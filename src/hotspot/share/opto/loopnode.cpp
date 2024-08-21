@@ -2290,7 +2290,7 @@ bool PhaseIdealLoop::is_counted_loop(Node* x, IdealLoopTree*&loop, BasicType iv_
   assert(l == loop->_head && l->phi() == phi && l->loopexit_or_null() == lex, "" );
 #endif
 #ifndef PRODUCT
-  if (TraceLoopOpts) { //TLO
+  if (log_is_enabled(Trace, loopopts)) { //TLO
     LogMessage(loopopts) msg;
     NonInterleavingLogStream st(LogLevelType::Trace, msg);
     st.print("Counted      ");
@@ -3990,7 +3990,7 @@ void PhaseIdealLoop::replace_parallel_iv(IdealLoopTree *loop) {
 
     if ((ratio_con * stride_con) == stride_con2) { // Check for exact
 #ifndef PRODUCT
-      if (TraceLoopOpts) { //TLO
+      if (log_is_enabled(Trace, loopopts)) { //TLO
         LogMessage(loopopts) msg;
         NonInterleavingLogStream st(LogLevelType::Trace, msg);
         st.print("Parallel IV: %d ", phi2->_idx);
@@ -4234,13 +4234,19 @@ void IdealLoopTree::dump_head(outputStream* out) {
   if (_has_sfpt) out->print(" has_sfpt");
   if (_rce_candidate) out->print(" rce");
   if (_safepts != nullptr && _safepts->size() > 0) {
-    out->print(" sfpts={"); _safepts->dump_simple(); out->print(" }");
+    out->print(" sfpts={");
+    _safepts->dump_simple(out);
+    out->print(" }");
   }
   if (_required_safept != nullptr && _required_safept->size() > 0) {
-    out->print(" req={"); _required_safept->dump_simple(); out->print(" }");
+    out->print(" req={");
+    _required_safept->dump_simple(out);
+    out->print(" }");
   }
   if (Verbose) {
-    out->print(" body={"); _body.dump_simple(); out->print(" }");
+    out->print(" body={");
+    _body.dump_simple(out);
+    out->print(" }");
   }
   if (_head->is_Loop() && _head->as_Loop()->is_strip_mined()) {
     out->print(" strip_mined");
@@ -4753,7 +4759,7 @@ void PhaseIdealLoop::build_and_optimize() {
     return;
   }
   DEBUG_ONLY( if (VerifyLoopOptimizations) { verify(); } );
-  if (TraceLoopOpts && C->has_loops()) { //TLO
+  if (log_is_enabled(Trace, loopopts) && C->has_loops()) { //TLO
     LogMessage(loopopts) msg;
     NonInterleavingLogStream st(LogLevelType::Trace, msg);
     _ltree_root->dump(&st);
@@ -4889,9 +4895,9 @@ void PhaseIdealLoop::build_and_optimize() {
   if (!C->major_progress() && (C->parse_predicate_count() > 0)) {
     C->mark_parse_predicate_nodes_useless(_igvn);
     assert(C->parse_predicate_count() == 0, "should be zero now");
-      if (TraceLoopOpts) { //TLO
-        log_trace(loopopts)("PredicatesOff");
-      }
+    if (log_is_enabled(Trace, loopopts)) { //TLO
+      log_trace(loopopts)("PredicatesOff");
+    }
      C->set_major_progress();
   }
 
@@ -5565,7 +5571,7 @@ int PhaseIdealLoop::build_loop_tree_impl( Node *n, int pre_order ) {
         // Check for bad CFG here to prevent crash, and bailout of compile
         if (l == nullptr) {
 #ifndef PRODUCT
-          if (TraceLoopOpts) { //TLO
+          if (log_is_enabled(Trace, loopopts)) { //TLO
             LogMessage(loopopts) msg;
             NonInterleavingLogStream st(LogLevelType::Trace, msg);
             st.print_cr("bailout: unhandled CFG: infinite irreducible loop");

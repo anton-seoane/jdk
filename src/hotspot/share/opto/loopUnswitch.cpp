@@ -355,7 +355,7 @@ void PhaseIdealLoop::trace_loop_unswitching_impossible(const LoopNode* original_
 }
 
 void PhaseIdealLoop::trace_loop_unswitching_count(IdealLoopTree* loop, LoopNode* original_head) {
-  if (TraceLoopOpts) { //TLO
+  if (log_is_enabled(Trace, loopopts)) { //TLO
     LogMessage(loopopts) msg;
     NonInterleavingLogStream st(LogLevelType::Trace, msg);
     st.print("Unswitch   %d ", original_head->unswitch_count() + 1);

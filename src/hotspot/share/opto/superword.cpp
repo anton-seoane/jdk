@@ -1882,7 +1882,7 @@ bool SuperWord::schedule_and_apply() const {
 // correctness and profitability checks have passed, and the graph was successfully scheduled.
 void VTransform::apply() {
 #ifndef PRODUCT
-  if (_trace._info || TraceLoopOpts) { //TLO
+  if (_trace._info || log_is_enabled(Trace, loopopts)) { //TLO
     LogMessage(loopopts) msg;
     NonInterleavingLogStream st(LogLevelType::Trace, msg);
     st.print_cr("\nVTransform::apply:");

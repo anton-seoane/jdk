@@ -1662,7 +1662,7 @@ public:
 
   uint size() const { return _cnt; }
   void dump(outputStream* out = tty) const;
-  void dump_simple() const;
+  void dump_simple(outputStream* out = tty) const;
 };
 
 // Definition must appear after complete type definition of Node_List

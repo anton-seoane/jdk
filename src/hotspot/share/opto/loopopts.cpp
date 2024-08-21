@@ -865,7 +865,7 @@ Node *PhaseIdealLoop::conditional_move( Node *region ) {
     register_new_node( cmov, cmov_ctrl );
     _igvn.replace_node( phi, cmov );
 #ifndef PRODUCT
-    if (TraceLoopOpts) { //TLO
+    if (log_is_enabled(Trace, loopopts)) { //TLO
       LogMessage(loopopts) msg;
       NonInterleavingLogStream st(LogLevelType::Trace, msg);
       st.print("CMOV  ");
@@ -1468,7 +1468,7 @@ void PhaseIdealLoop::split_if_with_blocks_post(Node *n) {
 
     // Now split the IF
     C->print_method(PHASE_BEFORE_SPLIT_IF, 4, iff);
-    if ((PrintOpto && VerifyLoopOptimizations) || TraceLoopOpts) { //TLO //OPT
+    if ((PrintOpto && VerifyLoopOptimizations) || log_is_enabled(Trace, loopopts)) { //TLO //OPT
       log_trace(loopopts, opto)("Split-If");
     }
     do_split_if(iff);
@@ -3806,7 +3806,7 @@ bool PhaseIdealLoop::partial_peel( IdealLoopTree *loop, Node_List &old_new ) {
   }
 
 #ifndef PRODUCT
-  if (TraceLoopOpts) { //TLO
+  if (log_is_enabled(Trace, loopopts)) { //TLO
     LogMessage(loopopts) msg;
     NonInterleavingLogStream st(LogLevelType::Trace, msg);
     st.print("PartialPeel  ");

@@ -3381,9 +3381,6 @@ bool Arguments::handle_deprecated_print_gc_flags() {
     log_warning(gc)("-XX:+PrintGCDetails is deprecated. Will use -Xlog:gc* instead.");
   }
 
-  tty->print_cr("in");
-  LogConfiguration::configure_stdout(LogLevel::Trace, true, LOG_TAGS(gc));
-
   if (_legacyGCLogging.lastFlag == 2) {
     // -Xloggc was used to specify a filename
     const char* gc_conf = PrintGCDetails ? "gc*" : "gc";
@@ -3579,7 +3576,8 @@ jint Arguments::parse(const JavaVMInitArgs* initial_cmd_args) {
     return JNI_EINVAL;
   }
 
-  tty->print_cr("TTY");
+  // Putting it here for the moment
+  if (TraceLoopOpts) LogConfiguration::configure_stdout(LogLevel::Trace, false, LOG_TAGS(loopopts));
 
   // Set object alignment values.
   set_object_alignment();

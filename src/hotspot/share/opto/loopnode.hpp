@@ -1803,7 +1803,7 @@ public:
 
   ~AutoNodeBudget() {
 #ifndef PRODUCT
-    if (TraceLoopOpts) { //TLO
+    if (log_is_enabled(Trace, loopopts)) { //TLO
       uint request = _phase->nodes_required();
       uint delta   = _phase->C->live_nodes() - _nodes_at_begin;
 

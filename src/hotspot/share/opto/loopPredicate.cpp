@@ -1198,7 +1198,7 @@ bool PhaseIdealLoop::loop_predication_impl_helper(IdealLoopTree* loop, IfProjNod
       NonInterleavingLogStream st(LogLevelType::Trace, msg);
       st.print("Predicate invariant if%s: %d ", negated ? " negated" : "", new_predicate_iff->_idx);
       loop->dump_head(&st);
-    } else if (TraceLoopOpts) { //TLO
+    } else if (log_is_enabled(Trace, loopopts)) { //TLO
       LogMessage(loopopts) msg;
       NonInterleavingLogStream st(LogLevelType::Trace, msg);
       st.print("Predicate IC ");
@@ -1292,7 +1292,7 @@ bool PhaseIdealLoop::loop_predication_impl_helper(IdealLoopTree* loop, IfProjNod
     C->print_method(PHASE_AFTER_LOOP_PREDICATION_RC, 4, template_assertion_predicate_proj->in(0));
 
 #ifndef PRODUCT
-    if (TraceLoopOpts && !TraceLoopPredicate) { //TLO
+    if (log_is_enabled(Trace, loopopts) && !TraceLoopPredicate) { //TLO
       //TLP, we remove the if condition as both will not happen if Xlog:tlo,tlp
       LogMessage(loopopts) msg;
       NonInterleavingLogStream st(LogLevelType::Trace, msg);

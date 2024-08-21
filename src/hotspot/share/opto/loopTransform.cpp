@@ -735,7 +735,7 @@ void PhaseIdealLoop::do_peeling(IdealLoopTree *loop, Node_List &old_new) {
   // no longer a 'main' loop; it will need new pre and post loops before
   // we can do further RCE.
 #ifndef PRODUCT
-  if (TraceLoopOpts) { //TLO
+  if (log_is_enabled(Trace, loopopts)) { //TLO
     LogMessage(loopopts) msg;
     NonInterleavingLogStream st(LogLevelType::Trace, msg);
     st.print("Peel         ");
@@ -1551,7 +1551,7 @@ void PhaseIdealLoop::copy_assertion_predicates_to_main_loop(CountedLoopNode* pre
 void PhaseIdealLoop::insert_pre_post_loops(IdealLoopTree *loop, Node_List &old_new, bool peel_only) {
 
 #ifndef PRODUCT
-  if (TraceLoopOpts) { //TLO
+  if (log_is_enabled(Trace, loopopts)) { //TLO
     LogMessage(loopopts) msg;
     NonInterleavingLogStream st(LogLevelType::Trace, msg);
     if (peel_only)
@@ -1800,7 +1800,7 @@ void PhaseIdealLoop::insert_vector_post_loop(IdealLoopTree *loop, Node_List &old
   }
 
 #ifndef PRODUCT
-  if (TraceLoopOpts) { //TLO
+  if (log_is_enabled(Trace, loopopts)) { //TLO
     LogMessage(loopopts) msg;
     NonInterleavingLogStream st(LogLevelType::Trace, msg);
     st.print("PostVector  ");
@@ -2098,7 +2098,7 @@ void PhaseIdealLoop::do_unroll(IdealLoopTree *loop, Node_List &old_new, bool adj
     NonInterleavingLogStream st(LogLevelType::Trace, msg);
     st.print("Unrolling ");
     loop->dump_head(&st);
-  } else if (TraceLoopOpts) { //TLO
+  } else if (log_is_enabled(Trace, loopopts)) { //TLO
     LogMessage(loopopts) msg;
     NonInterleavingLogStream st(LogLevelType::Trace, msg);
     if (loop_head->trip_count() < (uint)LoopUnrollLimit) {
@@ -2109,7 +2109,7 @@ void PhaseIdealLoop::do_unroll(IdealLoopTree *loop, Node_List &old_new, bool adj
     loop->dump_head(&st);
   }
 
-  if (C->do_vector_loop() && (PrintOpto && (VerifyLoopOptimizations || TraceLoopOpts))) { //TLO //OPT
+  if (C->do_vector_loop() && (PrintOpto && (VerifyLoopOptimizations || log_is_enabled(Trace, loopopts)))) { //TLO //OPT
     LogMessage(loopopts, opto) msg;
     NonInterleavingLogStream st(LogLevelType::Trace, msg);
     Node_Stack stack(C->live_nodes() >> 2);
@@ -2324,7 +2324,7 @@ void PhaseIdealLoop::do_unroll(IdealLoopTree *loop, Node_List &old_new, bool adj
   loop_head->clear_strip_mined();
 
 #ifndef PRODUCT
-  if (C->do_vector_loop() && (PrintOpto && (VerifyLoopOptimizations || TraceLoopOpts))) { //TLO //OPT
+  if (C->do_vector_loop() && (PrintOpto && (VerifyLoopOptimizations || log_is_enabled(Trace, loopopts)))) { //TLO //OPT
     LogMessage(loopopts, opto) msg;
     NonInterleavingLogStream st(LogLevelType::Trace, msg);
     st.print_cr("\nnew loop after unroll");
@@ -2359,7 +2359,7 @@ void PhaseIdealLoop::do_maximally_unroll(IdealLoopTree *loop, Node_List &old_new
   assert(cl->has_exact_trip_count(), "trip count is not exact");
   assert(cl->trip_count() > 0, "");
 #ifndef PRODUCT
-  if (TraceLoopOpts) { //TLO
+  if (log_is_enabled(Trace, loopopts)) { //TLO
     LogMessage(loopopts) msg;
     NonInterleavingLogStream st(LogLevelType::Trace, msg);
     st.print("MaxUnroll  %d ", cl->trip_count());
@@ -2830,7 +2830,7 @@ void PhaseIdealLoop::do_range_check(IdealLoopTree *loop, Node_List &old_new) {
     NonInterleavingLogStream st(LogLevelType::Debug, msg);
     st.print("Range Check Elimination ");
     loop->dump_head(&st);
-  } else if (TraceLoopOpts) { //TLO
+  } else if (log_is_enabled(Trace, loopopts)) { //TLO
     LogMessage(loopopts) msg;
     NonInterleavingLogStream st(LogLevelType::Trace, msg);
     st.print("RangeCheck   ");
@@ -3407,7 +3407,7 @@ bool IdealLoopTree::do_remove_empty_loop(PhaseIdealLoop *phase) {
     NonInterleavingLogStream st(LogLevelType::Debug, msg);
     st.print("Removing empty loop with%s zero trip guard", needs_guard ? "out" : "");
     this->dump_head(&st);
-  } else if (TraceLoopOpts) { //TLO
+  } else if (log_is_enabled(Trace, loopopts)) { //TLO
     LogMessage(loopopts) msg;
     NonInterleavingLogStream st(LogLevelType::Trace, msg);
     st.print("Empty with%s zero trip guard   ", needs_guard ? "out" : "");
@@ -3592,7 +3592,7 @@ bool IdealLoopTree::do_one_iteration_loop(PhaseIdealLoop *phase) {
   }
 
 #ifndef PRODUCT
-  if (TraceLoopOpts) { //TLO
+  if (log_is_enabled(Trace, loopopts)) { //TLO
     LogMessage(loopopts) msg;
     NonInterleavingLogStream st(LogLevelType::Trace, msg);
     st.print("OneIteration ");
@@ -4087,7 +4087,7 @@ bool PhaseIdealLoop::intrinsify_fill(IdealLoopTree* lpt) {
   }
 
 #ifndef PRODUCT
-  if (TraceLoopOpts) { //TLO
+  if (log_is_enabled(Trace, loopopts)) { //TLO
     LogMessage(loopopts) msg;
     NonInterleavingLogStream st(LogLevelType::Trace, msg);
     st.print("ArrayFill    ");
