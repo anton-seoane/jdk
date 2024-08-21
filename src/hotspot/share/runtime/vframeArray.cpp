@@ -335,8 +335,8 @@ void vframeArrayElement::unpack_on_stack(int caller_actual_parameters,
   }
 
 #ifndef PRODUCT
-  if (PrintDeoptimizationDetails) {
-    tty->print_cr("Expressions size: %d", expressions()->size());
+  if (PrintDeoptimizationDetails) { //8287010
+    log_debug(deoptimization)("Expressions size: %d", expressions()->size());
   }
 #endif // !PRODUCT
 
@@ -354,22 +354,24 @@ void vframeArrayElement::unpack_on_stack(int caller_actual_parameters,
       case T_INT:
         *addr = value->get_intptr();
 #ifndef PRODUCT
-        if (PrintDeoptimizationDetails) {
-          tty->print_cr(" - Reconstructed expression %d (INT): %d", i, (int)(*addr));
+        if (PrintDeoptimizationDetails) { //8287010
+          log_debug(deoptimization)(" - Reconstructed expression %d (INT): %d", i, (int)(*addr));
         }
 #endif // !PRODUCT
         break;
       case T_OBJECT:
         *addr = value->get_intptr(T_OBJECT);
 #ifndef PRODUCT
-        if (PrintDeoptimizationDetails) {
-          tty->print(" - Reconstructed expression %d (OBJECT): ", i);
+        if (PrintDeoptimizationDetails) { //8287010
+          LogMessage(deoptimization) msg;
+          NonInterleavingLogStream st{LogLevelType::Debug, msg};
+          st.print(" - Reconstructed expression %d (OBJECT): ", i);
           oop o = cast_to_oop((address)(*addr));
           if (o == nullptr) {
-            tty->print_cr("null");
+            st.print_cr("null");
           } else {
             ResourceMark rm;
-            tty->print_raw_cr(o->klass()->name()->as_C_string());
+            st.print_raw_cr(o->klass()->name()->as_C_string());
           }
         }
 #endif // !PRODUCT
@@ -384,8 +386,8 @@ void vframeArrayElement::unpack_on_stack(int caller_actual_parameters,
   }
 
 #ifndef PRODUCT
-  if (PrintDeoptimizationDetails) {
-    tty->print_cr("Locals size: %d", locals()->size());
+  if (PrintDeoptimizationDetails) { //8287010
+    log_debug(deoptimization)("Locals size: %d", locals()->size());
   }
 #endif // !PRODUCT
 
@@ -398,22 +400,24 @@ void vframeArrayElement::unpack_on_stack(int caller_actual_parameters,
       case T_INT:
         *addr = value->get_intptr();
 #ifndef PRODUCT
-        if (PrintDeoptimizationDetails) {
-          tty->print_cr(" - Reconstructed local %d (INT): %d", i, (int)(*addr));
+        if (PrintDeoptimizationDetails) { //8287010
+          log_debug(deoptimization)(" - Reconstructed local %d (INT): %d", i, (int)(*addr));
         }
 #endif // !PRODUCT
         break;
       case T_OBJECT:
         *addr = value->get_intptr(T_OBJECT);
 #ifndef PRODUCT
-        if (PrintDeoptimizationDetails) {
-          tty->print(" - Reconstructed local %d (OBJECT): ", i);
+        if (PrintDeoptimizationDetails) { //8287010
+          LogMessage(deoptimization) msg;
+          NonInterleavingLogStream st{LogLevelType::Debug, msg};
+          st.print(" - Reconstructed local %d (OBJECT): ", i);
           oop o = cast_to_oop((address)(*addr));
           if (o == nullptr) {
-            tty->print_cr("null");
+            st.print_cr("null");
           } else {
             ResourceMark rm;
-            tty->print_raw_cr(o->klass()->name()->as_C_string());
+            st.print_raw_cr(o->klass()->name()->as_C_string());
           }
         }
 #endif // !PRODUCT
@@ -458,18 +462,22 @@ void vframeArrayElement::unpack_on_stack(int caller_actual_parameters,
   }
 
 #ifndef PRODUCT
-  if (PrintDeoptimizationDetails) {
-    ttyLocker ttyl;
-    tty->print_cr("[%d. Interpreted Frame]", ++unpack_counter);
-    iframe()->print_on(tty);
+  if (PrintDeoptimizationDetails) { //8287010
+    LogMessage(deoptimization) msg;
+    NonInterleavingLogStream st{LogLevelType::Debug, msg};
+    st.print_cr("[%d. Interpreted Frame]", ++unpack_counter);
+    iframe()->print_on(&st);
     RegisterMap map(thread,
                     RegisterMap::UpdateMap::include,
                     RegisterMap::ProcessFrames::include,
                     RegisterMap::WalkContinuation::skip);
     vframe* f = vframe::new_vframe(iframe(), &map, thread);
-    f->print();
-    if (WizardMode && Verbose) method()->print_codes();
-    tty->cr();
+    f->print(&st);
+    if (WizardMode && Verbose) {
+      //8287010: change st tagset for this scope to (wizard, verbose, deoptimization)
+      method()->print_codes_on(&st);
+    }
+    st.cr();
   }
 #endif // !PRODUCT
 
@@ -593,13 +601,13 @@ void vframeArray::unpack_to_stack(frame &unpack_frame, int exec_mode, int caller
   Events::log_deopt_message(current, "DEOPT UNPACKING pc=" INTPTR_FORMAT " sp=" INTPTR_FORMAT " mode %d",
                             p2i(unpack_frame.pc()), p2i(unpack_frame.sp()), exec_mode);
 
-  if (TraceDeoptimization) {
+  if (TraceDeoptimization) { //8295060
     ResourceMark rm;
-    stringStream st;
+    LogMessage(deoptimization) msg;
+    NonInterleavingLogStream st{LogLevelType::Trace, msg};
     st.print_cr("DEOPT UNPACKING thread=" INTPTR_FORMAT " vframeArray=" INTPTR_FORMAT " mode=%d",
                 p2i(current), p2i(this), exec_mode);
     st.print_cr("   Virtual frames (outermost/oldest first):");
-    tty->print_raw(st.freeze());
   }
 
   // Do the unpacking of interpreter frames; the frame at index 0 represents the top activation, so it has no callee
@@ -621,7 +629,7 @@ void vframeArray::unpack_to_stack(frame &unpack_frame, int exec_mode, int caller
       callee_parameters = callee->size_of_parameters() + (has_member_arg ? 1 : 0);
       callee_locals     = callee->max_locals();
     }
-    if (TraceDeoptimization) {
+    if (TraceDeoptimization) { //8295060
       ResourceMark rm;
       stringStream st;
       st.print("      VFrame %d (" INTPTR_FORMAT ")", index, p2i(elem));
@@ -636,8 +644,8 @@ void vframeArray::unpack_to_stack(frame &unpack_frame, int exec_mode, int caller
       }
       st.print(" - %s", code_name);
       st.print(" @ bci=%d ", bci);
-      st.print_cr("sp=" PTR_FORMAT, p2i(elem->iframe()->sp()));
-      tty->print_raw(st.freeze());
+      st.print("sp=" PTR_FORMAT, p2i(elem->iframe()->sp()));
+      log_trace(deoptimization)("%s", st.freeze());
     }
     elem->unpack_on_stack(caller_actual_parameters,
                           callee_parameters,
@@ -653,7 +661,7 @@ void vframeArray::unpack_to_stack(frame &unpack_frame, int exec_mode, int caller
     caller_actual_parameters = callee_parameters;
   }
   deallocate_monitor_chunks();
-  if (TraceDeoptimization) {
+  if (TraceDeoptimization) { //8295060: ask!
     tty->cr();
   }
 }

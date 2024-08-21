@@ -86,6 +86,7 @@
 #include "utilities/copy.hpp"
 #include "utilities/macros.hpp"
 #include "utilities/resourceHash.hpp"
+#include "logging/logStream.hpp"
 
 // -------------------- Compile::mach_constant_base_node -----------------------
 // Constant table base node singleton.
@@ -511,42 +512,44 @@ CompileWrapper::~CompileWrapper() {
 void Compile::print_compile_messages() {
 #ifndef PRODUCT
   // Check if recompiling
+  stringStream ss; //OPT
   if (!subsume_loads() && PrintOpto) {
     // Recompiling without allowing machine instructions to subsume loads
-    tty->print_cr("*********************************************************");
-    tty->print_cr("** Bailout: Recompile without subsuming loads          **");
-    tty->print_cr("*********************************************************");
+    ss.print_cr("*********************************************************");
+    ss.print_cr("** Bailout: Recompile without subsuming loads          **");
+    ss.print_cr("*********************************************************");
   }
   if ((do_escape_analysis() != DoEscapeAnalysis) && PrintOpto) {
     // Recompiling without escape analysis
-    tty->print_cr("*********************************************************");
-    tty->print_cr("** Bailout: Recompile without escape analysis          **");
-    tty->print_cr("*********************************************************");
+    ss.print_cr("*********************************************************");
+    ss.print_cr("** Bailout: Recompile without escape analysis          **");
+    ss.print_cr("*********************************************************");
   }
   if (do_iterative_escape_analysis() != DoEscapeAnalysis && PrintOpto) {
     // Recompiling without iterative escape analysis
-    tty->print_cr("*********************************************************");
-    tty->print_cr("** Bailout: Recompile without iterative escape analysis**");
-    tty->print_cr("*********************************************************");
+    ss.print_cr("*********************************************************");
+    ss.print_cr("** Bailout: Recompile without iterative escape analysis**");
+    ss.print_cr("*********************************************************");
   }
   if (do_reduce_allocation_merges() != ReduceAllocationMerges && PrintOpto) {
     // Recompiling without reducing allocation merges
-    tty->print_cr("*********************************************************");
-    tty->print_cr("** Bailout: Recompile without reduce allocation merges **");
-    tty->print_cr("*********************************************************");
+    ss.print_cr("*********************************************************");
+    ss.print_cr("** Bailout: Recompile without reduce allocation merges **");
+    ss.print_cr("*********************************************************");
   }
   if ((eliminate_boxing() != EliminateAutoBox) && PrintOpto) {
     // Recompiling without boxing elimination
-    tty->print_cr("*********************************************************");
-    tty->print_cr("** Bailout: Recompile without boxing elimination       **");
-    tty->print_cr("*********************************************************");
+    ss.print_cr("*********************************************************");
+    ss.print_cr("** Bailout: Recompile without boxing elimination       **");
+    ss.print_cr("*********************************************************");
   }
   if ((do_locks_coarsening() != EliminateLocks) && PrintOpto) {
     // Recompiling without locks coarsening
-    tty->print_cr("*********************************************************");
-    tty->print_cr("** Bailout: Recompile without locks coarsening         **");
-    tty->print_cr("*********************************************************");
+    ss.print_cr("*********************************************************");
+    ss.print_cr("** Bailout: Recompile without locks coarsening         **");
+    ss.print_cr("*********************************************************");
   }
+  if (ss.is_empty() == false) log_debug(opto)("%s", ss.freeze());
   if (env()->break_at_compile()) {
     // Open the debugger when compiling this method.
     tty->print("### Breaking when compiling: ");
@@ -555,11 +558,11 @@ void Compile::print_compile_messages() {
     BREAKPOINT;
   }
 
-  if( PrintOpto ) {
+  if( PrintOpto ) { //OPT
     if (is_osr_compilation()) {
-      tty->print("[OSR]%3d", _compile_id);
+      log_debug(opto)("[OSR]%3d", _compile_id);
     } else {
-      tty->print("%3d", _compile_id);
+      log_debug(opto)("%3d", _compile_id);
     }
   }
 #endif
@@ -709,6 +712,7 @@ Compile::Compile( ciEnv* ci_env, ciMethod* target, int osr_bci,
   if (directive->ReplayInlineOption) {
     _replay_inline_data = ciReplay::load_inline_data(method(), entry_bci(), ci_env->comp_level());
   }
+  //tty->print("%d\n", directive->PrintInliningOption); LMAO
   set_print_inlining(directive->PrintInliningOption || PrintOptoInlining);
   set_print_intrinsics(directive->PrintIntrinsicsOption);
   set_has_irreducible_loop(true); // conservative until build_loop_tree() reset it
@@ -1942,10 +1946,12 @@ void Compile::process_for_unstable_if_traps(PhaseIterGVN& igvn) {
         if (!live_locals.at(i) && !local->is_top() && local != lhs && local!= rhs) {
           uint idx = jvms->locoff() + i;
 #ifdef ASSERT
-          if (PrintOpto && Verbose) {
-            tty->print("[unstable_if] kill local#%d: ", idx);
-            local->dump();
-            tty->cr();
+          if (PrintOpto && Verbose) { //OPT
+            LogMessage(opto) msg;
+            NonInterleavingLogStream st(LogLevelType::Debug, msg);
+            st.print("[unstable_if] kill local#%d: ", idx);
+            local->dump(&st);
+            st.cr();
           }
 #endif
           igvn.replace_input_of(unc, idx, top());

@@ -37,6 +37,7 @@
 #include "opto/rootnode.hpp"
 #include "opto/subnode.hpp"
 #include "opto/subtypenode.hpp"
+#include "logging/logStream.hpp"
 
 // Portions of code courtesy of Clifford Click
 
@@ -1534,8 +1535,11 @@ Node* IfNode::Ideal(PhaseGVN *phase, bool can_reshape) {
 //------------------------------dominated_by-----------------------------------
 Node* IfNode::dominated_by(Node* prev_dom, PhaseIterGVN* igvn, bool pin_array_access_nodes) {
 #ifndef PRODUCT
-  if (TraceIterativeGVN) {
-    tty->print("   Removing IfNode: "); this->dump();
+  if (TraceIterativeGVN) { //TIGVN
+    LogMessage(iterativegvn) msg;
+    NonInterleavingLogStream st(LogLevelType::Trace, msg);
+    st.print("   Removing IfNode: ");
+    this->dump(&st);
   }
 #endif
 
@@ -1731,8 +1735,11 @@ Node* IfNode::simple_subsuming(PhaseIterGVN* igvn) {
     return nullptr;
   }
 #ifndef PRODUCT
-  if (TraceIterativeGVN) {
-    tty->print("   Subsumed IfNode: "); dump();
+  if (TraceIterativeGVN) { //TIGVN
+    LogMessage(iterativegvn) msg;
+    NonInterleavingLogStream st(LogLevelType::Trace, msg);
+    st.print("   Subsumed IfNode: ");
+    dump(&st);
   }
 #endif
   // Replace condition with constant True(1)/False(0).

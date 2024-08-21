@@ -29,6 +29,7 @@
 #include "opto/superwordVTransformBuilder.hpp"
 #include "opto/vectornode.hpp"
 #include "opto/movenode.hpp"
+#include "logging/logStream.hpp"
 
 SuperWord::SuperWord(const VLoopAnalyzer &vloop_analyzer) :
   _vloop_analyzer(vloop_analyzer),
@@ -1881,10 +1882,12 @@ bool SuperWord::schedule_and_apply() const {
 // correctness and profitability checks have passed, and the graph was successfully scheduled.
 void VTransform::apply() {
 #ifndef PRODUCT
-  if (_trace._info || TraceLoopOpts) {
-    tty->print_cr("\nVTransform::apply:");
-    lpt()->dump_head();
-    lpt()->head()->dump();
+  if (_trace._info || TraceLoopOpts) { //TLO
+    LogMessage(loopopts) msg;
+    NonInterleavingLogStream st(LogLevelType::Trace, msg);
+    st.print_cr("\nVTransform::apply:");
+    lpt()->dump_head(&st);
+    lpt()->head()->dump(&st);
   }
   assert(cl()->is_main_loop(), "auto vectorization only for main loops");
   assert(_graph.is_scheduled(), "must already be scheduled");

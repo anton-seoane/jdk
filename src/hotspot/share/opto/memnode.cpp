@@ -2960,7 +2960,7 @@ private:
   Node* make_merged_input_value(const Node_List& merge_list);
   StoreNode* make_merged_store(const Node_List& merge_list, Node* merged_input_value);
 
-  DEBUG_ONLY( void trace(const Node_List& merge_list, const Node* merged_input_value, const StoreNode* merged_store) const; )
+  DEBUG_ONLY( void trace(const Node_List& merge_list, const Node* merged_input_value, const StoreNode* merged_store, outputStream* out = tty) const; )
 };
 
 StoreNode* MergePrimitiveArrayStores::run() {
@@ -3010,7 +3010,11 @@ StoreNode* MergePrimitiveArrayStores::run() {
 
   StoreNode* merged_store = make_merged_store(merge_list, merged_input_value);
 
-  DEBUG_ONLY( if(TraceMergeStores) { trace(merge_list, merged_input_value, merged_store); } )
+  DEBUG_ONLY( if(TraceMergeStores) { //TMS
+                LogMessage(mergestores) msg;
+                NonInterleavingLogStream st(LogLevelType::Trace, msg);
+                trace(merge_list, merged_input_value, merged_store, &st); 
+              } )
 
   return merged_store;
 }
@@ -3396,7 +3400,7 @@ StoreNode* MergePrimitiveArrayStores::make_merged_store(const Node_List& merge_l
 }
 
 #ifdef ASSERT
-void MergePrimitiveArrayStores::trace(const Node_List& merge_list, const Node* merged_input_value, const StoreNode* merged_store) const {
+void MergePrimitiveArrayStores::trace(const Node_List& merge_list, const Node* merged_input_value, const StoreNode* merged_store, outputStream* out) const { //TMS, we'll probably need to remove the ad-hoc tags
   stringStream ss;
   ss.print_cr("[TraceMergeStores]: Replace");
   for (int i = (int)merge_list.size() - 1; i >= 0; i--) {
@@ -3405,7 +3409,7 @@ void MergePrimitiveArrayStores::trace(const Node_List& merge_list, const Node* m
   ss.print_cr("[TraceMergeStores]: with");
   merged_input_value->dump("\n", false, &ss);
   merged_store->dump("\n", false, &ss);
-  tty->print("%s", ss.as_string());
+  out->print("%s", ss.as_string());
 }
 #endif
 

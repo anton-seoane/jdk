@@ -613,13 +613,13 @@ class Parse : public GraphKit {
   Node* optimize_cmp_with_klass(Node* c);
 
  public:
-#ifndef PRODUCT
+#ifndef PRODUCT //OPT, pay attention
   // Handle PrintOpto, etc.
   void show_parse_info();
   void dump_map_adr_mem() const;
   static void print_statistics(); // Print some performance counters
   void dump();
-  void dump_bci(int bci);
+  void dump_bci(int bci, outputStream* out = tty);
 #endif
 };
 

@@ -1072,12 +1072,12 @@ JRT_ENTRY(void, Runtime1::patch_code(JavaThread* current, Runtime1::StubID stub_
     // At compile time we assumed the field wasn't volatile/atomic but after
     // loading it turns out it was volatile/atomic so we have to throw the
     // compiled code out and let it be regenerated.
-    if (TracePatching) {
+    if (TracePatching) { //TP
       if (deoptimize_for_volatile) {
-        tty->print_cr("Deoptimizing for patching volatile field reference");
+        log_trace(patching)("Deoptimizing for patching volatile field reference");
       }
       if (deoptimize_for_atomic) {
-        tty->print_cr("Deoptimizing for patching atomic field reference");
+        log_trace(patching)("Deoptimizing for patching atomic field reference");
       }
     }
 
@@ -1125,10 +1125,11 @@ JRT_ENTRY(void, Runtime1::patch_code(JavaThread* current, Runtime1::StubID stub_
         unsigned char* being_initialized_entry_offset = (unsigned char*) (stub_location - 3);
         address copy_buff = stub_location - *byte_skip - *byte_count;
         address being_initialized_entry = stub_location - *being_initialized_entry_offset;
-        if (TracePatching) {
-          ttyLocker ttyl;
-          tty->print_cr(" Patching %s at bci %d at address " INTPTR_FORMAT "  (%s)", Bytecodes::name(code), bci,
-                        p2i(instr_pc), (stub_id == Runtime1::access_field_patching_id) ? "field" : "klass");
+        if (TracePatching) { //TP
+          LogMessage(patching) msg;
+          NonInterleavingLogStream st(LogLevelType::Trace, msg);
+          st.print_cr(" Patching %s at bci %d at address " INTPTR_FORMAT "  (%s)", Bytecodes::name(code), bci,
+                      p2i(instr_pc), (stub_id == Runtime1::access_field_patching_id) ? "field" : "klass");
           nmethod* caller_code = CodeCache::find_nmethod(caller_frame.pc());
           assert(caller_code != nullptr, "nmethod not found");
 
@@ -1137,10 +1138,10 @@ JRT_ENTRY(void, Runtime1::patch_code(JavaThread* current, Runtime1::StubID stub_
 
           const ImmutableOopMap* map = caller_code->oop_map_for_return_address(caller_frame.pc());
           assert(map != nullptr, "null check");
-          map->print();
-          tty->cr();
+          map->print_on(&st);
+          st.cr();
 
-          Disassembler::decode(copy_buff, copy_buff + *byte_count, tty);
+          Disassembler::decode(copy_buff, copy_buff + *byte_count, &st);
         }
         // depending on the code below, do_patch says whether to copy the patch body back into the nmethod
         bool do_patch = true;
@@ -1178,8 +1179,10 @@ JRT_ENTRY(void, Runtime1::patch_code(JavaThread* current, Runtime1::StubID stub_
               n_copy->set_data(cast_from_oop<intx>(mirror()));
             }
 
-            if (TracePatching) {
-              Disassembler::decode(copy_buff, copy_buff + *byte_count, tty);
+            if (TracePatching) { //TP
+              LogMessage(patching) msg;
+              NonInterleavingLogStream st(LogLevelType::Trace, msg);
+              Disassembler::decode(copy_buff, copy_buff + *byte_count, &st);
             }
           }
         } else if (stub_id == Runtime1::load_appendix_patching_id) {
@@ -1189,8 +1192,10 @@ JRT_ENTRY(void, Runtime1::patch_code(JavaThread* current, Runtime1::StubID stub_
                  "illegal init value");
           n_copy->set_data(cast_from_oop<intx>(appendix()));
 
-          if (TracePatching) {
-            Disassembler::decode(copy_buff, copy_buff + *byte_count, tty);
+          if (TracePatching) { //TP
+            LogMessage(patching) msg;
+            NonInterleavingLogStream st(LogLevelType::Trace, msg);
+            Disassembler::decode(copy_buff, copy_buff + *byte_count, &st);
           }
         } else {
           ShouldNotReachHere();
@@ -1320,8 +1325,8 @@ void Runtime1::patch_code(JavaThread* current, Runtime1::StubID stub_id) {
   // (see another implementation above).
   MACOS_AARCH64_ONLY(ThreadWXEnable wx(WXWrite, current));
 
-  if (TracePatching) {
-    tty->print_cr("Deoptimizing because patch is needed");
+  if (TracePatching) { //TP
+    log_trace(patching)("Deoptimizing because patch is needed");
   }
 
   RegisterMap reg_map(current,
@@ -1486,13 +1491,13 @@ JRT_ENTRY(void, Runtime1::predicate_failed_trap(JavaThread* current))
     mdo->inc_trap_count(Deoptimization::Reason_none);
   }
 
-  if (TracePredicateFailedTraps) {
+  if (TracePredicateFailedTraps) { //TPFT
     stringStream ss1, ss2;
     vframeStream vfst(current);
     Method* inlinee = vfst.method();
     inlinee->print_short_name(&ss1);
     m->print_short_name(&ss2);
-    tty->print_cr("Predicate failed trap in method %s at bci %d inlined in %s at pc " INTPTR_FORMAT, ss1.freeze(), vfst.bci(), ss2.freeze(), p2i(caller_frame.pc()));
+    log_trace(predicatefailedtrap)("Predicate failed trap in method %s at bci %d inlined in %s at pc " INTPTR_FORMAT, ss1.freeze(), vfst.bci(), ss2.freeze(), p2i(caller_frame.pc()));
   }
 
 

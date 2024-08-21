@@ -1838,7 +1838,7 @@ void CompileBroker::shutdown_compiler_runtime(AbstractCompiler* comp, CompilerTh
  * Helper function to create new or reuse old CompileLog.
  */
 CompileLog* CompileBroker::get_log(CompilerThread* ct) {
-  if (!LogCompilation) return nullptr;
+  //if (!LogCompilation) return nullptr;
 
   AbstractCompiler *compiler = ct->compiler();
   bool c1 = compiler->is_c1();

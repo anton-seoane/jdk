@@ -1000,34 +1000,40 @@ void Method::set_signature_handler(address handler) {
 
 void Method::print_made_not_compilable(int comp_level, bool is_osr, bool report, const char* reason) {
   assert(reason != nullptr, "must provide a reason");
-  if (PrintCompilation && report) {
-    ttyLocker ttyl;
-    tty->print("made not %scompilable on ", is_osr ? "OSR " : "");
+  if (PrintCompilation && report) { //8295060
+    LogMessage(compilation) msg;
+    NonInterleavingLogStream st{LogLevelType::Trace, msg};
+    st.print("made not %scompilable on ", is_osr ? "OSR " : "");
     if (comp_level == CompLevel_all) {
-      tty->print("all levels ");
+      st.print("all levels ");
     } else {
-      tty->print("level %d ", comp_level);
+      st.print("level %d ", comp_level);
     }
-    this->print_short_name(tty);
+    this->print_short_name(&st);
     int size = this->code_size();
     if (size > 0) {
-      tty->print(" (%d bytes)", size);
+      st.print(" (%d bytes)", size);
     }
     if (reason != nullptr) {
-      tty->print("   %s", reason);
+      st.print("   %s", reason);
     }
-    tty->cr();
+    st.cr();
   }
-  if ((TraceDeoptimization || LogCompilation) && (xtty != nullptr)) {
-    ttyLocker ttyl;
-    xtty->begin_elem("make_not_compilable thread='" UINTX_FORMAT "' osr='%d' level='%d'",
-                     os::current_thread_id(), is_osr, comp_level);
+  if (TraceDeoptimization || LogCompilation) { //8295060
+    LogMessage(deoptimization, compilation) msg;
+    NonInterleavingLogStream st{LogLevelType::Trace, msg};
+    xmlStream xst(&st);
+    xst.begin_elem("make_not_compilable thread='" UINTX_FORMAT "' osr='%d' level='%d'", os::current_thread_id(), is_osr, comp_level);
+    //st.print("make_not_compilable thread='" UINTX_FORMAT "' osr='%d' level='%d'", os::current_thread_id(), is_osr, comp_level);
+    // xtty->begin_elem("make_not_compilable thread='" UINTX_FORMAT "' osr='%d' level='%d'",
+    //                  os::current_thread_id(), is_osr, comp_level);
     if (reason != nullptr) {
-      xtty->print(" reason=\'%s\'", reason);
+      st.print(" reason=\'%s\'", reason);
+      //xtty->print(" reason=\'%s\'", reason);
     }
-    xtty->method(this);
-    xtty->stamp();
-    xtty->end_elem();
+    xst.method(this);
+    xst.stamp();
+    xst.end_elem();
   }
 }
 

@@ -760,9 +760,9 @@ bool LibraryCallKit::try_to_inline(int predicate) {
     // If you get here, it may be that someone has added a new intrinsic
     // to the list in vmIntrinsics.hpp without implementing it here.
 #ifndef PRODUCT
-    if ((PrintMiscellaneous && (Verbose || WizardMode)) || PrintOpto) {
-      tty->print_cr("*** Warning: Unimplemented intrinsic %s(%d)",
-                    vmIntrinsics::name_at(intrinsic_id()), vmIntrinsics::as_int(intrinsic_id()));
+    if ((PrintMiscellaneous && (Verbose || WizardMode)) || PrintOpto) { //OPT
+      log_debug(opto)("*** Warning: Unimplemented intrinsic %s(%d)",
+                      vmIntrinsics::name_at(intrinsic_id()), vmIntrinsics::as_int(intrinsic_id()));
     }
 #endif
     return false;
@@ -798,9 +798,9 @@ Node* LibraryCallKit::try_to_predicate(int predicate) {
     // If you get here, it may be that someone has added a new intrinsic
     // to the list in vmIntrinsics.hpp without implementing it here.
 #ifndef PRODUCT
-    if ((PrintMiscellaneous && (Verbose || WizardMode)) || PrintOpto) {
-      tty->print_cr("*** Warning: Unimplemented predicate for intrinsic %s(%d)",
-                    vmIntrinsics::name_at(intrinsic_id()), vmIntrinsics::as_int(intrinsic_id()));
+    if ((PrintMiscellaneous && (Verbose || WizardMode)) || PrintOpto) { //OPT
+      log_debug(opto)("*** Warning: Unimplemented predicate for intrinsic %s(%d)",
+                      vmIntrinsics::name_at(intrinsic_id()), vmIntrinsics::as_int(intrinsic_id()));
     }
 #endif
     Node* slow_ctl = control();

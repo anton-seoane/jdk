@@ -2575,6 +2575,9 @@ jint Arguments::parse_each_vm_init_arg(const JavaVMInitArgs* args, bool* patch_m
       } else if (strcmp(tail, ":async") == 0) {
         LogConfiguration::set_async_mode(true);
         ret = true;
+      } else if (strcmp(tail, ":eager") == 0) {
+        LogConfiguration::set_eager_mode(true);
+        ret = true;
       } else if (*tail == '\0') {
         ret = LogConfiguration::parse_command_line_arguments();
         assert(ret, "-Xlog without arguments should never fail to parse");
@@ -3378,6 +3381,9 @@ bool Arguments::handle_deprecated_print_gc_flags() {
     log_warning(gc)("-XX:+PrintGCDetails is deprecated. Will use -Xlog:gc* instead.");
   }
 
+  tty->print_cr("in");
+  LogConfiguration::configure_stdout(LogLevel::Trace, true, LOG_TAGS(gc));
+
   if (_legacyGCLogging.lastFlag == 2) {
     // -Xloggc was used to specify a filename
     const char* gc_conf = PrintGCDetails ? "gc*" : "gc";
@@ -3572,6 +3578,8 @@ jint Arguments::parse(const JavaVMInitArgs* initial_cmd_args) {
   if (!handle_deprecated_print_gc_flags()) {
     return JNI_EINVAL;
   }
+
+  tty->print_cr("TTY");
 
   // Set object alignment values.
   set_object_alignment();

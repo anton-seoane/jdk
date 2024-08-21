@@ -590,7 +590,7 @@ Block* PhaseCFG::insert_anti_dependences(Block* LCA, Node* load, bool verify) {
   assert(Compile::AliasIdxTop <= load_alias_idx && load_alias_idx < C->num_alias_types(), "Invalid alias index");
   if (load_alias_idx == Compile::AliasIdxBot && C->do_aliasing() &&
       (PrintOpto || VerifyAliases ||
-       (PrintMiscellaneous && (WizardMode || Verbose)))) {
+       (PrintMiscellaneous && (WizardMode || Verbose)))) { //OPT, but not for now
     // Load nodes should not consume all of memory.
     // Reporting a bottom type indicates a bug in adlc.
     // If some particular type of node validly consumes all of memory,

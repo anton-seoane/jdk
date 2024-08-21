@@ -40,6 +40,7 @@
 #include "opto/rootnode.hpp"
 #include "utilities/macros.hpp"
 #include "utilities/powerOfTwo.hpp"
+#include "logging/logStream.hpp"
 
 //=============================================================================
 #define NODE_HASH_MINIMUM_SIZE    255
@@ -889,42 +890,48 @@ void PhaseIterGVN::trace_PhaseIterGVN(Node* n, Node* nn, const Type* oldtype) {
   if (nn != n || oldtype != newtype) {
     C->print_method(PHASE_AFTER_ITER_GVN_STEP, 5, n);
   }
-  if (TraceIterativeGVN) {
+  if (TraceIterativeGVN) { //TIGVN
+    LogMessage(iterativegvn) msg;
+    NonInterleavingLogStream st(LogLevelType::Trace, msg);
     uint wlsize = _worklist.size();
     if (nn != n) {
       // print old node
-      tty->print("< ");
+      st.print("< ");
       if (oldtype != newtype && oldtype != nullptr) {
-        oldtype->dump();
+        oldtype->dump_on(&st);
       }
-      do { tty->print("\t"); } while (tty->position() < 16);
-      tty->print("<");
-      n->dump();
+      do {
+        st.print("\t");
+      } while (tty->position() < 16); //lmao)
+      st.print("<");
+      n->dump(&st);
     }
     if (oldtype != newtype || nn != n) {
       // print new node and/or new type
       if (oldtype == nullptr) {
-        tty->print("* ");
+        st.print("* ");
       } else if (nn != n) {
-        tty->print("> ");
+        st.print("> ");
       } else {
-        tty->print("= ");
+        st.print("= ");
       }
       if (newtype == nullptr) {
-        tty->print("null");
+        st.print("null");
       } else {
-        newtype->dump();
+        newtype->dump_on(&st);
       }
-      do { tty->print("\t"); } while (tty->position() < 16);
-      nn->dump();
+      do {
+        st.print("\t");
+      } while (tty->position() < 16); //lmao
+      nn->dump(&st);
     }
     if (Verbose && wlsize < _worklist.size()) {
-      tty->print("  Push {");
+      st.print("  Push {");
       while (wlsize != _worklist.size()) {
         Node* pushed = _worklist.at(wlsize++);
-        tty->print(" %d", pushed->_idx);
+        st.print(" %d", pushed->_idx);
       }
-      tty->print_cr(" }");
+      st.print_cr(" }");
     }
     if (nn != n) {
       // ignore n, it might be subsumed
@@ -966,13 +973,13 @@ void PhaseIterGVN::verify_PhaseIterGVN() {
 #endif
 
   C->verify_graph_edges();
-  if (is_verify_def_use() && PrintOpto) {
+  if (is_verify_def_use() && PrintOpto) { //OPT
     if (_verify_counter == _verify_full_passes) {
-      tty->print_cr("VerifyIterativeGVN: %d transforms and verify passes",
-                    (int) _verify_full_passes);
+      log_debug(opto)("VerifyIterativeGVN: %d transforms and verify passes",
+                      (int) _verify_full_passes);
     } else {
-      tty->print_cr("VerifyIterativeGVN: %d transforms, %d full verify passes",
-                  (int) _verify_counter, (int) _verify_full_passes);
+      log_debug(opto)("VerifyIterativeGVN: %d transforms, %d full verify passes",
+                      (int) _verify_counter, (int) _verify_full_passes);
     }
   }
 
@@ -1005,11 +1012,13 @@ void PhaseIterGVN::dump_infinite_loop_info(Node* n, const char* where) {
  * Prints out information about IGVN if the 'verbose' option is used.
  */
 void PhaseIterGVN::trace_PhaseIterGVN_verbose(Node* n, int num_processed) {
-  if (TraceIterativeGVN && Verbose) {
-    tty->print("  Pop ");
-    n->dump();
+  if (TraceIterativeGVN && Verbose) { //TIGVN
+    LogMessage(iterativegvn) msg;
+    NonInterleavingLogStream st(LogLevelType::Trace, msg);
+    st.print("  Pop ");
+    n->dump(&st);
     if ((num_processed % 100) == 0) {
-      _worklist.print_set();
+      _worklist.print_set(&st);
     }
   }
 }
@@ -1846,12 +1855,14 @@ Node* PhaseCCP::fetch_next_node(Unique_Node_List& worklist) {
 
 #ifndef PRODUCT
 void PhaseCCP::dump_type_and_node(const Node* n, const Type* t) {
-  if (TracePhaseCCP) {
-    t->dump();
+  if (TracePhaseCCP) { //TPCCP
+    LogMessage(phaseccp) msg;
+    NonInterleavingLogStream st(LogLevelType::Trace, msg);
+    t->dump_on(&st);
     do {
-      tty->print("\t");
-    } while (tty->position() < 16);
-    n->dump();
+      st.print("\t");
+    } while (st.position() < 16); //lmao
+    n->dump(&st);
   }
 }
 #endif

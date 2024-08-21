@@ -37,6 +37,7 @@
 #include "opto/rootnode.hpp"
 #include "utilities/copy.hpp"
 #include "utilities/powerOfTwo.hpp"
+#include "logging/logStream.hpp"
 
 void Block_Array::grow( uint i ) {
   _nesting.check(_arena); // Check if a potential reallocation in the arena is safe
@@ -361,16 +362,16 @@ void Block::dump_head(const PhaseCFG* cfg, outputStream* st) const {
   st->cr();
 }
 
-void Block::dump() const {
-  dump(nullptr);
+void Block::dump(outputStream* out) const {
+  dump(nullptr, out);
 }
 
-void Block::dump(const PhaseCFG* cfg) const {
-  dump_head(cfg);
+void Block::dump(const PhaseCFG* cfg, outputStream* out) const {
+  dump_head(cfg, out);
   for (uint i=0; i< number_of_nodes(); i++) {
-    get_node(i)->dump();
+    get_node(i)->dump(out);
   }
-  tty->print("\n");
+  out->print("\n");
 }
 #endif
 
@@ -1110,17 +1111,23 @@ void PhaseCFG::postalloc_expand(PhaseRegAlloc* _ra) {
       Node *n = b->get_node(j);
       if (n->is_Mach() && n->as_Mach()->requires_postalloc_expand()) {
 #ifdef ASSERT
-        if (TracePostallocExpand) {
+        if (TracePostallocExpand) { //TPE
+          LogMessage(postallocexpand) msg;
+          NonInterleavingLogStream st(LogLevelType::Trace, msg);
           if (!foundNode) {
             foundNode = true;
-            tty->print("POSTALLOC EXPANDING %d %s\n", C->compile_id(),
-                       C->method() ? C->method()->name()->as_utf8() : C->stub_name());
+            st.print("POSTALLOC EXPANDING %d %s\n", C->compile_id(),
+                     C->method() ? C->method()->name()->as_utf8() : C->stub_name());
           }
-          tty->print("  postalloc expanding "); n->dump();
+          st.print("  postalloc expanding ");
+          n->dump(&st);
           if (Verbose) {
-            tty->print("    with ins:\n");
+            st.print("    with ins:\n");
             for (uint k = 0; k < n->len(); ++k) {
-              if (n->in(k)) { tty->print("        "); n->in(k)->dump(); }
+              if (n->in(k)) {
+                st.print("        ");
+                n->in(k)->dump(&st);
+              }
             }
           }
         }
@@ -1219,14 +1226,18 @@ void PhaseCFG::postalloc_expand(PhaseRegAlloc* _ra) {
         remove.push(n);
         j--;
 #ifdef ASSERT
-        if (TracePostallocExpand && Verbose) {
-          tty->print("    removing:\n");
+        if (TracePostallocExpand && Verbose) { //TPE
+          LogMessage(postallocexpand) msg;
+          NonInterleavingLogStream st(LogLevelType::Debug, msg);
+          st.print("    removing:\n");
           for (int k = 0; k < remove.length(); ++k) {
-            tty->print("        "); remove.at(k)->dump();
+            st.print("        ");
+            remove.at(k)->dump(&st);
           }
-          tty->print("    inserting:\n");
+          st.print("    inserting:\n");
           for (int k = 0; k < new_nodes.length(); ++k) {
-            tty->print("        "); new_nodes.at(k)->dump();
+            st.print("        ");
+            new_nodes.at(k)->dump(&st);
           }
         }
 #endif

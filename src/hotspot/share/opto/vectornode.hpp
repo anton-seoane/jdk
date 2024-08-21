@@ -32,6 +32,7 @@
 #include "opto/node.hpp"
 #include "opto/opcodes.hpp"
 #include "prims/vectorSupport.hpp"
+#include "logging/logStream.hpp"
 
 //------------------------------VectorNode-------------------------------------
 // Vector Operation
@@ -134,10 +135,12 @@ class VectorNode : public TypeNode {
   static bool is_scalar_op_that_returns_int_but_vector_op_returns_long(int opc);
 
   static void trace_new_vector(Node* n, const char* context) {
-#ifdef ASSERT
-    if (TraceNewVectors) {
-      tty->print("TraceNewVectors [%s]: ", context);
-      n->dump();
+#ifndef ASSERT
+    if (TraceNewVectors) { //TNV
+      LogMessage(newvectors) msg;
+      NonInterleavingLogStream st(LogLevelType::Trace, msg);
+      st.print("TraceNewVectors [%s]: ", context);
+      n->dump(&st);
     }
 #endif
   }

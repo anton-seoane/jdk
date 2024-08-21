@@ -44,6 +44,7 @@
 #include "runtime/os.inline.hpp"
 #include "runtime/sharedRuntime.hpp"
 #include "utilities/align.hpp"
+#include "logging/logStream.hpp"
 
 OptoReg::Name OptoReg::c_frame_pointer;
 
@@ -1096,10 +1097,12 @@ static void match_alias_type(Compile* C, Node* n, Node* m) {
     }
   }
   if (nidx != midx) {
-    if (PrintOpto || (PrintMiscellaneous && (WizardMode || Verbose))) {
-      tty->print_cr("==== Matcher alias shift %d => %d", nidx, midx);
-      n->dump();
-      m->dump();
+    if (PrintOpto || (PrintMiscellaneous && (WizardMode || Verbose))) { //OPT
+      LogMessage(opto) msg;
+      NonInterleavingLogStream st(LogLevelType::Debug, msg);
+      st.print_cr("==== Matcher alias shift %d => %d", nidx, midx);
+      n->dump(&st);
+      m->dump(&st);
     }
     assert(C->subsume_loads() && C->must_alias(nat, midx),
            "must not lose alias info when matching");
@@ -1695,8 +1698,8 @@ Node* Matcher::Label_Root(const Node* n, State* svec, Node* control, Node*& mem)
         (input_mem == NodeSentinel) ) {
       // Print when we exclude matching due to different memory states at input-loads
       if (PrintOpto && (Verbose && WizardMode) && (input_mem == NodeSentinel)
-          && !((mem!=(Node*)1) && m->is_Load() && m->in(MemNode::Memory) != mem)) {
-        tty->print_cr("invalid input_mem");
+          && !((mem!=(Node*)1) && m->is_Load() && m->in(MemNode::Memory) != mem)) { //OPT
+        log_debug(opto)("invalid input_mem");
       }
       // Switch to a register-only opcode; this value must be in a register
       // and cannot be subsumed as part of a larger instruction.

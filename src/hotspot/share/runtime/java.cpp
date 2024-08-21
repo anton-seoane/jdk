@@ -278,7 +278,7 @@ void print_statistics() {
 #else // COMPILER2
 #if INCLUDE_JVMCI
 #ifndef COMPILER1
-  if ((TraceDeoptimization || LogVMOutput || LogCompilation) && UseCompiler) {
+  if ((TraceDeoptimization || LogVMOutput || LogCompilation) && UseCompiler) { //8295060: ask around
     FlagSetting fs(DisplayVMOutput, DisplayVMOutput && TraceDeoptimization);
     Deoptimization::print_statistics();
     SharedRuntime::print_statistics();

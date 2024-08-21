@@ -26,6 +26,7 @@
 #include "c1/c1_Instruction.hpp"
 #include "c1/c1_LinearScan.hpp"
 #include "utilities/bitMap.inline.hpp"
+#include "logging/logStream.hpp"
 
 
 #ifdef _LP64
@@ -86,8 +87,11 @@ void LinearScan::allocate_fpu_stack() {
           assert(interval->from() <= id && id < interval->to(), "interval out of range");
 
 #ifndef PRODUCT
-          if (TraceFPURegisterUsage) {
-            tty->print("fpu reg %d is live because of ", reg - pd_first_fpu_reg); interval->print();
+          if (TraceFPURegisterUsage) { //TFRU
+            LogMessage(fpuregisterusage) msg;
+            NonInterleavingLogStream st(LogLevelType::Trace, msg);
+            st.print("fpu reg %d is live because of ", reg - pd_first_fpu_reg);
+            interval->print_on(&st);
           }
 #endif
 
@@ -98,8 +102,12 @@ void LinearScan::allocate_fpu_stack() {
         b->set_fpu_register_usage(regs);
 
 #ifndef PRODUCT
-        if (TraceFPURegisterUsage) {
-          tty->print("FPU regs for block %d, LIR instr %d): ", b->block_id(), id); regs.print_on(tty); tty->cr();
+        if (TraceFPURegisterUsage) { //TFRU
+          LogMessage(fpuregisterusage) msg;
+          NonInterleavingLogStream st(LogLevelType::Trace, msg);
+          st.print("FPU regs for block %d, LIR instr %d): ", b->block_id(), id);
+          regs.print_on(&st);
+          st.cr();
         }
 #endif
       }
@@ -130,9 +138,8 @@ void FpuStackAllocator::allocate() {
     intArray* fpu_stack_state = block->fpu_stack_state();
 
 #ifndef PRODUCT
-    if (TraceFPUStack) {
-      tty->cr();
-      tty->print_cr("------- Begin of new Block %d -------", block->block_id());
+    if (TraceFPUStack) { //TFS
+      log_trace(fpustack)("\n------- Begin of new Block %d -------", block->block_id());
     }
 #endif
 
@@ -150,10 +157,12 @@ void FpuStackAllocator::allocate() {
     }
 
 #ifndef PRODUCT
-    if (TraceFPUStack) {
-      tty->print("Reading FPU state for block %d:", block->block_id());
-      sim()->print();
-      tty->cr();
+    if (TraceFPUStack) { //TFS
+      LogMessage(fpustack) msg;
+      NonInterleavingLogStream st(LogLevelType::Trace, msg);
+      st.print("Reading FPU state for block %d:", block->block_id());
+      sim()->print(&st);
+      st.cr();
     }
 #endif
 
@@ -175,8 +184,10 @@ void FpuStackAllocator::allocate_block(BlockBegin* block) {
     _debug_information_computed = false;
 
 #ifndef PRODUCT
-    if (TraceFPUStack) {
-      op->print();
+    if (TraceFPUStack) { //TFS
+      LogMessage(fpustack) msg;
+      NonInterleavingLogStream st(LogLevelType::Trace, msg);
+      op->print_on(&st);
     }
     check_invalid_lir_op(op);
 #endif
@@ -250,9 +261,8 @@ void FpuStackAllocator::allocate_exception_handler(XHandler* xhandler) {
     intArray* old_state = sim()->write_state();
 
 #ifndef PRODUCT
-    if (TraceFPUStack) {
-      tty->cr();
-      tty->print_cr("------- begin of exception handler -------");
+    if (TraceFPUStack) { //TFS
+      log_trace(fpustack)("\n------- begin of exception handler -------");
     }
 #endif
 
@@ -272,8 +282,10 @@ void FpuStackAllocator::allocate_exception_handler(XHandler* xhandler) {
       LIR_Op* op = insts->at(pos());
 
 #ifndef PRODUCT
-      if (TraceFPUStack) {
-        op->print();
+      if (TraceFPUStack) { //TFS
+        LogMessage(fpustack) msg;
+        NonInterleavingLogStream st(LogLevelType::Trace, msg);
+        op->print_on(&st);
       }
       check_invalid_lir_op(op);
 #endif
@@ -303,9 +315,8 @@ void FpuStackAllocator::allocate_exception_handler(XHandler* xhandler) {
     }
 
 #ifndef PRODUCT
-    if (TraceFPUStack) {
-      tty->cr();
-      tty->print_cr("------- end of exception handler -------");
+    if (TraceFPUStack) { //TFS
+      log_trace(fpustack)("\n------- end of exception handler -------");
     }
 #endif
 
@@ -366,8 +377,12 @@ void FpuStackAllocator::insert_exchange(int offset) {
     sim()->swap(offset);
 
 #ifndef PRODUCT
-    if (TraceFPUStack) {
-      tty->print("Exchanged register: %d         New state: ", sim()->get_slot(0)); sim()->print(); tty->cr();
+    if (TraceFPUStack) { //TFS
+      LogMessage(fpustack) msg;
+      NonInterleavingLogStream st(LogLevelType::Trace, msg);
+      st.print("Exchanged register: %d         New state: ", sim()->get_slot(0));
+      sim()->print(&st);
+      st.cr();
     }
 #endif
 
@@ -388,8 +403,12 @@ void FpuStackAllocator::insert_free(int offset) {
   sim()->pop();
 
 #ifndef PRODUCT
-    if (TraceFPUStack) {
-      tty->print("Inserted pop                   New state: "); sim()->print(); tty->cr();
+    if (TraceFPUStack) { //TFS
+      LogMessage(fpustack) msg;
+      NonInterleavingLogStream st(LogLevelType::Trace, msg);
+      st.print("Inserted pop                   New state: ");
+      sim()->print(&st);
+      st.cr();
     }
 #endif
 }
@@ -417,8 +436,12 @@ void FpuStackAllocator::insert_copy(LIR_Opr from, LIR_Opr to) {
   sim()->push(fpu_num(to));
 
 #ifndef PRODUCT
-  if (TraceFPUStack) {
-    tty->print("Inserted copy (%d -> %d)         New state: ", fpu_num(from), fpu_num(to)); sim()->print(); tty->cr();
+  if (TraceFPUStack) { //TFS
+    LogMessage(fpustack) msg;
+    NonInterleavingLogStream st(LogLevelType::Trace, msg);
+    st.print("Inserted copy (%d -> %d)         New state: ", fpu_num(from), fpu_num(to));
+    sim()->print(&st);
+    st.cr();
   }
 #endif
 }
@@ -828,8 +851,12 @@ void FpuStackAllocator::merge_insert_add(LIR_List* instrs, FpuStackSim* cur_sim,
   move->set_result_opr(to_fpu_stack(move->result_opr()));
 
   #ifndef PRODUCT
-    if (TraceFPUStack) {
-      tty->print("Added new register: %d         New state: ", reg); cur_sim->print(); tty->cr();
+    if (TraceFPUStack) { //TFS
+      LogMessage(fpustack) msg;
+      NonInterleavingLogStream st(LogLevelType::Trace, msg);
+      st.print("Added new register: %d         New state: ", reg);
+      cur_sim->print(&st);
+      st.cr();
     }
   #endif
 }
@@ -842,8 +869,12 @@ void FpuStackAllocator::merge_insert_xchg(LIR_List* instrs, FpuStackSim* cur_sim
   cur_sim->swap(slot);
 
   #ifndef PRODUCT
-    if (TraceFPUStack) {
-      tty->print("Exchanged register: %d         New state: ", cur_sim->get_slot(slot)); cur_sim->print(); tty->cr();
+    if (TraceFPUStack) { //TFS
+      LogMessage(fpustack) msg;
+      NonInterleavingLogStream st(LogLevelType::Trace, msg);
+      st.print("Exchanged register: %d         New state: ", cur_sim->get_slot(slot));
+      cur_sim->print(&st);
+      st.cr();
     }
   #endif
 }
@@ -856,8 +887,12 @@ void FpuStackAllocator::merge_insert_pop(LIR_List* instrs, FpuStackSim* cur_sim)
   cur_sim->pop(reg);
 
   #ifndef PRODUCT
-    if (TraceFPUStack) {
-      tty->print("Removed register: %d           New state: ", reg); cur_sim->print(); tty->cr();
+    if (TraceFPUStack) { //TFS
+      LogMessage(fpustack) msg;
+      NonInterleavingLogStream st(LogLevelType::Trace, msg);
+      st.print("Removed register: %d           New state: ", reg);
+      cur_sim->print(&st);
+      st.cr();
     }
   #endif
 }
@@ -872,8 +907,10 @@ bool FpuStackAllocator::merge_rename(FpuStackSim* cur_sim, FpuStackSim* sux_sim,
       cur_sim->set_slot(change_slot, new_reg);
 
       #ifndef PRODUCT
-        if (TraceFPUStack) {
-          tty->print("Renamed register %d to %d       New state: ", reg, new_reg); cur_sim->print(); tty->cr();
+        if (TraceFPUStack) { //TFS
+          st.print("Renamed register %d to %d       New state: ", reg, new_reg);
+          cur_sim->print(&st);
+          st.cr();
         }
       #endif
 
@@ -886,10 +923,16 @@ bool FpuStackAllocator::merge_rename(FpuStackSim* cur_sim, FpuStackSim* sux_sim,
 
 void FpuStackAllocator::merge_fpu_stack(LIR_List* instrs, FpuStackSim* cur_sim, FpuStackSim* sux_sim) {
 #ifndef PRODUCT
-  if (TraceFPUStack) {
-    tty->cr();
-    tty->print("before merging: pred: "); cur_sim->print(); tty->cr();
-    tty->print("                 sux: "); sux_sim->print(); tty->cr();
+  if (TraceFPUStack) { //TFS
+    LogMessage(fpustack) msg;
+    NonInterleavingLogStream st(LogLevelType::Trace, msg);
+    st.cr();
+    st.print("before merging: pred: ");
+    cur_sim->print(&st);
+    st.cr();
+    st.print("                 sux: ");
+    sux_sim->print(&st);
+    st.cr();
   }
 
   int slot;
@@ -970,10 +1013,16 @@ void FpuStackAllocator::merge_fpu_stack(LIR_List* instrs, FpuStackSim* cur_sim, 
   }
 
 #ifndef PRODUCT
-  if (TraceFPUStack) {
-    tty->print("after merging:  pred: "); cur_sim->print(); tty->cr();
-    tty->print("                 sux: "); sux_sim->print(); tty->cr();
-    tty->cr();
+  if (TraceFPUStack) { //TFS
+    LogMessage(fpustack) msg;
+    NonInterleavingLogStream st(LogLevelType::Trace, msg);
+    st.print("after merging:  pred: ");
+    cur_sim->print(&st);
+    st.cr();
+    st.print("                 sux: ");
+    sux_sim->print(&st);
+    st.cr();
+    st.cr();
   }
 #endif
   assert(cur_sim->stack_size() == sux_sim->stack_size(), "stack size must be equal now");
@@ -982,10 +1031,16 @@ void FpuStackAllocator::merge_fpu_stack(LIR_List* instrs, FpuStackSim* cur_sim, 
 
 void FpuStackAllocator::merge_cleanup_fpu_stack(LIR_List* instrs, FpuStackSim* cur_sim, BitMap& live_fpu_regs) {
 #ifndef PRODUCT
-  if (TraceFPUStack) {
-    tty->cr();
-    tty->print("before cleanup: state: "); cur_sim->print(); tty->cr();
-    tty->print("                live:  "); live_fpu_regs.print_on(tty); tty->cr();
+  if (TraceFPUStack) { //TFS
+    LogMessage(fpustack) msg;
+    NonInterleavingLogStream st(LogLevelType::Trace, msg);
+    st.cr();
+    st.print("before cleanup: state: ");
+    cur_sim->print(&st);
+    st.cr();
+    st.print("                live:  ");
+    live_fpu_regs.print_on(&st);
+    st.cr();
   }
 #endif
 
@@ -1003,10 +1058,16 @@ void FpuStackAllocator::merge_cleanup_fpu_stack(LIR_List* instrs, FpuStackSim* c
   }
 
 #ifndef PRODUCT
-  if (TraceFPUStack) {
-    tty->print("after cleanup:  state: "); cur_sim->print(); tty->cr();
-    tty->print("                live:  "); live_fpu_regs.print_on(tty); tty->cr();
-    tty->cr();
+  if (TraceFPUStack) { //TFS
+    LogMessage(fpustack) msg;
+    NonInterleavingLogStream st(LogLevelType::Trace, msg);
+    st.print("after cleanup:  state: ");
+    cur_sim->print(&st);
+    st.cr();
+    st.print("                live:  ");
+    live_fpu_regs.print_on(&st);
+    st.cr();
+    st.cr();
   }
 
   // check if fpu stack only contains live registers
@@ -1022,11 +1083,13 @@ void FpuStackAllocator::merge_cleanup_fpu_stack(LIR_List* instrs, FpuStackSim* c
 
 bool FpuStackAllocator::merge_fpu_stack_with_successors(BlockBegin* block) {
 #ifndef PRODUCT
-  if (TraceFPUStack) {
-    tty->print_cr("Propagating FPU stack state for B%d at LIR_Op position %d to successors:",
-                  block->block_id(), pos());
-    sim()->print();
-    tty->cr();
+  if (TraceFPUStack) { //TFS
+    LogMessage(fpustack) msg;
+    NonInterleavingLogStream st(LogLevelType::Trace, msg);
+    st.print_cr("Propagating FPU stack state for B%d at LIR_Op position %d to successors:",
+                block->block_id(), pos());
+    sim()->print(&st);
+    st.cr();
   }
 #endif
 
@@ -1063,9 +1126,12 @@ bool FpuStackAllocator::merge_fpu_stack_with_successors(BlockBegin* block) {
       }
 
       intArray* state = sim()->write_state();
-      if (TraceFPUStack) {
-        tty->print_cr("Setting FPU stack state of B%d (merge path)", sux->block_id());
-        sim()->print(); tty->cr();
+      if (TraceFPUStack) { //TFS
+        LogMessage(fpustack) msg;
+        NonInterleavingLogStream st(LogLevelType::Trace, msg);
+        st.print_cr("Setting FPU stack state of B%d (merge path)", sux->block_id());
+        sim()->print(&st);
+        st.cr();
       }
       sux->set_fpu_stack_state(state);
     }
@@ -1097,9 +1163,12 @@ bool FpuStackAllocator::merge_fpu_stack_with_successors(BlockBegin* block) {
       }
 #endif
 #ifndef PRODUCT
-      if (TraceFPUStack) {
-        tty->print_cr("Setting FPU stack state of B%d", sux->block_id());
-        sim()->print(); tty->cr();
+      if (TraceFPUStack) { //TFS
+        LogMessage(fpustack) msg;
+        NonInterleavingLogStream st(LogLevelType::Trace, msg);
+        st.print_cr("Setting FPU stack state of B%d", sux->block_id());
+        sim()->print(&st);
+        st.cr();
       }
 #endif
 

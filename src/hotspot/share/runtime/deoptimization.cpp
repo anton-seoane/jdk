@@ -294,9 +294,10 @@ JRT_END
 #if COMPILER2_OR_JVMCI
 // print information about reallocated objects
 static void print_objects(JavaThread* deoptee_thread,
-                          GrowableArray<ScopeValue*>* objects, bool realloc_failures) {
+                          GrowableArray<ScopeValue*>* objects, bool realloc_failures) { //8295060
   ResourceMark rm;
-  stringStream st;  // change to logStream with logging
+  LogMessage(deoptimization) msg;
+  NonInterleavingLogStream st{LogLevelType::Trace, msg};
   st.print_cr("REALLOC OBJECTS in thread " INTPTR_FORMAT, p2i(deoptee_thread));
   fieldDescriptor fd;
 
@@ -319,7 +320,6 @@ static void print_objects(JavaThread* deoptee_thread,
       k->oop_print_on(obj(), &st);
     }
   }
-  tty->print_raw(st.freeze());
 }
 
 static bool rematerialize_objects(JavaThread* thread, int exec_mode, nmethod* compiled_method,
@@ -352,9 +352,8 @@ static bool rematerialize_objects(JavaThread* thread, int exec_mode, nmethod* co
     assert(oopDesc::is_oop_or_null(result), "must be oop");
     return_value = Handle(thread, result);
     assert(Universe::heap()->is_in_or_null(result), "must be heap pointer");
-    if (TraceDeoptimization) {
-      tty->print_cr("SAVED OOP RESULT " INTPTR_FORMAT " in thread " INTPTR_FORMAT, p2i(result), p2i(thread));
-      tty->cr();
+    if (TraceDeoptimization) { //8295060
+      log_trace(deoptimization)("SAVED OOP RESULT " INTPTR_FORMAT " in thread " INTPTR_FORMAT, p2i(result), p2i(thread));
     }
   }
   if (objects != nullptr) {
@@ -372,7 +371,7 @@ static bool rematerialize_objects(JavaThread* thread, int exec_mode, nmethod* co
     }
     bool skip_internal = (compiled_method != nullptr) && !compiled_method->is_compiled_by_jvmci();
     Deoptimization::reassign_fields(&deoptee, &map, objects, realloc_failures, skip_internal);
-    if (TraceDeoptimization) {
+    if (TraceDeoptimization) { //8295060
       print_objects(deoptee_thread, objects, realloc_failures);
     }
   }
@@ -402,9 +401,10 @@ static void restore_eliminated_locks(JavaThread* thread, GrowableArray<compiledV
                                                      exec_mode, realloc_failures);
       deoptimized_objects = deoptimized_objects || relocked;
 #ifndef PRODUCT
-      if (PrintDeoptimizationDetails) {
+      if (PrintDeoptimizationDetails) { //8287010
         ResourceMark rm;
-        stringStream st;
+        LogMessage(deoptimization) msg;
+        NonInterleavingLogStream st{LogLevelType::Debug, msg};
         for (int j = 0; j < monitors->length(); j++) {
           MonitorInfo* mi = monitors->at(j);
           if (mi->eliminated()) {
@@ -426,8 +426,7 @@ static void restore_eliminated_locks(JavaThread* thread, GrowableArray<compiledV
               st.print_cr("     object <" INTPTR_FORMAT "> locked", p2i(mi->owner()));
             }
           }
-        }
-        tty->print_raw(st.freeze());
+        }        
       }
 #endif // !PRODUCT
     }
@@ -512,7 +511,7 @@ Deoptimization::UnrollBlock* Deoptimization::fetch_unroll_info_helper(JavaThread
   }
   assert(vf->is_compiled_frame(), "Wrong frame type");
   chunk->push(compiledVFrame::cast(vf));
-
+  
   bool realloc_failures = false;
 
 #if COMPILER2_OR_JVMCI
@@ -545,8 +544,10 @@ Deoptimization::UnrollBlock* Deoptimization::fetch_unroll_info_helper(JavaThread
   Handle exceptionObject;
   if (trap_scope->rethrow_exception()) {
 #ifndef PRODUCT
-    if (PrintDeoptimizationDetails) {
-      tty->print_cr("Exception to be rethrown in the interpreter for method %s::%s at bci %d", trap_scope->method()->method_holder()->name()->as_C_string(), trap_scope->method()->name()->as_C_string(), trap_scope->bci());
+    if (PrintDeoptimizationDetails) { //8287010
+      log_debug(deoptimization)("Exception to be rethrown in the interpreter for method %s::%s at bci %d",
+                                trap_scope->method()->method_holder()->name()->as_C_string(),
+                                trap_scope->method()->name()->as_C_string(), trap_scope->bci());
     }
 #endif // !PRODUCT
 
@@ -759,8 +760,8 @@ Deoptimization::UnrollBlock* Deoptimization::fetch_unroll_info_helper(JavaThread
   info->set_initial_info((intptr_t) array->sender().initial_deoptimization_info());
 
   if (array->frames() > 1) {
-    if (VerifyStack && TraceDeoptimization) {
-      tty->print_cr("Deoptimizing method containing inlining");
+    if (VerifyStack && TraceDeoptimization) { //8295060
+      log_trace(deoptimization)("Deoptimizing method containing inlining");
     }
   }
 
@@ -1558,8 +1559,8 @@ void Deoptimization::reassign_fields(frame* fr, RegisterMap* reg_map, GrowableAr
     Handle obj = sv->value();
     assert(obj.not_null() || realloc_failures, "reallocation was missed");
 #ifndef PRODUCT
-    if (PrintDeoptimizationDetails) {
-      tty->print_cr("reassign fields for object of type %s!", k->name()->as_C_string());
+    if (PrintDeoptimizationDetails) { //8287010
+      log_debug(deoptimization)("reassign fields for object of type %s!", k->name()->as_C_string());
     }
 #endif // !PRODUCT
 
@@ -1579,11 +1580,14 @@ void Deoptimization::reassign_fields(frame* fr, RegisterMap* reg_map, GrowableAr
       if (payload->is_location() &&
           payload->as_LocationValue()->location().type() == Location::vector) {
 #ifndef PRODUCT
-        if (PrintDeoptimizationDetails) {
-          tty->print_cr("skip field reassignment for this vector - it should be assigned already");
+        if (PrintDeoptimizationDetails) { //8287010
+          LogMessage(deoptimization) msg;
+          NonInterleavingLogStream st{LogLevelType::Debug, msg};
+          st.print_cr("skip field reassignment for this vector - it should be assigned already");
           if (Verbose) {
+            //8287010: change st tagset for this scope to (verbose, deoptimization)
             Handle obj = sv->value();
-            k->oop_print_on(obj(), tty);
+            k->oop_print_on(obj(), &st);
           }
         }
 #endif // !PRODUCT
@@ -1660,6 +1664,12 @@ bool Deoptimization::relock_objects(JavaThread* thread, GrowableArray<MonitorInf
 }
 #endif // COMPILER2_OR_JVMCI
 
+void lmao() {
+  LogMessage(deoptimization) msg;
+  NonInterleavingLogStream st(LogLevelType::Debug, msg);
+  st.print_cr("LMAO DATA");
+}
+
 vframeArray* Deoptimization::create_vframeArray(JavaThread* thread, frame fr, RegisterMap *reg_map, GrowableArray<compiledVFrame*>* chunk, bool realloc_failures) {
   Events::log_deopt_message(thread, "DEOPT PACKING pc=" INTPTR_FORMAT " sp=" INTPTR_FORMAT, p2i(fr.pc()), p2i(fr.sp()));
 
@@ -1680,9 +1690,23 @@ vframeArray* Deoptimization::create_vframeArray(JavaThread* thread, frame fr, Re
   // Compare the vframeArray to the collected vframes
   assert(array->structural_compare(thread, chunk), "just checking");
 
-  if (TraceDeoptimization) {
+  if (TraceDeoptimization) { //8295060
     ResourceMark rm;
-    stringStream st;
+
+    {
+      LogMessage(deoptimization) msg;
+      NonInterleavingLogStream st(LogLevelType::Debug, msg);
+      st.print_cr("START DATA");
+      st.flush();
+      lmao();
+      st.print_cr("END DATA");
+    }
+
+
+
+
+    LogMessage(deoptimization) msg;
+    NonInterleavingLogStream st{LogLevelType::Trace, msg};
     st.print_cr("DEOPT PACKING thread=" INTPTR_FORMAT " vframeArray=" INTPTR_FORMAT, p2i(thread), p2i(array));
     st.print("   ");
     fr.print_on(&st);
@@ -1703,8 +1727,6 @@ vframeArray* Deoptimization::create_vframeArray(JavaThread* thread, frame fr, Re
       st.print(" - %s", code_name);
       st.print_cr(" @ bci=%d ", bci);
     }
-    tty->print_raw(st.freeze());
-    tty->cr();
   }
 
   return array;
@@ -1978,10 +2000,10 @@ static void post_deoptimization_event(nmethod* nm,
 #endif // INCLUDE_JFR
 
 static void log_deopt(nmethod* nm, Method* tm, intptr_t pc, frame& fr, int trap_bci,
-                              const char* reason_name, const char* reason_action) {
-  LogTarget(Debug, deoptimization) lt;
-  if (lt.is_enabled()) {
-    LogStream ls(lt);
+                              const char* reason_name, const char* reason_action) { //8295060
+  LogMessage(deoptimization) msg;
+  if (msg.is_debug()) {
+    NonInterleavingLogStream ls{LogLevelType::Debug, msg};
     bool is_osr = nm->is_osr_method();
     ls.print("cid=%4d %s level=%d",
              nm->compile_id(), (is_osr ? "osr" : "   "), nm->comp_level());
@@ -2045,7 +2067,7 @@ JRT_ENTRY(void, Deoptimization::uncommon_trap_inner(JavaThread* current, jint tr
 
     bool is_receiver_constraint_failure = COMPILER2_PRESENT(VerifyReceiverTypes &&) (reason == Deoptimization::Reason_receiver_constraint);
 
-    if (is_receiver_constraint_failure) {
+    if (is_receiver_constraint_failure) { //8295060: ask!
       tty->print_cr("  bci=%d pc=" INTPTR_FORMAT ", relative_pc=" INTPTR_FORMAT ", method=%s" JVMCI_ONLY(", debug_id=%d"),
                     trap_scope->bci(), p2i(fr.pc()), fr.pc() - nm->code_begin(), trap_scope->method()->name_and_sig_as_C_string()
                     JVMCI_ONLY(COMMA debug_id));
@@ -2106,7 +2128,7 @@ JRT_ENTRY(void, Deoptimization::uncommon_trap_inner(JavaThread* current, jint tr
     }
 
     // Print a bunch of diagnostics, if requested.
-    if (TraceDeoptimization || LogCompilation || is_receiver_constraint_failure) {
+    if (TraceDeoptimization || LogCompilation || is_receiver_constraint_failure) { //8295060
       ResourceMark rm;
 
       // Lock to read ProfileData, and ensure lock is not broken by a safepoint
@@ -2114,20 +2136,20 @@ JRT_ENTRY(void, Deoptimization::uncommon_trap_inner(JavaThread* current, jint tr
       // holding the tty lock (lock ordering by rank).
       MutexLocker ml(trap_mdo->extra_data_lock(), Mutex::_no_safepoint_check_flag);
 
-      ttyLocker ttyl;
+      LogMessage(deoptimization, compilation) msg;
+      NonInterleavingLogStream st{LogLevelType::Trace, msg};
+      xmlStream xst(&st);
 
       char buf[100];
-      if (xtty != nullptr) {
-        xtty->begin_head("uncommon_trap thread='" UINTX_FORMAT "' %s",
-                         os::current_thread_id(),
-                         format_trap_request(buf, sizeof(buf), trap_request));
+      xst.begin_head("uncommon_trap thread='" UINTX_FORMAT "' %s",
+                        os::current_thread_id(),
+                        format_trap_request(buf, sizeof(buf), trap_request));
 #if INCLUDE_JVMCI
-        if (speculation != 0) {
-          xtty->print(" speculation='" JLONG_FORMAT "'", speculation);
-        }
-#endif
-        nm->log_identity(xtty);
+      if (speculation != 0) {
+        xst.print(" speculation='" JLONG_FORMAT "'", speculation);
       }
+#endif
+      nm->log_identity(&xst);
       Symbol* class_name = nullptr;
       bool unresolved = false;
       if (unloaded_class_index >= 0) {
@@ -2135,80 +2157,74 @@ JRT_ENTRY(void, Deoptimization::uncommon_trap_inner(JavaThread* current, jint tr
         if (constants->tag_at(unloaded_class_index).is_unresolved_klass()) {
           class_name = constants->klass_name_at(unloaded_class_index);
           unresolved = true;
-          if (xtty != nullptr)
-            xtty->print(" unresolved='1'");
+          xst.print(" unresolved='1'");
         } else if (constants->tag_at(unloaded_class_index).is_symbol()) {
           class_name = constants->symbol_at(unloaded_class_index);
         }
-        if (xtty != nullptr)
-          xtty->name(class_name);
+        xst.name(class_name);
       }
-      if (xtty != nullptr && trap_mdo != nullptr && (int)reason < (int)MethodData::_trap_hist_limit) {
+      if (trap_mdo != nullptr && (int)reason < (int)MethodData::_trap_hist_limit) {
         // Dump the relevant MDO state.
         // This is the deopt count for the current reason, any previous
         // reasons or recompiles seen at this point.
         int dcnt = trap_mdo->trap_count(reason);
         if (dcnt != 0)
-          xtty->print(" count='%d'", dcnt);
+          xst.print(" count='%d'", dcnt);
 
         // We need to lock to read the ProfileData. But to keep the locks ordered, we need to
         // lock extra_data_lock before the tty lock.
         ProfileData* pdata = trap_mdo->bci_to_data(trap_bci);
         int dos = (pdata == nullptr)? 0: pdata->trap_state();
         if (dos != 0) {
-          xtty->print(" state='%s'", format_trap_state(buf, sizeof(buf), dos));
+          xst.print(" state='%s'", format_trap_state(buf, sizeof(buf), dos));
           if (trap_state_is_recompiled(dos)) {
             int recnt2 = trap_mdo->overflow_recompile_count();
             if (recnt2 != 0)
-              xtty->print(" recompiles2='%d'", recnt2);
+              xst.print(" recompiles2='%d'", recnt2);
           }
         }
       }
-      if (xtty != nullptr) {
-        xtty->stamp();
-        xtty->end_head();
-      }
+      xst.stamp();
+      xst.end_head();   
       if (TraceDeoptimization) {  // make noise on the tty
-        stringStream st;
-        st.print("UNCOMMON TRAP method=%s", trap_scope->method()->name_and_sig_as_C_string());
-        st.print("  bci=%d pc=" INTPTR_FORMAT ", relative_pc=" INTPTR_FORMAT JVMCI_ONLY(", debug_id=%d"),
+        //8295060
+        xst.print("UNCOMMON TRAP method=%s", trap_scope->method()->name_and_sig_as_C_string());
+        xst.print("  bci=%d pc=" INTPTR_FORMAT ", relative_pc=" INTPTR_FORMAT JVMCI_ONLY(", debug_id=%d"),
                  trap_scope->bci(), p2i(fr.pc()), fr.pc() - nm->code_begin() JVMCI_ONLY(COMMA debug_id));
-        st.print(" compiler=%s compile_id=%d", nm->compiler_name(), nm->compile_id());
+        xst.print(" compiler=%s compile_id=%d", nm->compiler_name(), nm->compile_id());
 #if INCLUDE_JVMCI
         if (nm->is_compiled_by_jvmci()) {
           const char* installed_code_name = nm->jvmci_name();
           if (installed_code_name != nullptr) {
-            st.print(" (JVMCI: installed code name=%s) ", installed_code_name);
+            xst.print(" (JVMCI: installed code name=%s) ", installed_code_name);
           }
         }
 #endif
-        st.print(" (@" INTPTR_FORMAT ") thread=" UINTX_FORMAT " reason=%s action=%s unloaded_class_index=%d" JVMCI_ONLY(" debug_id=%d"),
-                   p2i(fr.pc()),
-                   os::current_thread_id(),
-                   trap_reason_name(reason),
-                   trap_action_name(action),
-                   unloaded_class_index
+        xst.print(" (@" INTPTR_FORMAT ") thread=" UINTX_FORMAT " reason=%s action=%s unloaded_class_index=%d" JVMCI_ONLY(" debug_id=%d"),
+                  p2i(fr.pc()),
+                  os::current_thread_id(),
+                  trap_reason_name(reason),
+                  trap_action_name(action),
+                  unloaded_class_index
 #if INCLUDE_JVMCI
-                   , debug_id
+                  , debug_id
 #endif
-                   );
+                  );
         if (class_name != nullptr) {
-          st.print(unresolved ? " unresolved class: " : " symbol: ");
-          class_name->print_symbol_on(&st);
+          xst.print(unresolved ? " unresolved class: " : " symbol: ");
+          class_name->print_symbol_on(&xst);
         }
-        st.cr();
-        tty->print_raw(st.freeze());
+        xst.cr();
       }
-      if (xtty != nullptr) {
-        // Log the precise location of the trap.
-        for (ScopeDesc* sd = trap_scope; ; sd = sd->sender()) {
-          xtty->begin_elem("jvms bci='%d'", sd->bci());
-          xtty->method(sd->method());
-          xtty->end_elem();
-          if (sd->is_top())  break;
-        }
-        xtty->tail("uncommon_trap");
+      //8295060
+      // Log the precise location of the trap.
+      for (ScopeDesc* sd = trap_scope; ; sd = sd->sender()) {
+        xst.begin_elem("jvms bci='%d'", sd->bci());
+        xst.method(sd->method());
+        xst.end_elem();
+        if (sd->is_top())  break;
       }
+      xst.tail("uncommon_trap");
     }
     // (End diagnostic printout.)
 

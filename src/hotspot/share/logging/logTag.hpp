@@ -49,6 +49,7 @@ class outputStream;
   LOG_TAG(cause) \
   LOG_TAG(cds) \
   LOG_TAG(census) \
+  LOG_TAG(ciscspill) \
   LOG_TAG(class) \
   LOG_TAG(classhisto) \
   LOG_TAG(cleanup) \
@@ -83,6 +84,8 @@ class outputStream;
   LOG_TAG(finalizer) \
   LOG_TAG(fingerprint) \
   NOT_PRODUCT(LOG_TAG(foreign)) \
+  LOG_TAG(fpuregisterusage) \
+  LOG_TAG(fpustack) \
   LOG_TAG(free) \
   LOG_TAG(freelist) \
   LOG_TAG(gc) \
@@ -102,6 +105,7 @@ class outputStream;
   LOG_TAG(install) \
   LOG_TAG(interpreter) \
   LOG_TAG(itables) \
+  LOG_TAG(iterativegvn) \
   LOG_TAG(jfr) \
   LOG_TAG(jit) \
   LOG_TAG(jmethod) \
@@ -115,12 +119,17 @@ class outputStream;
   LOG_TAG(load) /* Trace all classes loaded */ \
   LOG_TAG(loader) \
   LOG_TAG(logging) \
+  LOG_TAG(looplimitcheck) \
+  LOG_TAG(loopopts) \
+  LOG_TAG(looppredicate) \
+  LOG_TAG(loopunswitching) \
   LOG_TAG(malloc) \
   LOG_TAG(map) \
   LOG_TAG(mark) \
   LOG_TAG(marking) \
   LOG_TAG(membername) \
   LOG_TAG(memops) \
+  LOG_TAG(mergestores) \
   LOG_TAG(metadata) \
   LOG_TAG(metaspace) \
   LOG_TAG(methodcomparator) \
@@ -132,6 +141,7 @@ class outputStream;
   LOG_TAG(monitormismatch) \
   LOG_TAG(native) \
   LOG_TAG(nestmates) \
+  LOG_TAG(newvectors) \
   LOG_TAG(nmethod) \
   LOG_TAG(nmt) \
   LOG_TAG(normalize) \
@@ -143,25 +153,35 @@ class outputStream;
   LOG_TAG(oopmap) \
   LOG_TAG(oops) \
   LOG_TAG(oopstorage) \
+  LOG_TAG(optimizefill) \
+  LOG_TAG(opto) \
+  LOG_TAG(optoparse) \
   LOG_TAG(os) \
   LOG_TAG(owner) \
   LOG_TAG(page) \
   LOG_TAG(pagesize) \
   LOG_TAG(parser) \
+  LOG_TAG(partialpeeling) \
   LOG_TAG(patch) \
+  LOG_TAG(patching) \
   LOG_TAG(path) \
   LOG_TAG(perf) \
   LOG_TAG(periodic) \
+  LOG_TAG(phaseccp) \
   LOG_TAG(phases) \
   LOG_TAG(plab) \
   LOG_TAG(placeholders) \
+  LOG_TAG(postallocexpand) \
+  LOG_TAG(predicatefailedtrap) \
   LOG_TAG(preempt) \
   LOG_TAG(preorder)  /* Trace all classes loaded in order referenced (not loaded) */ \
   LOG_TAG(preview)   /* Trace loading of preview feature types */ \
+  LOG_TAG(profiletripcount) \
   LOG_TAG(promotion) \
   LOG_TAG(protectiondomain) /* "Trace protection domain verification" */ \
   LOG_TAG(ptrqueue) \
   LOG_TAG(purge) \
+  LOG_TAG(rangelimitcheck) \
   LOG_TAG(record) \
   LOG_TAG(redefine) \
   LOG_TAG(ref) \
@@ -190,6 +210,7 @@ class outputStream;
   LOG_TAG(stringtable) \
   LOG_TAG(stubs) \
   LOG_TAG(subclass) \
+  LOG_TAG(superwordloopunrollanalysis) \
   LOG_TAG(survivor) \
   LOG_TAG(suspend) \
   LOG_TAG(sweep) \

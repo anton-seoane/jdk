@@ -37,6 +37,7 @@
 #include "opto/predicates.hpp"
 #include "opto/rootnode.hpp"
 #include "opto/subnode.hpp"
+#include "logging/logStream.hpp"
 #include <fenv.h>
 #include <math.h>
 
@@ -438,9 +439,11 @@ void PhaseIdealLoop::clone_parse_predicate_to_unswitched_loops(const PredicateBl
 #ifndef PRODUCT
 void PhaseIdealLoop::check_cloned_parse_predicate_for_unswitching(const Node* new_entry, const bool is_fast_loop) {
   assert(new_entry != nullptr, "IfTrue or IfFalse after clone predicate");
-  if (TraceLoopPredicate) {
-    tty->print("Parse Predicate cloned to %s loop: ", is_fast_loop ? "fast" : "slow");
-    new_entry->in(0)->dump();
+  if (TraceLoopPredicate) { //TLP
+    LogMessage(looppredicate) msg;
+    NonInterleavingLogStream st(LogLevelType::Trace, msg);
+    st.print("Parse Predicate cloned to %s loop: ", is_fast_loop ? "fast" : "slow");
+    new_entry->in(0)->dump(&st);
   }
 }
 #endif
@@ -769,7 +772,7 @@ BoolNode* PhaseIdealLoop::rc_predicate(Node* ctrl, const int scale, Node* offset
   jint con_offset = offset->is_Con() ? offset->get_int() : 0;
 
   stringStream* predString = nullptr;
-  if (TraceLoopPredicate) {
+  if (TraceLoopPredicate) { //TLP
     predString = new (mtCompiler) stringStream();
     predString->print("rc_predicate ");
   }
@@ -780,7 +783,7 @@ BoolNode* PhaseIdealLoop::rc_predicate(Node* ctrl, const int scale, Node* offset
   // same signs and upper, or different signs and not upper.
   if (((stride > 0) == (scale > 0)) == upper) {
     guarantee(limit != nullptr, "sanity");
-    if (TraceLoopPredicate) {
+    if (TraceLoopPredicate) { //TLP
       if (limit->is_Con()) {
         predString->print("(%d ", con_limit);
       } else {
@@ -810,7 +813,7 @@ BoolNode* PhaseIdealLoop::rc_predicate(Node* ctrl, const int scale, Node* offset
     }
     register_new_node(max_idx_expr, ctrl);
   } else {
-    if (TraceLoopPredicate) {
+    if (TraceLoopPredicate) { //TLP
       if (init->is_Con()) {
         predString->print("%d ", con_init);
       } else {
@@ -824,7 +827,7 @@ BoolNode* PhaseIdealLoop::rc_predicate(Node* ctrl, const int scale, Node* offset
   if (scale != 1) {
     ConNode* con_scale = _igvn.intcon(scale);
     set_ctrl(con_scale, C->root());
-    if (TraceLoopPredicate) {
+    if (TraceLoopPredicate) { //TLP
       predString->print("* %d ", scale);
     }
     // Check if (scale * max_idx_expr) may overflow
@@ -852,7 +855,7 @@ BoolNode* PhaseIdealLoop::rc_predicate(Node* ctrl, const int scale, Node* offset
   }
 
   if (offset && (!offset->is_Con() || con_offset != 0)){
-    if (TraceLoopPredicate) {
+    if (TraceLoopPredicate) { //TLP
       if (offset->is_Con()) {
         predString->print("+ %d ", con_offset);
       } else {
@@ -895,9 +898,9 @@ BoolNode* PhaseIdealLoop::rc_predicate(Node* ctrl, const int scale, Node* offset
   BoolNode* bol = new BoolNode(cmp, BoolTest::lt);
   register_new_node(bol, ctrl);
 
-  if (TraceLoopPredicate) {
+  if (TraceLoopPredicate) { //TLP
     predString->print_cr("<u range");
-    tty->print("%s", predString->base());
+    log_trace(looppredicate)("%s", predString->base());
     delete predString;
   }
   return bol;
@@ -1190,12 +1193,16 @@ bool PhaseIdealLoop::loop_predication_impl_helper(IdealLoopTree* loop, IfProjNod
     C->print_method(PHASE_AFTER_LOOP_PREDICATION_IC, 4, hoisted_check_predicate_proj->in(0));
 
 #ifndef PRODUCT
-    if (TraceLoopPredicate) {
-      tty->print("Predicate invariant if%s: %d ", negated ? " negated" : "", new_predicate_iff->_idx);
-      loop->dump_head();
-    } else if (TraceLoopOpts) {
-      tty->print("Predicate IC ");
-      loop->dump_head();
+    if (TraceLoopPredicate) { //TLP
+      LogMessage(looppredicate) msg;
+      NonInterleavingLogStream st(LogLevelType::Trace, msg);
+      st.print("Predicate invariant if%s: %d ", negated ? " negated" : "", new_predicate_iff->_idx);
+      loop->dump_head(&st);
+    } else if (TraceLoopOpts) { //TLO
+      LogMessage(loopopts) msg;
+      NonInterleavingLogStream st(LogLevelType::Trace, msg);
+      st.print("Predicate IC ");
+      loop->dump_head(&st);
     }
 #endif
   } else if (cl != nullptr && loop->is_range_check_if(if_success_proj, this, invar DEBUG_ONLY(COMMA parse_predicate_proj))) {
@@ -1252,8 +1259,8 @@ bool PhaseIdealLoop::loop_predication_impl_helper(IdealLoopTree* loop, IfProjNod
     IfNode* lower_bound_iff = lower_bound_proj->in(0)->as_If();
     _igvn.hash_delete(lower_bound_iff);
     lower_bound_iff->set_req(1, lower_bound_bol);
-    if (TraceLoopPredicate) {
-      tty->print_cr("lower bound check if: %d", lower_bound_iff->_idx);
+    if (TraceLoopPredicate) { //TLP
+      log_trace(looppredicate)("lower bound check if: %d", lower_bound_iff->_idx);
     }
 
     // Test the upper bound
@@ -1264,8 +1271,8 @@ bool PhaseIdealLoop::loop_predication_impl_helper(IdealLoopTree* loop, IfProjNod
     IfNode* upper_bound_iff = upper_bound_proj->in(0)->as_If();
     _igvn.hash_delete(upper_bound_iff);
     upper_bound_iff->set_req(1, upper_bound_bol);
-    if (TraceLoopPredicate) {
-      tty->print_cr("upper bound check if: %d", upper_bound_iff->_idx);
+    if (TraceLoopPredicate) { //TLP
+      log_trace(looppredicate)("upper bound check if: %d", upper_bound_iff->_idx);
     }
 
     // Fall through into rest of the cleanup code which will move any dependent nodes to the skeleton predicates of the
@@ -1285,9 +1292,12 @@ bool PhaseIdealLoop::loop_predication_impl_helper(IdealLoopTree* loop, IfProjNod
     C->print_method(PHASE_AFTER_LOOP_PREDICATION_RC, 4, template_assertion_predicate_proj->in(0));
 
 #ifndef PRODUCT
-    if (TraceLoopOpts && !TraceLoopPredicate) {
-      tty->print("Predicate RC ");
-      loop->dump_head();
+    if (TraceLoopOpts && !TraceLoopPredicate) { //TLO
+      //TLP, we remove the if condition as both will not happen if Xlog:tlo,tlp
+      LogMessage(loopopts) msg;
+      NonInterleavingLogStream st(LogLevelType::Trace, msg);
+      st.print("Predicate RC ");
+      loop->dump_head(&st);
     }
 #endif
   } else {
@@ -1399,10 +1409,12 @@ bool PhaseIdealLoop::loop_predication_impl(IdealLoopTree* loop) {
 
   if (!loop_predicate_block->has_parse_predicate() && !follow_branches) {
 #ifndef PRODUCT
-    if (TraceLoopPredicate) {
-      tty->print("Missing Parse Predicates:");
-      loop->dump_head();
-      head->dump(1);
+    if (TraceLoopPredicate) { //TLP
+      LogMessage(looppredicate) msg;
+      NonInterleavingLogStream st(LogLevelType::Trace, msg);
+      st.print("Missing Parse Predicates:");
+      loop->dump_head(&st);
+      head->dump(1, &st);
     }
 #endif
     return false;
@@ -1513,9 +1525,11 @@ bool PhaseIdealLoop::loop_predication_impl(IdealLoopTree* loop) {
 #ifndef PRODUCT
   // report that the loop predication has been actually performed
   // for this loop
-  if (TraceLoopPredicate && hoisted) {
-    tty->print("Loop Predication Performed:");
-    loop->dump_head();
+  if (TraceLoopPredicate && hoisted) { //TLP
+    LogMessage(looppredicate) msg;
+    NonInterleavingLogStream st(LogLevelType::Trace, msg);
+    st.print("Loop Predication Performed:");
+    loop->dump_head(&st);
   }
 #endif
 

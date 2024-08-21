@@ -32,6 +32,7 @@
 #include "opto/opaquenode.hpp"
 #include "opto/predicates.hpp"
 #include "opto/rootnode.hpp"
+#include "logging/logStream.hpp"
 
 // Loop Unswitching is a loop optimization to move an invariant, non-loop-exiting test in the loop body before the loop.
 // Such a test is either always true or always false in all loop iterations and could therefore only be executed once.
@@ -347,29 +348,33 @@ bool PhaseIdealLoop::has_control_dependencies_from_predicates(LoopNode* head) {
 
 #ifndef PRODUCT
 void PhaseIdealLoop::trace_loop_unswitching_impossible(const LoopNode* original_head) {
-  if (TraceLoopUnswitching) {
-    tty->print_cr("Loop Unswitching \"%d %s\" not possible due to control dependencies",
-                  original_head->_idx, original_head->Name());
+  if (TraceLoopUnswitching) { //TLU
+    log_trace(loopunswitching)("Loop Unswitching \"%d %s\" not possible due to control dependencies",
+                               original_head->_idx, original_head->Name());
   }
 }
 
 void PhaseIdealLoop::trace_loop_unswitching_count(IdealLoopTree* loop, LoopNode* original_head) {
-  if (TraceLoopOpts) {
-    tty->print("Unswitch   %d ", original_head->unswitch_count() + 1);
-    loop->dump_head();
+  if (TraceLoopOpts) { //TLO
+    LogMessage(loopopts) msg;
+    NonInterleavingLogStream st(LogLevelType::Trace, msg);
+    st.print("Unswitch   %d ", original_head->unswitch_count() + 1);
+    loop->dump_head(&st);
   }
 }
 
 void PhaseIdealLoop::trace_loop_unswitching_result(const UnswitchedLoopSelector& unswitched_loop_selector,
                                                    const LoopNode* original_head, const LoopNode* new_head) {
-  if (TraceLoopUnswitching) {
+  if (TraceLoopUnswitching) { //TLU
     IfNode* unswitch_candidate = unswitched_loop_selector.unswitch_candidate();
     IfNode* loop_selector = unswitched_loop_selector.selector();
-    tty->print_cr("Loop Unswitching:");
-    tty->print_cr("- Unswitch-Candidate-If: %d %s", unswitch_candidate->_idx, unswitch_candidate->Name());
-    tty->print_cr("- Loop-Selector-If: %d %s", loop_selector->_idx, loop_selector->Name());
-    tty->print_cr("- True-Path-Loop (=Orig): %d %s", original_head->_idx, original_head->Name());
-    tty->print_cr("- False-Path-Loop (=Clone): %d %s", new_head->_idx, new_head->Name());
+    LogMessage(loopunswitching) logm;
+    NonInterleavingLogStream st(LogLevelType::Trace, logm);
+    st.print_cr("Loop Unswitching:");
+    st.print_cr("- Unswitch-Candidate-If: %d %s", unswitch_candidate->_idx, unswitch_candidate->Name());
+    st.print_cr("- Loop-Selector-If: %d %s", loop_selector->_idx, loop_selector->Name());
+    st.print_cr("- True-Path-Loop (=Orig): %d %s", original_head->_idx, original_head->Name());
+    st.print_cr("- False-Path-Loop (=Clone): %d %s", new_head->_idx, new_head->Name());
   }
 }
 #endif

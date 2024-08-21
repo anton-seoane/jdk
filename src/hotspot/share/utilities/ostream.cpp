@@ -708,7 +708,7 @@ fileStream* defaultStream::open_file(const char* log_name) {
 
 void defaultStream::init_log() {
   // %%% Need a MutexLocker?
-  const char* log_name = LogFile != nullptr ? LogFile : "hotspot_%p.log";
+  const char* log_name = LogFile != nullptr ? LogFile : "hotspot_%p.log"; //hotspotty
   fileStream* file = open_file(log_name);
 
   if (file != nullptr) {

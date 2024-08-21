@@ -50,6 +50,7 @@
 #include "utilities/bitMap.inline.hpp"
 #include "utilities/powerOfTwo.hpp"
 #include "utilities/growableArray.hpp"
+#include "logging/logStream.hpp"
 
 //----------------------------GraphKit-----------------------------------------
 // Main utility constructor.
@@ -2114,11 +2115,11 @@ Node* GraphKit::uncommon_trap(int trap_request,
     break;
   }
 
-  if (TraceOptoParse) {
+  if (TraceOptoParse) { //TOP
     char buf[100];
-    tty->print_cr("Uncommon trap %s at bci:%d",
-                  Deoptimization::format_trap_request(buf, sizeof(buf),
-                                                      trap_request), bci());
+    log_trace(optoparse)("Uncommon trap %s at bci:%d",
+                         Deoptimization::format_trap_request(buf, sizeof(buf),
+                                                             trap_request), bci());
   }
 
   CompileLog* log = C->log();
@@ -4048,13 +4049,16 @@ InitializeNode* AllocateNode::initialization() {
 void GraphKit::add_parse_predicate(Deoptimization::DeoptReason reason, const int nargs) {
   // Too many traps seen?
   if (too_many_traps(reason)) {
-#ifdef ASSERT
-    if (TraceLoopPredicate) {
+#ifndef ASSERT
+    if (TraceLoopPredicate) { //TLP
+      LogMessage(looppredicate) msg;
+      NonInterleavingLogStream st(LogLevelType::Trace, msg);
+
       int tc = C->trap_count(reason);
-      tty->print("too many traps=%s tcount=%d in ",
-                    Deoptimization::trap_reason_name(reason), tc);
-      method()->print(); // which method has too many predicate traps
-      tty->cr();
+      st.print("too many traps=%s tcount=%d in ",
+               Deoptimization::trap_reason_name(reason), tc);
+      method()->print(&st); // which method has too many predicate traps
+      st.cr();
     }
 #endif
     // We cannot afford to take more traps here,

@@ -581,8 +581,8 @@ static void do_liveness(PhaseRegAlloc* regalloc, PhaseCFG* cfg, Block_List* work
       break;                    // Got 'em all
     }
 
-    if (PrintOpto && Verbose) {
-      tty->print_cr("retripping live calc");
+    if (PrintOpto && Verbose) { //OPT
+      log_debug(opto)("retripping live calc");
     }
 
     // Force the issue (expensively): recheck everybody
