@@ -138,9 +138,7 @@ void FpuStackAllocator::allocate() {
     intArray* fpu_stack_state = block->fpu_stack_state();
 
 #ifndef PRODUCT
-    if (TraceFPUStack) { //TFS
-      log_trace(fpustack)("\n------- Begin of new Block %d -------", block->block_id());
-    }
+    log_trace(fpustack)("\n------- Begin of new Block %d -------", block->block_id()); //TFS
 #endif
 
     assert(fpu_stack_state != nullptr ||
@@ -157,7 +155,7 @@ void FpuStackAllocator::allocate() {
     }
 
 #ifndef PRODUCT
-    if (TraceFPUStack) { //TFS
+    if (log_is_enabled(Trace, fpustack)) { //TFS
       LogMessage(fpustack) msg;
       NonInterleavingLogStream st(LogLevelType::Trace, msg);
       st.print("Reading FPU state for block %d:", block->block_id());
@@ -184,7 +182,7 @@ void FpuStackAllocator::allocate_block(BlockBegin* block) {
     _debug_information_computed = false;
 
 #ifndef PRODUCT
-    if (TraceFPUStack) { //TFS
+    if (log_is_enabled(Trace, fpustack)) { //TFS
       LogMessage(fpustack) msg;
       NonInterleavingLogStream st(LogLevelType::Trace, msg);
       op->print_on(&st);
@@ -261,9 +259,7 @@ void FpuStackAllocator::allocate_exception_handler(XHandler* xhandler) {
     intArray* old_state = sim()->write_state();
 
 #ifndef PRODUCT
-    if (TraceFPUStack) { //TFS
-      log_trace(fpustack)("\n------- begin of exception handler -------");
-    }
+    log_trace(fpustack)("\n------- begin of exception handler -------"); //TFS
 #endif
 
     if (xhandler->entry_code() == nullptr) {
@@ -282,7 +278,7 @@ void FpuStackAllocator::allocate_exception_handler(XHandler* xhandler) {
       LIR_Op* op = insts->at(pos());
 
 #ifndef PRODUCT
-      if (TraceFPUStack) { //TFS
+      if (log_is_enabled(Trace, fpustack)) { //TFS
         LogMessage(fpustack) msg;
         NonInterleavingLogStream st(LogLevelType::Trace, msg);
         op->print_on(&st);
@@ -315,9 +311,7 @@ void FpuStackAllocator::allocate_exception_handler(XHandler* xhandler) {
     }
 
 #ifndef PRODUCT
-    if (TraceFPUStack) { //TFS
-      log_trace(fpustack)("\n------- end of exception handler -------");
-    }
+    log_trace(fpustack)("\n------- end of exception handler -------"); //TFS
 #endif
 
     set_lir(old_lir);
@@ -377,7 +371,7 @@ void FpuStackAllocator::insert_exchange(int offset) {
     sim()->swap(offset);
 
 #ifndef PRODUCT
-    if (TraceFPUStack) { //TFS
+    if (log_is_enabled(Trace, fpustack)) { //TFS
       LogMessage(fpustack) msg;
       NonInterleavingLogStream st(LogLevelType::Trace, msg);
       st.print("Exchanged register: %d         New state: ", sim()->get_slot(0));
@@ -403,7 +397,7 @@ void FpuStackAllocator::insert_free(int offset) {
   sim()->pop();
 
 #ifndef PRODUCT
-    if (TraceFPUStack) { //TFS
+    if (log_is_enabled(Trace, fpustack)) { //TFS
       LogMessage(fpustack) msg;
       NonInterleavingLogStream st(LogLevelType::Trace, msg);
       st.print("Inserted pop                   New state: ");
@@ -436,7 +430,7 @@ void FpuStackAllocator::insert_copy(LIR_Opr from, LIR_Opr to) {
   sim()->push(fpu_num(to));
 
 #ifndef PRODUCT
-  if (TraceFPUStack) { //TFS
+  if (log_is_enabled(Trace, fpustack)) { //TFS
     LogMessage(fpustack) msg;
     NonInterleavingLogStream st(LogLevelType::Trace, msg);
     st.print("Inserted copy (%d -> %d)         New state: ", fpu_num(from), fpu_num(to));
@@ -851,7 +845,7 @@ void FpuStackAllocator::merge_insert_add(LIR_List* instrs, FpuStackSim* cur_sim,
   move->set_result_opr(to_fpu_stack(move->result_opr()));
 
   #ifndef PRODUCT
-    if (TraceFPUStack) { //TFS
+    if (log_is_enabled(Trace, fpustack)) { //TFS
       LogMessage(fpustack) msg;
       NonInterleavingLogStream st(LogLevelType::Trace, msg);
       st.print("Added new register: %d         New state: ", reg);
@@ -869,7 +863,7 @@ void FpuStackAllocator::merge_insert_xchg(LIR_List* instrs, FpuStackSim* cur_sim
   cur_sim->swap(slot);
 
   #ifndef PRODUCT
-    if (TraceFPUStack) { //TFS
+    if (log_is_enabled(Trace, fpustack)) { //TFS
       LogMessage(fpustack) msg;
       NonInterleavingLogStream st(LogLevelType::Trace, msg);
       st.print("Exchanged register: %d         New state: ", cur_sim->get_slot(slot));
@@ -887,7 +881,7 @@ void FpuStackAllocator::merge_insert_pop(LIR_List* instrs, FpuStackSim* cur_sim)
   cur_sim->pop(reg);
 
   #ifndef PRODUCT
-    if (TraceFPUStack) { //TFS
+    if (log_is_enabled(Trace, fpustack)) { //TFS
       LogMessage(fpustack) msg;
       NonInterleavingLogStream st(LogLevelType::Trace, msg);
       st.print("Removed register: %d           New state: ", reg);
@@ -907,7 +901,9 @@ bool FpuStackAllocator::merge_rename(FpuStackSim* cur_sim, FpuStackSim* sux_sim,
       cur_sim->set_slot(change_slot, new_reg);
 
       #ifndef PRODUCT
-        if (TraceFPUStack) { //TFS
+        if (log_is_enabled(Trace, fpustack)) { //TFS
+          LogMessage(fpustack) msg;
+          NonInterleavingLogStream st(LogLevelType::Trace, msg);
           st.print("Renamed register %d to %d       New state: ", reg, new_reg);
           cur_sim->print(&st);
           st.cr();
@@ -923,7 +919,7 @@ bool FpuStackAllocator::merge_rename(FpuStackSim* cur_sim, FpuStackSim* sux_sim,
 
 void FpuStackAllocator::merge_fpu_stack(LIR_List* instrs, FpuStackSim* cur_sim, FpuStackSim* sux_sim) {
 #ifndef PRODUCT
-  if (TraceFPUStack) { //TFS
+  if (log_is_enabled(Trace, fpustack)) { //TFS
     LogMessage(fpustack) msg;
     NonInterleavingLogStream st(LogLevelType::Trace, msg);
     st.cr();
@@ -1013,7 +1009,7 @@ void FpuStackAllocator::merge_fpu_stack(LIR_List* instrs, FpuStackSim* cur_sim, 
   }
 
 #ifndef PRODUCT
-  if (TraceFPUStack) { //TFS
+  if (log_is_enabled(Trace, fpustack)) { //TFS
     LogMessage(fpustack) msg;
     NonInterleavingLogStream st(LogLevelType::Trace, msg);
     st.print("after merging:  pred: ");
@@ -1031,7 +1027,7 @@ void FpuStackAllocator::merge_fpu_stack(LIR_List* instrs, FpuStackSim* cur_sim, 
 
 void FpuStackAllocator::merge_cleanup_fpu_stack(LIR_List* instrs, FpuStackSim* cur_sim, BitMap& live_fpu_regs) {
 #ifndef PRODUCT
-  if (TraceFPUStack) { //TFS
+  if (log_is_enabled(Trace, fpustack)) { //TFS
     LogMessage(fpustack) msg;
     NonInterleavingLogStream st(LogLevelType::Trace, msg);
     st.cr();
@@ -1058,7 +1054,7 @@ void FpuStackAllocator::merge_cleanup_fpu_stack(LIR_List* instrs, FpuStackSim* c
   }
 
 #ifndef PRODUCT
-  if (TraceFPUStack) { //TFS
+  if (log_is_enabled(Trace, fpustack)) { //TFS
     LogMessage(fpustack) msg;
     NonInterleavingLogStream st(LogLevelType::Trace, msg);
     st.print("after cleanup:  state: ");
@@ -1083,7 +1079,7 @@ void FpuStackAllocator::merge_cleanup_fpu_stack(LIR_List* instrs, FpuStackSim* c
 
 bool FpuStackAllocator::merge_fpu_stack_with_successors(BlockBegin* block) {
 #ifndef PRODUCT
-  if (TraceFPUStack) { //TFS
+  if (log_is_enabled(Trace, fpustack)) { //TFS
     LogMessage(fpustack) msg;
     NonInterleavingLogStream st(LogLevelType::Trace, msg);
     st.print_cr("Propagating FPU stack state for B%d at LIR_Op position %d to successors:",
@@ -1126,7 +1122,7 @@ bool FpuStackAllocator::merge_fpu_stack_with_successors(BlockBegin* block) {
       }
 
       intArray* state = sim()->write_state();
-      if (TraceFPUStack) { //TFS
+      if (log_is_enabled(Trace, fpustack)) { //TFS
         LogMessage(fpustack) msg;
         NonInterleavingLogStream st(LogLevelType::Trace, msg);
         st.print_cr("Setting FPU stack state of B%d (merge path)", sux->block_id());
@@ -1163,7 +1159,7 @@ bool FpuStackAllocator::merge_fpu_stack_with_successors(BlockBegin* block) {
       }
 #endif
 #ifndef PRODUCT
-      if (TraceFPUStack) { //TFS
+      if (log_is_enabled(Trace, fpustack)) { //TFS
         LogMessage(fpustack) msg;
         NonInterleavingLogStream st(LogLevelType::Trace, msg);
         st.print_cr("Setting FPU stack state of B%d", sux->block_id());

@@ -1,0 +1,22 @@
+{
+    "files.associations": {
+        "__locale": "cpp",
+        "locale": "cpp",
+        "__config": "cpp",
+        "algorithm": "cpp",
+        "array": "cpp",
+        "bitset": "cpp",
+        "ios": "cpp",
+        "ostream": "cpp",
+        "ratio": "cpp",
+        "sstream": "cpp",
+        "streambuf": "cpp",
+        "string": "cpp",
+        "string_view": "cpp",
+        "variant": "cpp",
+        "vector": "cpp",
+        "cmath": "cpp",
+        "complex": "cpp",
+        "version": "cpp"
+    }
+}

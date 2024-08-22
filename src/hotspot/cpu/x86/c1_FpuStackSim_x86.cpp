@@ -69,13 +69,13 @@ FpuStackSim::FpuStackSim(Compilation* compilation)
 
 
 void FpuStackSim::pop() {
-  if (TraceFPUStack) { trace_fpustack_ul("FPU-pop "); } //TFS
+  trace_fpustack_ul("FPU-pop "); //TFS
   set_regs_at(tos_index(), EMPTY);
   dec_stack_size();
 }
 
 void FpuStackSim::pop(int rnr) {
-  if (TraceFPUStack) { trace_fpustack_ul("FPU-pop %d", rnr); } //TFS
+  trace_fpustack_ul("FPU-pop %d", rnr); //TFS
   assert(regs_at(tos_index()) == rnr, "rnr is not on TOS");
   set_regs_at(tos_index(), EMPTY);
   dec_stack_size();
@@ -83,7 +83,7 @@ void FpuStackSim::pop(int rnr) {
 
 
 void FpuStackSim::push(int rnr) {
-  if (TraceFPUStack) { trace_fpustack_ul("FPU-push %d", rnr); } //TFS
+  trace_fpustack_ul("FPU-push %d", rnr); //TFS
   assert(regs_at(stack_size()) == EMPTY, "should be empty");
   set_regs_at(stack_size(), rnr);
   inc_stack_size();
@@ -91,7 +91,7 @@ void FpuStackSim::push(int rnr) {
 
 
 void FpuStackSim::swap(int offset) {
-  if (TraceFPUStack) { trace_fpustack_ul("FPU-swap %d", offset); } //TFS
+  trace_fpustack_ul("FPU-swap %d", offset); //TFS
   int t = regs_at(tos_index() - offset);
   set_regs_at(tos_index() - offset, regs_at(tos_index()));
   set_regs_at(tos_index(), t);
@@ -118,7 +118,7 @@ void FpuStackSim::set_slot(int tos_offset, int rnr) {
 }
 
 void FpuStackSim::rename(int old_rnr, int new_rnr) {
-  if (TraceFPUStack) { trace_fpustack_ul("FPU-rename %d %d", old_rnr, new_rnr); } //TFS
+  trace_fpustack_ul("FPU-rename %d %d", old_rnr, new_rnr); //TFS
   if (old_rnr == new_rnr)
     return;
   bool found = false;
@@ -160,7 +160,7 @@ bool FpuStackSim::slot_is_empty(int tos_offset) {
 
 
 void FpuStackSim::clear() {
-  if (TraceFPUStack) { trace_fpustack_ul("FPU-clear"); } //TFS
+  trace_fpustack_ul("FPU-clear"); //TFS
   for (int i = tos_index(); i >= 0; i--) {
     set_regs_at(i, EMPTY);
   }
@@ -203,6 +203,7 @@ void FpuStackSim::print(outputStream* out = tty) {
 
 
 void trace_fpustack_ul(const char *fmt, ...) {
+  if (!log_is_enabled(Trace, fpustack)) return;
   va_list args;
   va_start(args, fmt);
   LogMessage(fpustack) msg;

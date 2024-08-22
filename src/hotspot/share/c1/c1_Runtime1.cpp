@@ -1072,13 +1072,11 @@ JRT_ENTRY(void, Runtime1::patch_code(JavaThread* current, Runtime1::StubID stub_
     // At compile time we assumed the field wasn't volatile/atomic but after
     // loading it turns out it was volatile/atomic so we have to throw the
     // compiled code out and let it be regenerated.
-    if (TracePatching) { //TP
-      if (deoptimize_for_volatile) {
-        log_trace(patching)("Deoptimizing for patching volatile field reference");
-      }
-      if (deoptimize_for_atomic) {
-        log_trace(patching)("Deoptimizing for patching atomic field reference");
-      }
+    if (deoptimize_for_volatile) {
+      log_trace(patching)("Deoptimizing for patching volatile field reference"); //TP
+    }
+    if (deoptimize_for_atomic) {
+      log_trace(patching)("Deoptimizing for patching atomic field reference"); //TP
     }
 
     // It's possible the nmethod was invalidated in the last
@@ -1125,7 +1123,7 @@ JRT_ENTRY(void, Runtime1::patch_code(JavaThread* current, Runtime1::StubID stub_
         unsigned char* being_initialized_entry_offset = (unsigned char*) (stub_location - 3);
         address copy_buff = stub_location - *byte_skip - *byte_count;
         address being_initialized_entry = stub_location - *being_initialized_entry_offset;
-        if (TracePatching) { //TP
+        if (log_is_enabled(Trace, patching)) { //TP
           LogMessage(patching) msg;
           NonInterleavingLogStream st(LogLevelType::Trace, msg);
           st.print_cr(" Patching %s at bci %d at address " INTPTR_FORMAT "  (%s)", Bytecodes::name(code), bci,
@@ -1179,7 +1177,7 @@ JRT_ENTRY(void, Runtime1::patch_code(JavaThread* current, Runtime1::StubID stub_
               n_copy->set_data(cast_from_oop<intx>(mirror()));
             }
 
-            if (TracePatching) { //TP
+            if (log_is_enabled(Trace, patching)) { //TP
               LogMessage(patching) msg;
               NonInterleavingLogStream st(LogLevelType::Trace, msg);
               Disassembler::decode(copy_buff, copy_buff + *byte_count, &st);
@@ -1192,7 +1190,7 @@ JRT_ENTRY(void, Runtime1::patch_code(JavaThread* current, Runtime1::StubID stub_
                  "illegal init value");
           n_copy->set_data(cast_from_oop<intx>(appendix()));
 
-          if (TracePatching) { //TP
+          if (log_is_enabled(Trace, patching)) { //TP
             LogMessage(patching) msg;
             NonInterleavingLogStream st(LogLevelType::Trace, msg);
             Disassembler::decode(copy_buff, copy_buff + *byte_count, &st);
@@ -1325,9 +1323,7 @@ void Runtime1::patch_code(JavaThread* current, Runtime1::StubID stub_id) {
   // (see another implementation above).
   MACOS_AARCH64_ONLY(ThreadWXEnable wx(WXWrite, current));
 
-  if (TracePatching) { //TP
-    log_trace(patching)("Deoptimizing because patch is needed");
-  }
+  log_trace(patching)("Deoptimizing because patch is needed"); //TP
 
   RegisterMap reg_map(current,
                       RegisterMap::UpdateMap::skip,
