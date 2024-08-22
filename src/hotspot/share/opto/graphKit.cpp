@@ -2115,7 +2115,7 @@ Node* GraphKit::uncommon_trap(int trap_request,
     break;
   }
 
-  if (TraceOptoParse) { //TOP
+  if (log_is_enabled(Trace, optoparse)) { //TOP
     char buf[100];
     log_trace(optoparse)("Uncommon trap %s at bci:%d",
                          Deoptimization::format_trap_request(buf, sizeof(buf),

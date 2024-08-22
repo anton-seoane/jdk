@@ -1073,7 +1073,7 @@ void Parse::jump_switch_ranges(Node* key_val, SwitchRange *lo, SwitchRange *hi, 
 
 #ifndef PRODUCT
   _max_switch_depth = MAX2(switch_depth, _max_switch_depth);
-  if (TraceOptoParse && Verbose && WizardMode && switch_depth == 0) { //TOP
+  if (log_is_enabled(Trace, optoparse) && Verbose && WizardMode && switch_depth == 0) { //TOP
     LogMessage(optoparse) msg;
     NonInterleavingLogStream st(LogLevelType::Trace, msg);
 
@@ -1832,7 +1832,7 @@ void Parse::do_one_bytecode() {
 
 #ifdef ASSERT
   // for setting breakpoints
-  if (TraceOptoParse) { //TOP
+  if (log_is_enabled(Trace, optoparse)) { //TOP
     LogMessage(optoparse) msg;
     NonInterleavingLogStream st(LogLevelType::Trace, msg);
     st.print(" @");

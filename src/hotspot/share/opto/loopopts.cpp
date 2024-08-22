@@ -3365,9 +3365,7 @@ int PhaseIdealLoop::clone_for_use_outside_loop( IdealLoopTree *loop, Node* n, No
     get_loop(use_c)->_body.push(n_clone);
     _igvn.register_new_node_with_optimizer(n_clone);
 #ifndef PRODUCT
-    if (TracePartialPeeling) { //TPP
-      log_trace(partialpeeling)("loop exit cloning old: %d new: %d newbb: %d", n->_idx, n_clone->_idx, get_ctrl(n_clone)->_idx);
-    }
+    log_trace(partialpeeling)("loop exit cloning old: %d new: %d newbb: %d", n->_idx, n_clone->_idx, get_ctrl(n_clone)->_idx); //TPP
 #endif
   }
   return cloned;
@@ -3403,9 +3401,7 @@ void PhaseIdealLoop::clone_for_special_use_inside_loop( IdealLoopTree *loop, Nod
     sink_list.push(n_clone);
     not_peel.set(n_clone->_idx);
 #ifndef PRODUCT
-    if (TracePartialPeeling) { //TPP
-      log_trace(partialpeeling)("special not_peeled cloning old: %d new: %d", n->_idx, n_clone->_idx);
-    }
+    log_trace(partialpeeling)("special not_peeled cloning old: %d new: %d", n->_idx, n_clone->_idx); //TPP
 #endif
     while( worklist.size() ) {
       Node *use = worklist.pop();
@@ -3749,9 +3745,7 @@ bool PhaseIdealLoop::partial_peel( IdealLoopTree *loop, Node_List &old_new ) {
         opc == Op_Jump      ||
         opc == Op_JumpProj) {
 #ifndef PRODUCT
-      if (TracePartialPeeling) { //TPP
-        log_trace(partialpeeling)("\nExit control too complex: lp: %d", head->_idx);
-      }
+      log_trace(partialpeeling)("\nExit control too complex: lp: %d", head->_idx); //TPP
 #endif
       return false;
     }
@@ -3813,7 +3807,7 @@ bool PhaseIdealLoop::partial_peel( IdealLoopTree *loop, Node_List &old_new ) {
     loop->dump_head(&st);
   }
 
-  if (TracePartialPeeling) { //TPP
+  if (log_is_enabled(Trace, partialpeeling)) { //TPP
     LogMessage(partialpeeling) msg;
     NonInterleavingLogStream st(LogLevelType::Trace, msg);
     st.print_cr("before partial peel one iteration");
@@ -3893,9 +3887,7 @@ bool PhaseIdealLoop::partial_peel( IdealLoopTree *loop, Node_List &old_new ) {
   }
 
 #ifndef PRODUCT
-  if (TracePartialPeeling) { //TPP
-    log_trace(partialpeeling)("\npeeled list");
-  }
+  log_trace(partialpeeling)("\npeeled list"); //TPP
 #endif
 
   // Evacuate nodes in peel region into the not_peeled region if possible
@@ -3905,7 +3897,7 @@ bool PhaseIdealLoop::partial_peel( IdealLoopTree *loop, Node_List &old_new ) {
   for (uint i = 0; i < peel_list.size();) {
     Node* n = peel_list.at(i);
 #ifndef PRODUCT
-  if (TracePartialPeeling) { //TPP
+  if (log_is_enabled(Trace, partialpeeling)) { //TPP
     LogMessage(partialpeeling) msg;
     NonInterleavingLogStream st(LogLevelType::Trace, msg);
     n->dump(&st);
@@ -3933,10 +3925,8 @@ bool PhaseIdealLoop::partial_peel( IdealLoopTree *loop, Node_List &old_new ) {
             peel_list.remove(i);
             incr = false;
 #ifndef PRODUCT
-            if (TracePartialPeeling) { //TPP
-              log_trace(partialpeeling)("sink to not_peeled region: %d newbb: %d",
-                                        n->_idx, get_ctrl(n)->_idx);
-            }
+            log_trace(partialpeeling)("sink to not_peeled region: %d newbb: %d",
+                                      n->_idx, get_ctrl(n)->_idx); //TPP
 #endif
           }
         } else {
@@ -3956,7 +3946,7 @@ bool PhaseIdealLoop::partial_peel( IdealLoopTree *loop, Node_List &old_new ) {
 
   if (too_many_clones || exceed_node_budget || exceed_phi_limit) {
 #ifndef PRODUCT
-    if (TracePartialPeeling && exceed_phi_limit) { //TPP
+    if (exceed_phi_limit) { //TPP
       log_trace(partialpeeling)("\nToo many new phis: %d  old %d new cmpi: %c",
                                 new_phi_cnt, old_phi_cnt, new_peel_if != nullptr?'T':'F');
     }
@@ -4127,7 +4117,7 @@ bool PhaseIdealLoop::partial_peel( IdealLoopTree *loop, Node_List &old_new ) {
   loop->record_for_igvn();
 
 #ifndef PRODUCT
-  if (TracePartialPeeling) { //TPP
+  if (log_is_enabled(Trace, partialpeeling)) { //TPP
     LogMessage(partialpeeling) msg;
     NonInterleavingLogStream st(LogLevelType::Trace, msg);
     st.print_cr("\nafter partial peel one iteration");

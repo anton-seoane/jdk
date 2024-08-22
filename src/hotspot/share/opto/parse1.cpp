@@ -745,9 +745,7 @@ void Parse::do_all_blocks() {
   for (int rpo = 0; rpo < block_count(); rpo++) {
     Block* block = rpo_at(rpo);
     if (!block->is_parsed()) {
-      if (TraceOptoParse) { //TOP
-        log_trace(optoparse)("Skipped dead block %d at bci:%d", rpo, block->start());
-      }
+      log_trace(optoparse)("Skipped dead block %d at bci:%d", rpo, block->start()); //TOP
       assert(!block->is_merged(), "no half-processed blocks");
     }
   }
@@ -1519,7 +1517,7 @@ void Parse::Block::record_state(Parse* p) {
 
 //------------------------------do_one_block-----------------------------------
 void Parse::do_one_block() {
-  if (TraceOptoParse) { //TOP
+  if (log_is_enabled(Trace, optoparse)) { //TOP
     LogMessage(optoparse) msg;
     NonInterleavingLogStream st(LogLevelType::Trace, msg);
 
@@ -1696,21 +1694,22 @@ void Parse::handle_missing_successor(int target_bci) {
 
 //--------------------------merge_common---------------------------------------
 void Parse::merge_common(Parse::Block* target, int pnum) {
-  if (TraceOptoParse) { //TOP
-    log_trace(optoparse)("Merging state at block #%d bci:%d", target->rpo(), target->start());
-  }
+  LogMessage(optoparse) msg;
+  NonInterleavingLogStream st(LogLevelType::Trace, msg);
+
+  if (log_is_enabled(Trace, optoparse)) st.print("Merging state at block #%d bci:%d", target->rpo(), target->start()); //TOP
 
   // Zap extra stack slots to top
   assert(sp() == target->start_sp(), "");
   clean_stack(sp());
 
   if (!target->is_merged()) {   // No prior mapping at this bci
-    if (TraceOptoParse) { log_trace(optoparse)(" with empty state");  } //TOP
+    if (log_is_enabled(Trace, optoparse)) st.print(" with empty state"); //TOP
 
     // If this path is dead, do not bother capturing it as a merge.
     // It is "as if" we had 1 fewer predecessors from the beginning.
     if (stopped()) {
-      if (TraceOptoParse)  log_trace(optoparse)(", but path is dead and doesn't count"); //TOP
+      if (log_is_enabled(Trace, optoparse)) st.print(", but path is dead and doesn't count"); //TOP
       return;
     }
 
@@ -1752,7 +1751,7 @@ void Parse::merge_common(Parse::Block* target, int pnum) {
     assert(target->is_merged(), "do not come here twice");
 
   } else {                      // Prior mapping at this bci
-    if (TraceOptoParse) {  log_trace(optoparse)(" with previous state"); } //TOP
+    if (log_is_enabled(Trace, optoparse)) st.print(" with previous state"); //TOP
 #ifdef ASSERT
     if (target->is_SEL_head()) {
       target->mark_merged_backedge(block());
@@ -1783,8 +1782,8 @@ void Parse::merge_common(Parse::Block* target, int pnum) {
     if (pnum == 1) {            // Last merge for this Region?
       if (!block()->flow()->is_irreducible_loop_secondary_entry()) {
         Node* result = _gvn.transform(r);
-        if (r != result && TraceOptoParse) { //TOP
-          log_trace(optoparse)("Block #%d replace %d with %d", block()->rpo(), r->_idx, result->_idx);
+        if (r != result && log_is_enabled(Trace, optoparse)) { //TOP
+          st.print("Block #%d replace %d with %d", block()->rpo(), r->_idx, result->_idx);
         }
       }
       record_for_igvn(r);
@@ -1881,9 +1880,7 @@ void Parse::merge_common(Parse::Block* target, int pnum) {
     stop();                     // done with this guy, for now
   }
 
-  if (TraceOptoParse) { //TOP
-    log_trace(optoparse)(" on path %d", pnum);
-  }
+  if (log_is_enabled(Trace, optoparse)) st.print(" on path %d", pnum); //TOP
 
   // Done with this parser state.
   assert(stopped(), "");

@@ -3579,6 +3579,8 @@ jint Arguments::parse(const JavaVMInitArgs* initial_cmd_args) {
   // Putting it here for the moment
   if (TraceLoopOpts) LogConfiguration::configure_stdout(LogLevel::Trace, false, LOG_TAGS(loopopts));
   if (PrintOpto) LogConfiguration::configure_stdout(LogLevel::Trace, false, LOG_TAGS(opto));
+  if (TracePartialPeeling) LogConfiguration::configure_stdout(LogLevel::Trace, false, LOG_TAGS(partialpeeling));
+  if (TraceOptoParse) LogConfiguration::configure_stdout(LogLevel::Trace, false, LOG_TAGS(optoparse));
 
   // Set object alignment values.
   set_object_alignment();

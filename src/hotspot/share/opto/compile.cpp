@@ -561,18 +561,6 @@ void Compile::print_compile_messages() {
   }
 
   if (log_is_enabled(Debug, opto)) { //OPT
-
-    /*{
-      LogTarget(Debug, opto) lt1;
-      LogStream st1(lt1);
-      st1.print("lmao");
-      st1.print_cr("equisdé");
-      st1.print("xd");
-      //st1.hold();
-    }*/
-
-
-
     LogTarget(Debug, opto) lt;
     LogStream st(lt);
     if (is_osr_compilation()) {
