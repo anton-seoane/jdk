@@ -973,7 +973,7 @@ void PhaseIterGVN::verify_PhaseIterGVN() {
 #endif
 
   C->verify_graph_edges();
-  if (is_verify_def_use() && PrintOpto) { //OPT
+  if (is_verify_def_use() && log_is_enabled(Debug, opto)) { //OPT
     if (_verify_counter == _verify_full_passes) {
       log_debug(opto)("VerifyIterativeGVN: %d transforms and verify passes",
                       (int) _verify_full_passes);

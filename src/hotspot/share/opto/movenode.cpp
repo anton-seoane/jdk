@@ -317,7 +317,7 @@ Node *CMoveINode::Ideal(PhaseGVN *phase, bool can_reshape) {
 
   // Convert to a bool (flipped)
   // Build int->bool conversion
-  if (PrintOpto) { log_debug(opto)("CMOV to I2B"); } //OPT
+  if (log_is_enabled(Debug, opto)) { log_debug(opto)("CMOV to I2B"); } //OPT
   Node* n = new Conv2BNode(cmp->in(1));
   if (flip) {
     n = new XorINode(phase->transform(n), phase->intcon(1));

@@ -754,7 +754,7 @@ void PhaseIdealLoop::do_peeling(IdealLoopTree *loop, Node_List &old_new) {
     if (cl->is_main_loop()) {
       cl->set_normal_loop();
 #ifndef PRODUCT
-      if (PrintOpto && VerifyLoopOptimizations) { //OPT
+      if (log_is_enabled(Debug, opto) && VerifyLoopOptimizations) { //OPT
         LogMessage(opto) msg;
         NonInterleavingLogStream st(LogLevelType::Debug, msg);
         st.print("Peeling a 'main' loop; resetting to 'normal' ");
@@ -2093,7 +2093,7 @@ void PhaseIdealLoop::do_unroll(IdealLoopTree *loop, Node_List &old_new, bool adj
   C->print_method(PHASE_BEFORE_LOOP_UNROLLING, 4, loop_head);
 
 #ifndef PRODUCT
-  if (PrintOpto && VerifyLoopOptimizations) { //OPT
+  if (log_is_enabled(Debug, opto) && VerifyLoopOptimizations) { //OPT
     LogMessage(opto) msg;
     NonInterleavingLogStream st(LogLevelType::Trace, msg);
     st.print("Unrolling ");
@@ -2109,7 +2109,7 @@ void PhaseIdealLoop::do_unroll(IdealLoopTree *loop, Node_List &old_new, bool adj
     loop->dump_head(&st);
   }
 
-  if (C->do_vector_loop() && (PrintOpto && (VerifyLoopOptimizations || log_is_enabled(Trace, loopopts)))) { //TLO //OPT
+  if (C->do_vector_loop() && (log_is_enabled(Debug, opto) && (VerifyLoopOptimizations || log_is_enabled(Trace, loopopts)))) { //TLO //OPT
     LogMessage(loopopts, opto) msg;
     NonInterleavingLogStream st(LogLevelType::Trace, msg);
     Node_Stack stack(C->live_nodes() >> 2);
@@ -2324,7 +2324,7 @@ void PhaseIdealLoop::do_unroll(IdealLoopTree *loop, Node_List &old_new, bool adj
   loop_head->clear_strip_mined();
 
 #ifndef PRODUCT
-  if (C->do_vector_loop() && (PrintOpto && (VerifyLoopOptimizations || log_is_enabled(Trace, loopopts)))) { //TLO //OPT
+  if (C->do_vector_loop() && (log_is_enabled(Debug, opto) && (VerifyLoopOptimizations || log_is_enabled(Trace, loopopts)))) { //TLO //OPT
     LogMessage(loopopts, opto) msg;
     NonInterleavingLogStream st(LogLevelType::Trace, msg);
     st.print_cr("\nnew loop after unroll");
@@ -2825,7 +2825,7 @@ Node* PhaseIdealLoop::add_range_check_elimination_assertion_predicate(
 // Eliminate range-checks and other trip-counter vs loop-invariant tests.
 void PhaseIdealLoop::do_range_check(IdealLoopTree *loop, Node_List &old_new) {
 #ifndef PRODUCT
-  if (PrintOpto && VerifyLoopOptimizations) { //OPT
+  if (log_is_enabled(Debug, opto) && VerifyLoopOptimizations) { //OPT
     LogMessage(opto) msg;
     NonInterleavingLogStream st(LogLevelType::Debug, msg);
     st.print("Range Check Elimination ");
@@ -3062,7 +3062,7 @@ void PhaseIdealLoop::do_range_check(IdealLoopTree *loop, Node_List &old_new) {
           assert(assertion_predicate_has_loop_opaque_node(loop_entry->in(0)->as_If()), "unexpected");
 
         } else {
-          if (PrintOpto) { //OPT
+          if (log_is_enabled(Debug, opto)) { //OPT
             log_debug(opto)("missed RCE opportunity");
           }
           continue;             // In release mode, ignore it
@@ -3093,7 +3093,7 @@ void PhaseIdealLoop::do_range_check(IdealLoopTree *loop, Node_List &old_new) {
           add_constraint(stride_con, lscale_con, offset, mini, limit, pre_ctrl, &pre_limit, &main_limit);
           break;
         default:
-          if (PrintOpto) { //OPT
+          if (log_is_enabled(Debug, opto)) { //OPT
             log_debug(opto)("missed RCE opportunity");
           }
           continue;             // Unhandled case
@@ -3402,7 +3402,7 @@ bool IdealLoopTree::do_remove_empty_loop(PhaseIdealLoop *phase) {
   }
 
 #ifndef PRODUCT
-  if (PrintOpto) { //OPT
+  if (log_is_enabled(Debug, opto)) { //OPT
     LogMessage(opto) msg;
     NonInterleavingLogStream st(LogLevelType::Debug, msg);
     st.print("Removing empty loop with%s zero trip guard", needs_guard ? "out" : "");
@@ -3646,7 +3646,7 @@ bool IdealLoopTree::iteration_split_impl(PhaseIdealLoop *phase, Node_List &old_n
       }
     }
     if (policy_peeling(phase)) {    // Should we peel?
-      if (PrintOpto) { log_debug(opto)("should_peel"); } //OPT
+      if (log_is_enabled(Debug, opto)) { log_debug(opto)("should_peel"); } //OPT
       phase->do_peeling(this, old_new);
     } else if (policy_unswitching(phase)) {
       phase->do_unswitching(this, old_new);

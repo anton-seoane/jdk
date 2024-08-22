@@ -2269,7 +2269,7 @@ char *PhaseChaitin::dump_register(const Node* n, char* buf, size_t buf_size) con
 }
 
 void PhaseChaitin::dump_for_spill_split_recycle() const {
-  if( WizardMode && (PrintCompilation || PrintOpto) ) { //OPT
+  if( WizardMode && (PrintCompilation || log_is_enabled(Debug, opto)) ) { //OPT
     // Display which live ranges need to be split and the allocator's state
     LogMessage(opto) msg;
     NonInterleavingLogStream st(LogLevelType::Debug, msg);

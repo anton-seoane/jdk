@@ -1097,7 +1097,7 @@ static void match_alias_type(Compile* C, Node* n, Node* m) {
     }
   }
   if (nidx != midx) {
-    if (PrintOpto || (PrintMiscellaneous && (WizardMode || Verbose))) { //OPT
+    if (log_is_enabled(Debug, opto) || (PrintMiscellaneous && (WizardMode || Verbose))) { //OPT
       LogMessage(opto) msg;
       NonInterleavingLogStream st(LogLevelType::Debug, msg);
       st.print_cr("==== Matcher alias shift %d => %d", nidx, midx);
@@ -1697,7 +1697,7 @@ Node* Matcher::Label_Root(const Node* n, State* svec, Node* control, Node*& mem)
         // is used by any of the other subtrees
         (input_mem == NodeSentinel) ) {
       // Print when we exclude matching due to different memory states at input-loads
-      if (PrintOpto && (Verbose && WizardMode) && (input_mem == NodeSentinel)
+      if (log_is_enabled(Debug, opto) && (Verbose && WizardMode) && (input_mem == NodeSentinel)
           && !((mem!=(Node*)1) && m->is_Load() && m->in(MemNode::Memory) != mem)) { //OPT
         log_debug(opto)("invalid input_mem");
       }

@@ -422,7 +422,7 @@ Parse::Parse(JVMState* caller, ciMethod* parse_method, float expected_uses)
   DEBUG_ONLY(_block_count = -1);
   DEBUG_ONLY(_blocks = (Block*)-1);
 #ifndef PRODUCT
-  if (PrintCompilation || PrintOpto) { //OPT, help
+  if (PrintCompilation || log_is_enabled(Debug, opto)) { //OPT, help
     // Make sure I have an inline tree, so I can print messages about it.
     InlineTree::find_subtree_from_root(C->ilt(), caller, parse_method);
   }
@@ -523,7 +523,7 @@ Parse::Parse(JVMState* caller, ciMethod* parse_method, float expected_uses)
     assert(false, "type flow analysis failed during parsing");
     C->record_method_not_compilable(_flow->failure_reason());
 #ifndef PRODUCT
-      if (PrintOpto && (Verbose || WizardMode)) { //OPT
+      if (log_is_enabled(Debug, opto) && (Verbose || WizardMode)) { //OPT
         if (is_osr_parse()) {
           log_debug(opto)("OSR @%d type flow bailout: %s", _entry_bci, _flow->failure_reason());
         } else {
@@ -1030,7 +1030,7 @@ void Parse::do_exits() {
       AllocateNode* alloc = AllocateNode::Ideal_allocation(alloc_with_final());
       alloc->compute_MemBar_redundancy(method());
     }
-    if (PrintOpto && (Verbose || WizardMode)) { //OPT
+    if (log_is_enabled(Debug, opto) && (Verbose || WizardMode)) { //OPT
       stringStream ss;
       method()->print_name(&ss);
       ss.print_cr(" writes finals and needs a memory barrier");
@@ -1044,7 +1044,7 @@ void Parse::do_exits() {
   // MemBarRelease.
   if (wrote_stable()) {
     _exits.insert_mem_bar(Op_MemBarRelease);
-    if (PrintOpto && (Verbose || WizardMode)) { //OPT
+    if (log_is_enabled(Debug, opto) && (Verbose || WizardMode)) { //OPT
       stringStream ss;
       method()->print_name(&ss);
       ss.print_cr(" writes @Stable and needs a memory barrier");
@@ -1705,12 +1705,12 @@ void Parse::merge_common(Parse::Block* target, int pnum) {
   clean_stack(sp());
 
   if (!target->is_merged()) {   // No prior mapping at this bci
-    if (TraceOptoParse) { log_trace(optoparse)(" with empty state");  } //OPT
+    if (TraceOptoParse) { log_trace(optoparse)(" with empty state");  } //TOP
 
     // If this path is dead, do not bother capturing it as a merge.
     // It is "as if" we had 1 fewer predecessors from the beginning.
     if (stopped()) {
-      if (TraceOptoParse)  log_trace(optoparse)(", but path is dead and doesn't count"); //OPT
+      if (TraceOptoParse)  log_trace(optoparse)(", but path is dead and doesn't count"); //TOP
       return;
     }
 
@@ -1752,7 +1752,7 @@ void Parse::merge_common(Parse::Block* target, int pnum) {
     assert(target->is_merged(), "do not come here twice");
 
   } else {                      // Prior mapping at this bci
-    if (TraceOptoParse) {  log_trace(optoparse)(" with previous state"); } //OPT
+    if (TraceOptoParse) {  log_trace(optoparse)(" with previous state"); } //TOP
 #ifdef ASSERT
     if (target->is_SEL_head()) {
       target->mark_merged_backedge(block());
@@ -1783,7 +1783,7 @@ void Parse::merge_common(Parse::Block* target, int pnum) {
     if (pnum == 1) {            // Last merge for this Region?
       if (!block()->flow()->is_irreducible_loop_secondary_entry()) {
         Node* result = _gvn.transform(r);
-        if (r != result && TraceOptoParse) { //OPT
+        if (r != result && TraceOptoParse) { //TOP
           log_trace(optoparse)("Block #%d replace %d with %d", block()->rpo(), r->_idx, result->_idx);
         }
       }
@@ -1881,7 +1881,7 @@ void Parse::merge_common(Parse::Block* target, int pnum) {
     stop();                     // done with this guy, for now
   }
 
-  if (TraceOptoParse) { //OPT
+  if (TraceOptoParse) { //TOP
     log_trace(optoparse)(" on path %d", pnum);
   }
 
@@ -2345,10 +2345,11 @@ void Parse::show_parse_info() {
       tty->cr();
     }
   }
-  if (PrintOpto && (depth() == 1 || PrintOptoInlining)) {
+  if (log_is_enabled(Debug, opto) && (depth() == 1 || PrintOptoInlining)) { //OPT
     // Print that we succeeded; suppress this message on the first osr parse.
     LogMessage(opto) msg;
     NonInterleavingLogStream st(LogLevelType::Debug, msg);
+    st.resume();
 
     if (method()->is_synchronized())         st.print("s");
     if (method()->has_exception_handlers())  st.print("!");
@@ -2372,7 +2373,7 @@ void Parse::show_parse_info() {
       st.print(" __inlined %d (%d bytes)", ilt->count_inlines(),
                  ilt->count_inline_bcs());
     }
-    st.cr();
+    //st.cr();
   }
 }
 

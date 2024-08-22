@@ -1360,7 +1360,7 @@ bool Parse::seems_never_taken(float prob) const {
 //-------------------------------repush_if_args--------------------------------
 // Push arguments of an "if" bytecode back onto the stack by adjusting _sp.
 inline int Parse::repush_if_args() {
-  if (PrintOpto && WizardMode) { //OPT
+  if (log_is_enabled(Debug, opto) && WizardMode) { //OPT
     stringStream ss;
     ss.print("defending against excessive implicit null exceptions on %s @%d in ",
              Bytecodes::name(iter().cur_bc()), iter().cur_bci());
@@ -1387,7 +1387,7 @@ void Parse::do_ifnull(BoolTest::mask btest, Node *c) {
   float prob = branch_prediction(cnt, btest, target_bci, c);
   if (prob == PROB_UNKNOWN) {
     // (An earlier version of do_ifnull omitted this trap for OSR methods.)
-    if (PrintOpto && Verbose) { //OPT
+    if (log_is_enabled(Debug, opto) && Verbose) { //OPT
       log_debug(opto)("Never-taken edge stops compilation at bci %d", bci());
     }
     repush_if_args(); // to gather stats on loop
@@ -1458,7 +1458,7 @@ void Parse::do_if(BoolTest::mask btest, Node* c) {
   float untaken_prob = 1.0 - prob;
 
   if (prob == PROB_UNKNOWN) {
-    if (PrintOpto && Verbose) { //OPT
+    if (log_is_enabled(Debug, opto) && Verbose) { //OPT
       log_debug(opto)("Never-taken edge stops compilation at bci %d", bci());
     }
     repush_if_args(); // to gather stats on loop

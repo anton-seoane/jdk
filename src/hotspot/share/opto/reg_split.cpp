@@ -294,7 +294,7 @@ int PhaseChaitin::split_USE(MachSpillCopyNode::SpillType spill_type, Node *def, 
 static Node* clone_node(Node* def, Block *b, Compile* C) {
   if (def->needs_anti_dependence_check()) {
 #ifdef ASSERT
-    if (PrintOpto && WizardMode) { //OPT
+    if (log_is_enabled(Debug, opto) && WizardMode) { //OPT
       LogMessage(opto) msg;
       NonInterleavingLogStream st(LogLevelType::Debug, msg);
       st.print_cr("RA attempts to clone node with anti_dependence:");
@@ -534,7 +534,7 @@ uint PhaseChaitin::Split(uint maxlrg, ResourceArea* split_arena) {
       // Initialize the split counts to zero
       splits.append(0);
 #endif
-      if (PrintOpto && WizardMode && lrgs(bidx)._was_spilled1) { //OPT
+      if (log_is_enabled(Debug, opto) && WizardMode && lrgs(bidx)._was_spilled1) { //OPT
         log_debug(opto)("Warning, 2nd spill of L%d", bidx);
       }
     }
@@ -1447,7 +1447,7 @@ uint PhaseChaitin::Split(uint maxlrg, ResourceArea* split_arena) {
   // Issue a warning if splitting made no progress
   int noprogress = 0;
   for (slidx = 0; slidx < spill_cnt; slidx++) {
-    if (PrintOpto && WizardMode && splits.at(slidx) == 0) { //OPT
+    if (log_is_enabled(Debug, opto) && WizardMode && splits.at(slidx) == 0) { //OPT
       log_debug(opto)("Failed to split live range %d", lidxs.at(slidx));
       //BREAKPOINT;
     }

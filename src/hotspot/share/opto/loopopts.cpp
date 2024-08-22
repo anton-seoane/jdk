@@ -313,7 +313,7 @@ bool PhaseIdealLoop::loop_phi_backedge_type_contains_zero(const Node* phi_diviso
 // IGVN worklist for later cleanup.  Move control-dependent data Nodes on the
 // live path up to the dominating control.
 void PhaseIdealLoop::dominated_by(IfProjNode* prevdom, IfNode* iff, bool flip, bool pin_array_access_nodes) {
-  if (VerifyLoopOptimizations && PrintOpto) { log_debug(opto)("dominating test"); } //OPT
+  if (VerifyLoopOptimizations && log_is_enabled(Debug, opto)) { log_debug(opto)("dominating test"); } //OPT
 
   // prevdom is the dominating projection of the dominating test.
   assert(iff->Opcode() == Op_If ||
@@ -840,7 +840,7 @@ Node *PhaseIdealLoop::conditional_move( Node *region ) {
     if (phi == nullptr || _igvn.type(phi) == Type::TOP) {
       break;
     }
-    if (PrintOpto && VerifyLoopOptimizations) { log_debug(opto)("CMOV"); } //OPT
+    if (log_is_enabled(Debug, opto) && VerifyLoopOptimizations) { log_debug(opto)("CMOV"); } //OPT
     // Move speculative ops
     wq.push(phi);
     while (wq.size() > 0) {
@@ -849,7 +849,7 @@ Node *PhaseIdealLoop::conditional_move( Node *region ) {
         Node* m = n->in(j);
         if (m != nullptr && !is_dominator(get_ctrl(m), cmov_ctrl)) {
 #ifndef PRODUCT
-          if (PrintOpto && VerifyLoopOptimizations) { //OPT
+          if (log_is_enabled(Debug, opto) && VerifyLoopOptimizations) { //OPT
             LogMessage(opto) msg;
             NonInterleavingLogStream st(LogLevelType::Debug, msg);
             st.print("  speculate: ");
@@ -1228,7 +1228,7 @@ static bool merge_point_too_heavy(Compile* C, Node* region) {
   }
   int nodes_left = C->max_node_limit() - C->live_nodes();
   if (weight * 8 > nodes_left) {
-    if (PrintOpto) { //OPT
+    if (log_is_enabled(Debug, opto)) { //OPT
       log_debug(opto)("*** Split-if bails out:  %d nodes, region weight %d", C->unique(), weight);
     }
     return true;
@@ -1468,7 +1468,7 @@ void PhaseIdealLoop::split_if_with_blocks_post(Node *n) {
 
     // Now split the IF
     C->print_method(PHASE_BEFORE_SPLIT_IF, 4, iff);
-    if ((PrintOpto && VerifyLoopOptimizations) || log_is_enabled(Trace, loopopts)) { //TLO //OPT
+    if ((log_is_enabled(Debug, opto) && VerifyLoopOptimizations) || log_is_enabled(Trace, loopopts)) { //TLO //OPT
       log_trace(loopopts, opto)("Split-If");
     }
     do_split_if(iff);
@@ -2515,7 +2515,7 @@ void PhaseIdealLoop::clone_loop( IdealLoopTree *loop, Node_List &old_new, int dd
   LoopNode* head = loop->_head->as_Loop();
   head->verify_strip_mined(1);
 
-  if (C->do_vector_loop() && PrintOpto) { //OPT
+  if (C->do_vector_loop() && log_is_enabled(Debug, opto)) { //OPT
     const char* mname = C->method()->name()->as_quoted_ascii();
     if (mname != nullptr) {
       log_debug(opto)("PhaseIdealLoop::clone_loop: for vectorize method %s\n", mname);
@@ -2526,7 +2526,7 @@ void PhaseIdealLoop::clone_loop( IdealLoopTree *loop, Node_List &old_new, int dd
   if (C->do_vector_loop()) {
     cm.set_clone_idx(cm.max_gen()+1);
 #ifndef PRODUCT
-    if (PrintOpto) { //OPT
+    if (log_is_enabled(Debug, opto)) { //OPT
       LogMessage(opto) msg;
       NonInterleavingLogStream st(LogLevelType::Debug, msg);
       st.print_cr("PhaseIdealLoop::clone_loop: _clone_idx %d", cm.clone_idx());

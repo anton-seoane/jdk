@@ -139,7 +139,7 @@ bool PhaseIdealLoop::split_up( Node *n, Node *blk1, Node *blk2 ) {
 
   // Found some other Node; must clone it up
 #ifndef PRODUCT
-  if( PrintOpto && VerifyLoopOptimizations ) { //OPT
+  if (log_is_enabled(Debug, opto) && VerifyLoopOptimizations) { //OPT
     LogMessage(opto) msg;
     NonInterleavingLogStream st(LogLevelType::Debug, msg);
     st.print("Cloning up: ");
@@ -313,7 +313,7 @@ bool PhaseIdealLoop::clone_cmp_down(Node* n, const Node* blk1, const Node* blk2)
 
       // Must clone down
 #ifndef PRODUCT
-      if( PrintOpto && VerifyLoopOptimizations ) { //OPT
+      if (log_is_enabled(Debug, opto) && VerifyLoopOptimizations) { //OPT
         LogMessage(opto) msg;
         NonInterleavingLogStream st(LogLevelType::Debug, msg);
         st.print("Cloning down: ");
@@ -349,7 +349,7 @@ bool PhaseIdealLoop::clone_cmp_down(Node* n, const Node* blk1, const Node* blk2)
           if (at_relevant_ctrl(bol, blk1, blk2)) {
             // Recursively sink any BoolNode
 #ifndef PRODUCT
-            if( PrintOpto && VerifyLoopOptimizations ) { //OPT
+            if (log_is_enabled(Debug, opto) && VerifyLoopOptimizations) { //OPT
               LogMessage(opto) msg;
               NonInterleavingLogStream st(LogLevelType::Debug, msg);
               st.print("Cloning down: ");

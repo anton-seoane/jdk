@@ -538,7 +538,7 @@ void Parse::do_call() {
   // uncommon-trap when callee is unloaded, uninitialized or will not link
   // bailout when too many arguments for register representation
   if (!will_link || can_not_compile_call_site(orig_callee, klass)) {
-    if (PrintOpto && (Verbose || WizardMode)) { //OPT
+    if (log_is_enabled(Debug, opto) && (Verbose || WizardMode)) { //OPT
       LogMessage(opto) msg;
       NonInterleavingLogStream st(LogLevelType::Debug, msg);
       method()->print_name(&st);
@@ -772,7 +772,7 @@ void Parse::do_call() {
     // If the return type of the method is not loaded, assert that the
     // value we got is a null.  Otherwise, we need to recompile.
     if (!rtype->is_loaded()) {
-      if (PrintOpto && (Verbose || WizardMode)) { //OPT
+      if (log_is_enabled(Debug, opto) && (Verbose || WizardMode)) { //OPT
         LogMessage(opto) msg;
         NonInterleavingLogStream st(LogLevelType::Debug, msg);
         method()->print_name(&st);
@@ -878,7 +878,7 @@ void Parse::catch_call_exceptions(ciExceptionHandlerStream& handlers) {
 #ifndef PRODUCT
       // We do not expect the same handler bci to take both cold unloaded
       // and hot loaded exceptions.  But, watch for it.
-      if (PrintOpto && (Verbose || WizardMode) && extype->is_loaded()) { //OPT
+      if (log_is_enabled(Debug, opto) && (Verbose || WizardMode) && extype->is_loaded()) { //OPT
         LogMessage(opto) msg;
         NonInterleavingLogStream st(LogLevelType::Debug, msg);
         st.print("Warning: Handler @%d takes mixed loaded/unloaded exceptions in ", bci());
@@ -1008,7 +1008,7 @@ void Parse::catch_inline_exceptions(SafePointNode* ex_map) {
 
     if (remaining == 1) {
       push_ex_oop(ex_node);        // Push exception oop for handler
-      if (PrintOpto && WizardMode) { //OPT
+      if (log_is_enabled(Debug, opto) && WizardMode) { //OPT
         log_debug(opto)("  Catching every inline exception bci:%d -> handler_bci:%d", bci(), handler_bci);
       }
       // If this is a backwards branch in the bytecodes, add safepoint
@@ -1039,7 +1039,7 @@ void Parse::catch_inline_exceptions(SafePointNode* ex_map) {
       assert(klass->has_subklass() || tinst->klass_is_exact(), "lost exactness");
       Node* ex_oop = _gvn.transform(new CheckCastPPNode(control(), ex_node, tinst));
       push_ex_oop(ex_oop);      // Push exception oop for handler
-      if (PrintOpto && WizardMode) { //OPT
+      if (log_is_enabled(Debug, opto) && WizardMode) { //OPT
         stringStream ss;
         ss.print("  Catching inline exception bci:%d -> handler_bci:%d -- ", bci(), handler_bci);
         klass->print_name_on(&ss);

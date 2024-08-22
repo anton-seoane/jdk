@@ -4327,7 +4327,7 @@ const Type *TypeInstPtr::xmeet_helper(const Type *t) const {
       // One of these classes has not been loaded
       const TypeInstPtr* unloaded_meet = xmeet_unloaded(tinst, interfaces);
 #ifndef PRODUCT
-      if (PrintOpto && Verbose) { //OPT
+      if (log_is_enabled(Debug, opto) && Verbose) { //OPT
         LogMessage(opto) msg;
         NonInterleavingLogStream st(LogLevelType::Debug, msg);
         st.print("meet of unloaded classes resulted in: ");
