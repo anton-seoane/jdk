@@ -108,8 +108,10 @@ void LogStreamImplBase::LineBuffer::reset() {
 
 template <typename BackingLog>
 LogStreamImpl<BackingLog>::~LogStreamImpl() {
+  //_backing_log.print("dying");
   if (!_current_line.is_empty()) {
-    _backing_log.print("%s", _current_line.buffer());
+    if (_hold) _backing_log.print_hold("%s", _current_line.buffer());
+    else       _backing_log.print("%s", _current_line.buffer());
     _current_line.reset();
   }
 }

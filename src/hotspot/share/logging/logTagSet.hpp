@@ -53,6 +53,8 @@ class LogTagSet {
   typedef size_t (*PrefixWriter)(char* buf, size_t size);
   PrefixWriter _write_prefix;
 
+  bool _resume = false;
+
   // Keep constructor private to prevent incorrect instantiations of this class.
   // Only LogTagSetMappings can create/contain instances of this class.
   // The constructor links all tagsets together in a global list of tagsets.
@@ -90,6 +92,8 @@ class LogTagSet {
   LogTagType tag(size_t idx) const {
     return _tag[idx];
   }
+
+  void resume() { _resume = true; }
 
   bool contains(LogTagType tag) const {
     for (size_t i = 0; i < LogTag::MaxTags && _tag[i] != LogTag::__NO_TAG; i++) {
@@ -130,7 +134,9 @@ class LogTagSet {
     return _output_list.is_level(level);
   }
   void log(LogLevelType level, const char* msg);
-  void log(const LogMessageBuffer& msg);
+  void log_hold(LogLevelType level, const char* msg);
+  void log(const LogMessageBuffer& msg, bool resume = false);
+  void log_hold(const LogMessageBuffer& msg, bool resume = false);
 
   ATTRIBUTE_PRINTF(3, 4)
   void write(LogLevelType level, const char* fmt, ...);
@@ -146,6 +152,9 @@ class LogTagSet {
 
   ATTRIBUTE_PRINTF(3, 0)
   void vwrite(LogLevelType level, const char* fmt, va_list args);
+
+  ATTRIBUTE_PRINTF(3, 0)
+  void vwrite_hold(LogLevelType level, const char* fmt, va_list args);
 };
 
 template <LogTagType T0, LogTagType T1 = LogTag::__NO_TAG, LogTagType T2 = LogTag::__NO_TAG,

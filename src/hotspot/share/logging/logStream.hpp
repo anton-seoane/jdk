@@ -71,6 +71,7 @@ template <typename BackingLog>
 class LogStreamImpl : public LogStreamImplBase {
 protected:
   BackingLog _backing_log;
+  bool       _hold = false;
 
 public:
   explicit LogStreamImpl(BackingLog bl)
@@ -81,6 +82,10 @@ public:
   bool is_enabled() {
     return _backing_log.is_enabled();
   }
+
+  void hold() { _hold = true; }
+
+  void resume() { _backing_log.resume(); };
 
   void write(const char* s, size_t len) override;
 };
@@ -149,6 +154,15 @@ public:
     return _lm.is_level(_level);
   }
 
+  void print_hold(const char* fmt, ...) ATTRIBUTE_PRINTF(2, 3) {
+    va_list args;
+    va_start(args, fmt);
+    if (is_enabled()) {
+      _lm.vwrite_hold(_level, fmt, args);
+    }
+    va_end(args);
+  }
+
   void print(const char* fmt, ...) ATTRIBUTE_PRINTF(2, 3) {
     va_list args;
     va_start(args, fmt);
@@ -157,6 +171,8 @@ public:
     }
     va_end(args);
   }
+
+  void resume() { _lm.resume(); }
 
   void flush() {
     _lm.flush();

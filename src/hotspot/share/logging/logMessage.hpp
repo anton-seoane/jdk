@@ -63,6 +63,8 @@ class LogMessageImpl : public LogMessageBuffer {
 private:
   LogTagSet& _tagset;
   bool _has_content;
+  bool _hold = false;
+  bool _resume = false;
 
 protected:
   LogMessageImpl(LogTagSet& tagset)
@@ -76,14 +78,23 @@ public:
     }
   }
 
+  void resume() { _resume = true; }
+
   void flush() {
-    _tagset.log(*this);
+    if (_hold) _tagset.log_hold(*this, _resume);
+    else       _tagset.log(*this, _resume);
     reset();
   }
 
   void reset() {
     _has_content = false;
     LogMessageBuffer::reset();
+  }
+
+  ATTRIBUTE_PRINTF(3, 0)
+  void vwrite_hold(LogLevelType level, const char* fmt, va_list args) {
+    _hold = true;
+    vwrite(level, fmt, args);
   }
 
   ATTRIBUTE_PRINTF(3, 0)

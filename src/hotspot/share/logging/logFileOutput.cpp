@@ -287,7 +287,7 @@ int LogFileOutput::write_blocking(const LogDecorations& decorations, const char*
   return written;
 }
 
-int LogFileOutput::write(const LogDecorations& decorations, const char* msg) {
+int LogFileOutput::write(const LogDecorations& decorations, const char* msg, bool resume) {
   if (_stream == nullptr) {
     // An error has occurred with this output, avoid writing to it.
     return 0;
@@ -302,7 +302,7 @@ int LogFileOutput::write(const LogDecorations& decorations, const char* msg) {
   return write_blocking(decorations, msg);
 }
 
-int LogFileOutput::write(LogMessageBuffer::Iterator msg_iterator) {
+int LogFileOutput::write(LogMessageBuffer::Iterator msg_iterator, bool resume) {
   if (_stream == nullptr) {
     // An error has occurred with this output, avoid writing to it.
     return 0;
@@ -315,7 +315,7 @@ int LogFileOutput::write(LogMessageBuffer::Iterator msg_iterator) {
   }
 
   RotationLocker lock(_rotation_semaphore);
-  int written = LogFileStreamOutput::write(msg_iterator);
+  int written = LogFileStreamOutput::write(msg_iterator, resume);
   if (written > 0) {
     _current_size += written;
 

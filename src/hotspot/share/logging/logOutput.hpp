@@ -99,8 +99,10 @@ class LogOutput : public CHeapObj<mtLogging> {
   virtual const char* name() const = 0;
   virtual bool initialize(const char* options, outputStream* errstream) = 0;
   virtual bool set_option(const char* key, const char* value, outputStream* errstream) = 0;
-  virtual int write(const LogDecorations& decorations, const char* msg) = 0;
-  virtual int write(LogMessageBuffer::Iterator msg_iterator) = 0;
+  virtual int write(const LogDecorations& decorations, const char* msg, bool resume) = 0;
+  virtual int write_hold(const LogDecorations& decorations, const char* msg, bool resume) = 0;
+  virtual int write(LogMessageBuffer::Iterator msg_iterator, bool resume) = 0;
+  virtual int write_hold(LogMessageBuffer::Iterator msg_iterator, bool resume) = 0;
 };
 
 #endif // SHARE_LOGGING_LOGOUTPUT_HPP

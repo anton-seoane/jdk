@@ -49,13 +49,15 @@ class LogFileStreamOutput : public LogOutput {
   }
 
   int write_decorations(const LogDecorations& decorations);
-  int write_internal(const LogDecorations& decorations, const char* msg);
+  int write_internal(const LogDecorations& decorations, const char* msg, bool hold = false, bool resume = false);
   bool flush();
 
  public:
   virtual bool set_option(const char* key, const char* value, outputStream* errstream);
-  virtual int write(const LogDecorations& decorations, const char* msg);
-  virtual int write(LogMessageBuffer::Iterator msg_iterator);
+  virtual int write(const LogDecorations& decorations, const char* msg, bool resume = false);
+  virtual int write_hold(const LogDecorations& decorations, const char* msg, bool resume = false);
+  virtual int write(LogMessageBuffer::Iterator msg_iterator, bool resume = false);
+  virtual int write_hold(LogMessageBuffer::Iterator msg_iterator, bool resume = false);
   // Write API used by AsyncLogWriter
   virtual int write_blocking(const LogDecorations& decorations, const char* msg);
   virtual void describe(outputStream* out);

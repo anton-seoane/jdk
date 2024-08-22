@@ -90,6 +90,17 @@ public:
     return LogTargetHandle(LogTargetImpl<level, T0, T1, T2, T3, T4, GuardTag>());
   }
 
+  void print_hold(const char* fmt, ...) ATTRIBUTE_PRINTF(2, 3) {
+    va_list args;
+    va_start(args, fmt);
+    if (is_enabled()) {
+      _tagset.vwrite_hold(_level, fmt, args);
+    }
+    va_end(args);
+  }
+
+  void resume() { _tagset.resume(); }
+
   void print(const char* fmt, ...) ATTRIBUTE_PRINTF(2, 3) {
     va_list args;
     va_start(args, fmt);
