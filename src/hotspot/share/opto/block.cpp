@@ -1111,7 +1111,7 @@ void PhaseCFG::postalloc_expand(PhaseRegAlloc* _ra) {
       Node *n = b->get_node(j);
       if (n->is_Mach() && n->as_Mach()->requires_postalloc_expand()) {
 #ifdef ASSERT
-        if (TracePostallocExpand) { //TPE
+        if (log_is_enabled(Trace, postallocexpand)) { //TPE
           LogMessage(postallocexpand) msg;
           NonInterleavingLogStream st(LogLevelType::Trace, msg);
           if (!foundNode) {
@@ -1226,7 +1226,7 @@ void PhaseCFG::postalloc_expand(PhaseRegAlloc* _ra) {
         remove.push(n);
         j--;
 #ifdef ASSERT
-        if (TracePostallocExpand && Verbose) { //TPE
+        if (log_is_enabled(Trace, postallocexpand) && Verbose) { //TPE
           LogMessage(postallocexpand) msg;
           NonInterleavingLogStream st(LogLevelType::Debug, msg);
           st.print("    removing:\n");
