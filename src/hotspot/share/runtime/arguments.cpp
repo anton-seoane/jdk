@@ -3600,6 +3600,7 @@ jint Arguments::parse(const JavaVMInitArgs* initial_cmd_args) {
   #ifdef ASSERT
     if (TraceMergeStores) LogConfiguration::configure_stdout(LogLevel::Trace, false, LOG_TAGS(mergestores));
     if (TracePostallocExpand) LogConfiguration::configure_stdout(LogLevel::Trace, false, LOG_TAGS(postallocexpand));
+    if (TraceRangeLimitCheck) LogConfiguration::configure_stdout(LogLevel::Trace, false, LOG_TAGS(rangelimitcheck));
   #endif
 
   // Set object alignment values.
