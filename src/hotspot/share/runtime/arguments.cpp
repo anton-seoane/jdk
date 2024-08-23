@@ -3592,13 +3592,14 @@ jint Arguments::parse(const JavaVMInitArgs* initial_cmd_args) {
   #if defined(ASSERT) || !defined(PRODUCT)
     if (TraceOptimizeFill) LogConfiguration::configure_stdout(LogLevel::Trace, false, LOG_TAGS(optimizefill));
     if (TraceIterativeGVN) LogConfiguration::configure_stdout(LogLevel::Trace, false, LOG_TAGS(iterativegvn));
+    if (TraceLoopLimitCheck) LogConfiguration::configure_stdout(LogLevel::Trace, false, LOG_TAGS(looplimitcheck));
   #endif
   #ifndef PRODUCT
     if (TraceCISCSpill) LogConfiguration::configure_stdout(LogLevel::Trace, false, LOG_TAGS(ciscspill));
   #endif
   #ifdef ASSERT
     if (TraceMergeStores) LogConfiguration::configure_stdout(LogLevel::Trace, false, LOG_TAGS(mergestores));
-    if (TracePostAllocExpand) LogConfiguration::configure_stdout(LogLevel::Trace, false, LOG_TAGS(postallocexpand));
+    if (TracePostallocExpand) LogConfiguration::configure_stdout(LogLevel::Trace, false, LOG_TAGS(postallocexpand));
   #endif
 
   // Set object alignment values.
