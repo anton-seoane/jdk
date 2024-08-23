@@ -755,6 +755,7 @@ void PhaseChaitin::mark_ssa() {
 }
 
 void PhaseChaitin::trace_cisc_spill_ul(const char* text, Node* n) {
+  if (!log_is_enabled(Trace, ciscspill)) return;
   if (text == nullptr || n == nullptr) return;
   LogMessage(ciscspill) msg;
   NonInterleavingLogStream st(LogLevelType::Trace, msg);
@@ -1049,11 +1050,7 @@ void PhaseChaitin::gather_lrg_masks( bool after_aggressive ) {
         // bit to its appropriate input
         if( UseCISCSpill && after_aggressive && inp == k ) {
 #ifndef PRODUCT
-          trace_cisc_spill_ul("  use_cisc_RegMask: ", n);
-          // if( TraceCISCSpill ) { //TCS
-          //   tty->print("  use_cisc_RegMask: ");
-          //   n->dump();
-          // }
+          trace_cisc_spill_ul("  use_cisc_RegMask: ", n); //TCS
 #endif
           n->as_Mach()->use_cisc_RegMask();
         }
@@ -1742,11 +1739,7 @@ void PhaseChaitin::fixup_spills() {
         if( OptoReg::is_stack(src_reg) ) { // If input is on stack
           // This is a CISC Spill, get stack offset and construct new node
 #ifndef PRODUCT
-          trace_cisc_spill_ul("    reg-instr:  ", n);
-          // if( TraceCISCSpill ) { //TCS
-          //   tty->print("    reg-instr:  ");
-          //   n->dump();
-          // }
+          trace_cisc_spill_ul("    reg-instr:  ", n); //TCS
 #endif
           int stk_offset = reg2offset(src_reg);
           // Bailout if we might exceed node limit when spilling this instruction
@@ -1777,19 +1770,11 @@ void PhaseChaitin::fixup_spills() {
           //
           ++_used_cisc_instructions;
 #ifndef PRODUCT
-          trace_cisc_spill_ul("    cisc-instr: ", cisc);
-          // if( TraceCISCSpill ) { //TCS
-          //   tty->print("    cisc-instr: ");
-          //   cisc->dump();
-          // }
+          trace_cisc_spill_ul("    cisc-instr: ", cisc); //TCS
 #endif
         } else {
 #ifndef PRODUCT
-          trace_cisc_spill_ul("    using reg-instr: ", n);
-          // if( TraceCISCSpill ) { //TCS
-          //   tty->print("    using reg-instr: ");
-          //   n->dump();
-          // }
+          trace_cisc_spill_ul("    using reg-instr: ", n); //TCS
 #endif
           ++_unused_cisc_instructions;    // input can be on stack
         }

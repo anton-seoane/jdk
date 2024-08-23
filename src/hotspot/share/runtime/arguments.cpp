@@ -3592,6 +3592,9 @@ jint Arguments::parse(const JavaVMInitArgs* initial_cmd_args) {
   #if defined(ASSERT) || !defined(PRODUCT)
     if (TraceOptimizeFill) LogConfiguration::configure_stdout(LogLevel::Trace, false, LOG_TAGS(optimizefill));
   #endif
+  #ifndef PRODUCT
+    if (TraceCISCSpill) LogConfiguration::configure_stdout(LogLevel::Trace, false, LOG_TAGS(ciscspill));
+  #endif
 
   // Set object alignment values.
   set_object_alignment();
