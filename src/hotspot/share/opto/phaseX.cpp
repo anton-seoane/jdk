@@ -1855,7 +1855,7 @@ Node* PhaseCCP::fetch_next_node(Unique_Node_List& worklist) {
 
 #ifndef PRODUCT
 void PhaseCCP::dump_type_and_node(const Node* n, const Type* t) {
-  if (TracePhaseCCP) { //TPCCP
+  if (log_is_enabled(Trace, phaseccp)) { //TPCCP
     LogMessage(phaseccp) msg;
     NonInterleavingLogStream st(LogLevelType::Trace, msg);
     t->dump_on(&st);

@@ -1487,14 +1487,12 @@ JRT_ENTRY(void, Runtime1::predicate_failed_trap(JavaThread* current))
     mdo->inc_trap_count(Deoptimization::Reason_none);
   }
 
-  if (TracePredicateFailedTraps) { //TPFT
-    stringStream ss1, ss2;
-    vframeStream vfst(current);
-    Method* inlinee = vfst.method();
-    inlinee->print_short_name(&ss1);
-    m->print_short_name(&ss2);
-    log_trace(predicatefailedtrap)("Predicate failed trap in method %s at bci %d inlined in %s at pc " INTPTR_FORMAT, ss1.freeze(), vfst.bci(), ss2.freeze(), p2i(caller_frame.pc()));
-  }
+  stringStream ss1, ss2;
+  vframeStream vfst(current);
+  Method* inlinee = vfst.method();
+  inlinee->print_short_name(&ss1);
+  m->print_short_name(&ss2);
+  log_trace(predicatefailedtraps)("Predicate failed trap in method %s at bci %d inlined in %s at pc " INTPTR_FORMAT, ss1.freeze(), vfst.bci(), ss2.freeze(), p2i(caller_frame.pc())); //TPFT
 
 
   Deoptimization::deoptimize_frame(current, caller_frame.id());

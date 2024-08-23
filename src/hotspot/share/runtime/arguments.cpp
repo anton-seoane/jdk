@@ -3586,6 +3586,7 @@ jint Arguments::parse(const JavaVMInitArgs* initial_cmd_args) {
   if (TraceProfileTripCount) LogConfiguration::configure_stdout(LogLevel::Trace, false, LOG_TAGS(profiletripcount));
   if (TraceLoopPredicate) LogConfiguration::configure_stdout(LogLevel::Trace, false, LOG_TAGS(looppredicate));
   if (TraceLoopUnswitching) LogConfiguration::configure_stdout(LogLevel::Trace, false, LOG_TAGS(loopunswitching));
+  if (TracePredicateFailedTraps) LogConfiguration::configure_stdout(LogLevel::Trace, false, LOG_TAGS(predicatefailedtraps));
   #ifndef ASSERT
     if (TraceNewVectors) LogConfiguration::configure_stdout(LogLevel::Trace, false, LOG_TAGS(newvectors));
   #endif
@@ -3596,11 +3597,15 @@ jint Arguments::parse(const JavaVMInitArgs* initial_cmd_args) {
   #endif
   #ifndef PRODUCT
     if (TraceCISCSpill) LogConfiguration::configure_stdout(LogLevel::Trace, false, LOG_TAGS(ciscspill));
+    if (TracePhaseCCP) LogConfiguration::configure_stdout(LogLevel::Trace, false, LOG_TAGS(phaseccp));
   #endif
   #ifdef ASSERT
     if (TraceMergeStores) LogConfiguration::configure_stdout(LogLevel::Trace, false, LOG_TAGS(mergestores));
     if (TracePostallocExpand) LogConfiguration::configure_stdout(LogLevel::Trace, false, LOG_TAGS(postallocexpand));
     if (TraceRangeLimitCheck) LogConfiguration::configure_stdout(LogLevel::Trace, false, LOG_TAGS(rangelimitcheck));
+  #endif
+  #if !defined(_LP64) && !defined(PRODUCT)
+    if (TraceFPURegisterUsage) LogConfiguration::configure_stdout(LogLevel::Trace, false, LOG_TAGS(fpuregisterusage));
   #endif
 
   // Set object alignment values.

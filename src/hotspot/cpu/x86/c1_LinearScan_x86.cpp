@@ -87,7 +87,7 @@ void LinearScan::allocate_fpu_stack() {
           assert(interval->from() <= id && id < interval->to(), "interval out of range");
 
 #ifndef PRODUCT
-          if (TraceFPURegisterUsage) { //TFRU
+          if (log_is_enabled(Trace, fpuregisterusage)) { //TFRU
             LogMessage(fpuregisterusage) msg;
             NonInterleavingLogStream st(LogLevelType::Trace, msg);
             st.print("fpu reg %d is live because of ", reg - pd_first_fpu_reg);
@@ -102,7 +102,7 @@ void LinearScan::allocate_fpu_stack() {
         b->set_fpu_register_usage(regs);
 
 #ifndef PRODUCT
-        if (TraceFPURegisterUsage) { //TFRU
+        if (log_is_enabled(Trace, fpuregisterusage)) { //TFRU
           LogMessage(fpuregisterusage) msg;
           NonInterleavingLogStream st(LogLevelType::Trace, msg);
           st.print("FPU regs for block %d, LIR instr %d): ", b->block_id(), id);
