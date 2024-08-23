@@ -3588,6 +3588,9 @@ jint Arguments::parse(const JavaVMInitArgs* initial_cmd_args) {
   #ifndef ASSERT
     if (TraceNewVectors) LogConfiguration::configure_stdout(LogLevel::Trace, false, LOG_TAGS(newvectors));
   #endif
+  #if defined(ASSERT) || !defined(PRODUCT)
+    if (TraceOptimizeFill) LogConfiguration::configure_stdout(LogLevel::Trace, false, LOG_TAGS(optimizefill));
+  #endif
 
   // Set object alignment values.
   set_object_alignment();

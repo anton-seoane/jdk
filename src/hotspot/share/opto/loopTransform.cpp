@@ -3886,7 +3886,7 @@ bool PhaseIdealLoop::match_fill_loop(IdealLoopTree* lpt, Node*& store, Node*& st
 
   if (msg != nullptr) {
 #ifndef PRODUCT
-    if (TraceOptimizeFill) { //TOF
+    if (log_is_enabled(Trace, optimizefill)) { //TOF
       LogMessage(optimizefill) logm;
       NonInterleavingLogStream st(LogLevelType::Trace, logm);
       st.print_cr("not fill intrinsic candidate: %s", msg);
@@ -3971,7 +3971,7 @@ bool PhaseIdealLoop::match_fill_loop(IdealLoopTree* lpt, Node*& store, Node*& st
 
   if (msg != nullptr) {
 #ifndef PRODUCT
-    if (TraceOptimizeFill) { //TOF
+    if (log_is_enabled(Trace, optimizefill)) { //TOF
       LogMessage(optimizefill) logm;
       NonInterleavingLogStream st(LogLevelType::Trace, logm);
       st.print_cr("not fill intrinsic: %s", msg);
@@ -4034,7 +4034,7 @@ bool PhaseIdealLoop::match_fill_loop(IdealLoopTree* lpt, Node*& store, Node*& st
   }
 
 #ifdef ASSERT
-  if (TraceOptimizeFill) { //TOF
+  if (log_is_enabled(Trace, optimizefill)) { //TOF
     LogMessage(optimizefill) logm;
     NonInterleavingLogStream st(LogLevelType::Trace, logm);
     if (msg != nullptr) {
@@ -4130,9 +4130,7 @@ bool PhaseIdealLoop::intrinsify_fill(IdealLoopTree* lpt) {
     len = new SubINode(len, _igvn.intcon(1));
     _igvn.register_new_node_with_optimizer(len);
 #ifndef PRODUCT
-    if (TraceOptimizeFill) { //TOF
-      log_trace(optimizefill)("ArrayFill store on backedge, subtract 1 from len.");
-    }
+    log_trace(optimizefill)("ArrayFill store on backedge, subtract 1 from len."); //TOF
 #endif
   }
 
@@ -4239,7 +4237,7 @@ bool PhaseIdealLoop::intrinsify_fill(IdealLoopTree* lpt) {
   }
 
 #ifndef PRODUCT
-  if (TraceOptimizeFill) { //TOF
+  if (log_is_enabled(Trace, optimizefill)) { //TOF
     LogMessage(optimizefill) logm;
     NonInterleavingLogStream st(LogLevelType::Trace, logm);
     st.print("ArrayFill call   ");
