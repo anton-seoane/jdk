@@ -890,7 +890,7 @@ void PhaseIterGVN::trace_PhaseIterGVN(Node* n, Node* nn, const Type* oldtype) {
   if (nn != n || oldtype != newtype) {
     C->print_method(PHASE_AFTER_ITER_GVN_STEP, 5, n);
   }
-  if (TraceIterativeGVN) { //TIGVN
+  if (log_is_enabled(Trace, iterativegvn)) { //TIGVN
     LogMessage(iterativegvn) msg;
     NonInterleavingLogStream st(LogLevelType::Trace, msg);
     uint wlsize = _worklist.size();
@@ -902,7 +902,7 @@ void PhaseIterGVN::trace_PhaseIterGVN(Node* n, Node* nn, const Type* oldtype) {
       }
       do {
         st.print("\t");
-      } while (tty->position() < 16); //lmao)
+      } while (st.position() < 16); //lmao)
       st.print("<");
       n->dump(&st);
     }
@@ -922,7 +922,7 @@ void PhaseIterGVN::trace_PhaseIterGVN(Node* n, Node* nn, const Type* oldtype) {
       }
       do {
         st.print("\t");
-      } while (tty->position() < 16); //lmao
+      } while (st.position() < 16); //lmao
       nn->dump(&st);
     }
     if (Verbose && wlsize < _worklist.size()) {
@@ -1012,7 +1012,7 @@ void PhaseIterGVN::dump_infinite_loop_info(Node* n, const char* where) {
  * Prints out information about IGVN if the 'verbose' option is used.
  */
 void PhaseIterGVN::trace_PhaseIterGVN_verbose(Node* n, int num_processed) {
-  if (TraceIterativeGVN && Verbose) { //TIGVN
+  if (log_is_enabled(Trace, iterativegvn) && Verbose) { //TIGVN
     LogMessage(iterativegvn) msg;
     NonInterleavingLogStream st(LogLevelType::Trace, msg);
     st.print("  Pop ");

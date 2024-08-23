@@ -1535,7 +1535,7 @@ Node* IfNode::Ideal(PhaseGVN *phase, bool can_reshape) {
 //------------------------------dominated_by-----------------------------------
 Node* IfNode::dominated_by(Node* prev_dom, PhaseIterGVN* igvn, bool pin_array_access_nodes) {
 #ifndef PRODUCT
-  if (TraceIterativeGVN) { //TIGVN
+  if (log_is_enabled(Trace, iterativegvn)) { //TIGVN
     LogMessage(iterativegvn) msg;
     NonInterleavingLogStream st(LogLevelType::Trace, msg);
     st.print("   Removing IfNode: ");
@@ -1735,7 +1735,7 @@ Node* IfNode::simple_subsuming(PhaseIterGVN* igvn) {
     return nullptr;
   }
 #ifndef PRODUCT
-  if (TraceIterativeGVN) { //TIGVN
+  if (log_is_enabled(Trace, iterativegvn)) { //TIGVN
     LogMessage(iterativegvn) msg;
     NonInterleavingLogStream st(LogLevelType::Trace, msg);
     st.print("   Subsumed IfNode: ");

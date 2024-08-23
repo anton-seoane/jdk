@@ -3591,6 +3591,7 @@ jint Arguments::parse(const JavaVMInitArgs* initial_cmd_args) {
   #endif
   #if defined(ASSERT) || !defined(PRODUCT)
     if (TraceOptimizeFill) LogConfiguration::configure_stdout(LogLevel::Trace, false, LOG_TAGS(optimizefill));
+    if (TraceIterativeGVN) LogConfiguration::configure_stdout(LogLevel::Trace, false, LOG_TAGS(iterativegvn));
   #endif
   #ifndef PRODUCT
     if (TraceCISCSpill) LogConfiguration::configure_stdout(LogLevel::Trace, false, LOG_TAGS(ciscspill));
