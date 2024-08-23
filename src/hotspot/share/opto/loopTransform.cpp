@@ -248,9 +248,7 @@ void IdealLoopTree::compute_profile_trip_cnt(PhaseIdealLoop *phase) {
     head->mark_profile_trip_failed();
   }
 #ifndef PRODUCT
-  if (TraceProfileTripCount) { //PTC
-    log_trace(profiletripcount)("compute_profile_trip_cnt  lp: %d cnt: %f\n", head->_idx, trip_cnt);
-  }
+  log_trace(profiletripcount)("compute_profile_trip_cnt  lp: %d cnt: %f\n", head->_idx, trip_cnt); //PTC
 #endif
   head->set_profile_trip_cnt(trip_cnt);
 }

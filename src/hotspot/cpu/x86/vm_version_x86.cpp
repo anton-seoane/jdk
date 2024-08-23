@@ -1370,7 +1370,7 @@ void VM_Version::get_processor_features() {
 
 #if defined(COMPILER2) && defined(ASSERT)
   if (MaxVectorSize > 0) {
-    if (supports_avx() && PrintMiscellaneous && Verbose && TraceNewVectors) { //TNV
+    if (supports_avx() && PrintMiscellaneous && Verbose && log_is_enabled(Trace, newvectors)) { //TNV
       LogMessage(newvectors) msg;
       NonInterleavingLogStream st(LogLevelType::Trace, msg);
       st.print_cr("State of YMM registers after signal handle:");

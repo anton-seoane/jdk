@@ -136,7 +136,7 @@ class VectorNode : public TypeNode {
 
   static void trace_new_vector(Node* n, const char* context) {
 #ifndef ASSERT
-    if (TraceNewVectors) { //TNV
+    if (log_is_enabled(Trace, newvectors)) { //TNV
       LogMessage(newvectors) msg;
       NonInterleavingLogStream st(LogLevelType::Trace, msg);
       st.print("TraceNewVectors [%s]: ", context);

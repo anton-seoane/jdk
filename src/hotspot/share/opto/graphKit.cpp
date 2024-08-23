@@ -4050,7 +4050,7 @@ void GraphKit::add_parse_predicate(Deoptimization::DeoptReason reason, const int
   // Too many traps seen?
   if (too_many_traps(reason)) {
 #ifndef ASSERT
-    if (TraceLoopPredicate) { //TLP
+    if (log_is_enabled(Trace, looppredicate)) { //TLP
       LogMessage(looppredicate) msg;
       NonInterleavingLogStream st(LogLevelType::Trace, msg);
 
