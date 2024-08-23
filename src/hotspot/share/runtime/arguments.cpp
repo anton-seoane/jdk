@@ -3585,6 +3585,7 @@ jint Arguments::parse(const JavaVMInitArgs* initial_cmd_args) {
   if (TracePatching) LogConfiguration::configure_stdout(LogLevel::Trace, false, LOG_TAGS(patching));
   if (TraceProfileTripCount) LogConfiguration::configure_stdout(LogLevel::Trace, false, LOG_TAGS(profiletripcount));
   if (TraceLoopPredicate) LogConfiguration::configure_stdout(LogLevel::Trace, false, LOG_TAGS(looppredicate));
+  if (TraceLoopUnswitching) LogConfiguration::configure_stdout(LogLevel::Trace, false, LOG_TAGS(loopunswitching));
   #ifndef ASSERT
     if (TraceNewVectors) LogConfiguration::configure_stdout(LogLevel::Trace, false, LOG_TAGS(newvectors));
   #endif
