@@ -3010,7 +3010,7 @@ StoreNode* MergePrimitiveArrayStores::run() {
 
   StoreNode* merged_store = make_merged_store(merge_list, merged_input_value);
 
-  DEBUG_ONLY( if(TraceMergeStores) { //TMS
+  DEBUG_ONLY( if(log_is_enabled(Trace, mergestores)) { //TMS
                 LogMessage(mergestores) msg;
                 NonInterleavingLogStream st(LogLevelType::Trace, msg);
                 trace(merge_list, merged_input_value, merged_store, &st); 

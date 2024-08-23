@@ -3595,6 +3595,9 @@ jint Arguments::parse(const JavaVMInitArgs* initial_cmd_args) {
   #ifndef PRODUCT
     if (TraceCISCSpill) LogConfiguration::configure_stdout(LogLevel::Trace, false, LOG_TAGS(ciscspill));
   #endif
+  #ifdef ASSERT
+    if (TraceMergeStores) LogConfiguration::configure_stdout(LogLevel::Trace, false, LOG_TAGS(mergestores));
+  #endif
 
   // Set object alignment values.
   set_object_alignment();
