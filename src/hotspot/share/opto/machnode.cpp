@@ -814,9 +814,9 @@ bool MachCallStaticJavaNode::cmp( const Node &n ) const {
 
 //----------------------------uncommon_trap_request----------------------------
 // If this is an uncommon trap, return the request code, else zero.
-int MachCallStaticJavaNode::uncommon_trap_request() const {
+int MachCallStaticJavaNode::uncommon_trap_request(outputStream* st) const {
   if (_name != nullptr && !strcmp(_name, "uncommon_trap")) {
-    return CallStaticJavaNode::extract_uncommon_trap_request(this);
+    return CallStaticJavaNode::extract_uncommon_trap_request(this, st);
   }
   return 0;
 }
@@ -824,7 +824,7 @@ int MachCallStaticJavaNode::uncommon_trap_request() const {
 #ifndef PRODUCT
 // Helper for summarizing uncommon_trap arguments.
 void MachCallStaticJavaNode::dump_trap_args(outputStream *st) const {
-  int trap_req = uncommon_trap_request();
+  int trap_req = uncommon_trap_request(st);
   if (trap_req != 0) {
     char buf[100];
     st->print("(%s)",

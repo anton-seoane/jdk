@@ -975,7 +975,7 @@ public:
   }
 
   // If this is an uncommon trap, return the request code, else zero.
-  int uncommon_trap_request() const;
+  int uncommon_trap_request(outputStream* st = tty) const;
 
   virtual int ret_addr_offset();
 #ifndef PRODUCT

@@ -817,9 +817,9 @@ public:
   }
 
   // If this is an uncommon trap, return the request code, else zero.
-  int uncommon_trap_request() const;
+  int uncommon_trap_request(outputStream* st = tty) const;
   bool is_uncommon_trap() const;
-  static int extract_uncommon_trap_request(const Node* call);
+  static int extract_uncommon_trap_request(const Node* call, outputStream* st = tty);
 
   bool is_boxing_method() const {
     return is_macro() && (method() != nullptr) && method()->is_boxing_method();

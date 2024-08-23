@@ -1111,17 +1111,17 @@ bool CallStaticJavaNode::is_uncommon_trap() const {
 
 //----------------------------uncommon_trap_request----------------------------
 // If this is an uncommon trap, return the request code, else zero.
-int CallStaticJavaNode::uncommon_trap_request() const {
-  return is_uncommon_trap() ? extract_uncommon_trap_request(this) : 0;
+int CallStaticJavaNode::uncommon_trap_request(outputStream* st) const {
+  return is_uncommon_trap() ? extract_uncommon_trap_request(this, st) : 0;
 }
-int CallStaticJavaNode::extract_uncommon_trap_request(const Node* call) {
+int CallStaticJavaNode::extract_uncommon_trap_request(const Node* call, outputStream* st) {
 #ifndef PRODUCT
   if (!(call->req() > TypeFunc::Parms &&
         call->in(TypeFunc::Parms) != nullptr &&
         call->in(TypeFunc::Parms)->is_Con() &&
         call->in(TypeFunc::Parms)->bottom_type()->isa_int())) {
     assert(in_dump() != 0, "OK if dumping");
-    tty->print("[bad uncommon trap]");
+    st->print("[bad uncommon trap]");
     return 0;
   }
 #endif
@@ -1133,7 +1133,7 @@ void CallStaticJavaNode::dump_spec(outputStream *st) const {
   st->print("# Static ");
   if (_name != nullptr) {
     st->print("%s", _name);
-    int trap_req = uncommon_trap_request();
+    int trap_req = uncommon_trap_request(st);
     if (trap_req != 0) {
       char buf[100];
       st->print("(%s)",
