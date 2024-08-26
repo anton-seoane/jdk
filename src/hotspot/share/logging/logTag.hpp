@@ -116,6 +116,8 @@ class outputStream;
   LOG_TAG(library) \
   LOG_TAG(link) \
   LOG_TAG(liveness) \
+  LOG_TAG(livenessgen) \
+  LOG_TAG(livenessquery) \
   LOG_TAG(load) /* Trace all classes loaded */ \
   LOG_TAG(loader) \
   LOG_TAG(logging) \
@@ -154,6 +156,7 @@ class outputStream;
   LOG_TAG(oops) \
   LOG_TAG(oopstorage) \
   LOG_TAG(optimizefill) \
+  LOG_TAG(optimizeptrcompare) \
   LOG_TAG(opto) \
   LOG_TAG(optoparse) \
   LOG_TAG(os) \

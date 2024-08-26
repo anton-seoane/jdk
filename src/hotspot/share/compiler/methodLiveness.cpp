@@ -33,6 +33,7 @@
 #include "memory/allocation.inline.hpp"
 #include "memory/resourceArea.hpp"
 #include "utilities/bitMap.inline.hpp"
+#include "logging/logStream.hpp"
 
 // The MethodLiveness class performs a simple liveness analysis on a method
 // in order to decide which locals are live (that is, will be used again) at
@@ -83,10 +84,12 @@ MethodLiveness::MethodLiveness(Arena* arena, ciMethod* method)
 
 void MethodLiveness::compute_liveness() {
 #ifndef PRODUCT
-  if (TraceLivenessGen) {
-    tty->print_cr("################################################################");
-    tty->print("# Computing liveness information for ");
-    method()->print_short_name();
+  if (log_is_enabled(Trace, livenessgen)) { //TLG
+    LogMessage(livenessgen) msg;
+    NonInterleavingLogStream st(LogLevelType::Trace, msg);
+    st.print_cr("################################################################");
+    st.print("# Computing liveness information for ");
+    method()->print_short_name(&st);
   }
 #endif
 
@@ -388,11 +391,13 @@ MethodLivenessResult MethodLiveness::get_liveness_at(int entry_bci) {
     }
 
 #ifndef PRODUCT
-    if (TraceLivenessQuery) {
-      tty->print("Liveness query of ");
-      method()->print_short_name();
-      tty->print(" @ %d : result is ", bci);
-      answer.print_on(tty);
+    if (log_is_enabled(Trace, livenessquery)) { //TLQ
+      LogMessage(livenessquery) msg;
+      NonInterleavingLogStream st(LogLevelType::Trace, msg);
+      st.print("Liveness query of ");
+      method()->print_short_name(&st);
+      st.print(" @ %d : result is ", bci);
+      answer.print_on(&st);
     }
 #endif
   }
@@ -422,9 +427,7 @@ MethodLiveness::BasicBlock *MethodLiveness::BasicBlock::split(int split_bci) {
   int start = _start_bci;
   int limit = _limit_bci;
 
-  if (TraceLivenessGen) {
-    tty->print_cr(" ** Splitting block (%d,%d) at %d", start, limit, split_bci);
-  }
+  log_trace(livenessgen)(" ** Splitting block (%d,%d) at %d", start, limit, split_bci); // TLG
 
   GrowableArray<BasicBlock*>* save_predecessors = _normal_predecessors;
 
@@ -783,9 +786,11 @@ void MethodLiveness::BasicBlock::propagate(MethodLiveness *ml) {
   // just once, rather than at individual bytecodes.
   _entry.set_union(_exception_exit);
 
-  if (TraceLivenessGen) {
-    tty->print_cr(" ** Visiting block at %d **", start_bci());
-    print_on(tty);
+  if (log_is_enabled(Trace, livenessgen)) { //TLG
+    LogMessage(livenessgen) msg;
+    NonInterleavingLogStream st(LogLevelType::Trace, msg);
+    st.print_cr(" ** Visiting block at %d **", start_bci());
+    print_on(&st);
   }
 
   int i;

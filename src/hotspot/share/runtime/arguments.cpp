@@ -3587,6 +3587,7 @@ jint Arguments::parse(const JavaVMInitArgs* initial_cmd_args) {
   if (TraceLoopPredicate) LogConfiguration::configure_stdout(LogLevel::Trace, false, LOG_TAGS(looppredicate));
   if (TraceLoopUnswitching) LogConfiguration::configure_stdout(LogLevel::Trace, false, LOG_TAGS(loopunswitching));
   if (TracePredicateFailedTraps) LogConfiguration::configure_stdout(LogLevel::Trace, false, LOG_TAGS(predicatefailedtraps));
+  if (TraceLivenessGen) LogConfiguration::configure_stdout(LogLevel::Trace, false, LOG_TAGS(livenessgen));
   #ifndef ASSERT
     if (TraceNewVectors) LogConfiguration::configure_stdout(LogLevel::Trace, false, LOG_TAGS(newvectors));
   #endif
@@ -3598,6 +3599,8 @@ jint Arguments::parse(const JavaVMInitArgs* initial_cmd_args) {
   #ifndef PRODUCT
     if (TraceCISCSpill) LogConfiguration::configure_stdout(LogLevel::Trace, false, LOG_TAGS(ciscspill));
     if (TracePhaseCCP) LogConfiguration::configure_stdout(LogLevel::Trace, false, LOG_TAGS(phaseccp));
+    if (TraceLivenessQuery) LogConfiguration::configure_stdout(LogLevel::Trace, false, LOG_TAGS(livenessquery));
+    if (PrintOptimizePtrCompare) LogConfiguration::configure_stdout(LogLevel::Trace, false, LOG_TAGS(optimizeptrcompare));
   #endif
   #ifdef ASSERT
     if (TraceMergeStores) LogConfiguration::configure_stdout(LogLevel::Trace, false, LOG_TAGS(mergestores));

@@ -44,6 +44,7 @@
 #include "opto/castnode.hpp"
 #include "opto/rootnode.hpp"
 #include "utilities/macros.hpp"
+#include "logging/logStream.hpp"
 
 ConnectionGraph::ConnectionGraph(Compile * C, PhaseIterGVN *igvn, int invocation) :
   // If ReduceAllocationMerges is enabled we might call split_through_phi during
@@ -3189,10 +3190,12 @@ void ConnectionGraph::optimize_ideal_graph(GrowableArray<Node*>& ptr_cmp_worklis
       if (tcmp->singleton()) {
         Node* cmp = igvn->makecon(tcmp);
 #ifndef PRODUCT
-        if (PrintOptimizePtrCompare) {
-          tty->print_cr("++++ Replaced: %d %s(%d,%d) --> %s", n->_idx, (n->Opcode() == Op_CmpP ? "CmpP" : "CmpN"), n->in(1)->_idx, n->in(2)->_idx, (tcmp == TypeInt::CC_EQ ? "EQ" : "NotEQ"));
+        if (log_is_enabled(Trace, optimizeptrcompare)) { //POPC
+          LogMessage(optimizeptrcompare) msg;
+          NonInterleavingLogStream st(LogLevelType::Trace, msg);
+          st.print_cr("++++ Replaced: %d %s(%d,%d) --> %s", n->_idx, (n->Opcode() == Op_CmpP ? "CmpP" : "CmpN"), n->in(1)->_idx, n->in(2)->_idx, (tcmp == TypeInt::CC_EQ ? "EQ" : "NotEQ"));
           if (Verbose) {
-            n->dump(1);
+            n->dump(1, &st);
           }
         }
 #endif
