@@ -136,6 +136,7 @@ class outputStream;
   LOG_TAG(metaspace) \
   LOG_TAG(methodcomparator) \
   LOG_TAG(methodhandles) \
+  LOG_TAG(methodreplacement) \
   LOG_TAG(mirror) \
   LOG_TAG(mmu) \
   LOG_TAG(module) \
