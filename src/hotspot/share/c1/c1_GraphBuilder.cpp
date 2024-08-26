@@ -2685,9 +2685,7 @@ Value PhiSimplifier::simplify(Value v) {
     phi->set_subst(subst);
 
 #ifndef PRODUCT
-    if (PrintPhiFunctions) {
-      tty->print_cr("simplified phi function %c%d to %c%d (Block B%d)", phi->type()->tchar(), phi->id(), subst->type()->tchar(), subst->id(), phi->block()->block_id());
-    }
+    log_trace(phifunctions)("simplified phi function %c%d to %c%d (Block B%d)", phi->type()->tchar(), phi->id(), subst->type()->tchar(), subst->id(), phi->block()->block_id()); //TPF
 #endif
 
     return subst;

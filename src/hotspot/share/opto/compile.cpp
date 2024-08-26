@@ -4941,10 +4941,12 @@ bool Compile::coarsened_locks_consistent() {
     if (unbalanced) {
       // unbalanced monitor enter/exit - only some [un]lock nodes were removed or modified
 #ifdef ASSERT
-      if (PrintEliminateLocks) {
-        tty->print_cr("=== unbalanced coarsened locks ===");
+      if (log_is_enabled(Trace, eliminatelocks)) { //PEL
+        LogMessage(eliminatelocks) msg;
+        NonInterleavingLogStream st(LogLevelType::Trace, msg);
+        st.print_cr("=== unbalanced coarsened locks ===");
         for (uint l = 0; l < size; l++) {
-          locks_list->at(l)->dump();
+          locks_list->at(l)->dump(&st);
         }
       }
 #endif

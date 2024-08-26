@@ -78,6 +78,7 @@ class outputStream;
   NOT_PRODUCT(LOG_TAG(downcall)) \
   LOG_TAG(dump) \
   LOG_TAG(dynamic) \
+  LOG_TAG(eliminatelocks) \
   LOG_TAG(ergo) \
   LOG_TAG(event) \
   LOG_TAG(exceptions) \
@@ -177,6 +178,7 @@ class outputStream;
   LOG_TAG(periodic) \
   LOG_TAG(phaseccp) \
   LOG_TAG(phases) \
+  LOG_TAG(phifunctions) \
   LOG_TAG(plab) \
   LOG_TAG(placeholders) \
   LOG_TAG(postallocexpand) \

@@ -715,14 +715,14 @@ void BlockBegin::block_values_do(ValueVisitor* f) {
 
 
 #ifndef PRODUCT
-   #define TRACE_PHI(code) if (PrintPhiFunctions) { code; }
+   #define TRACE_PHI(code) code
 #else
-   #define TRACE_PHI(coce)
+   #define TRACE_PHI(code)
 #endif
 
 
 bool BlockBegin::try_merge(ValueStack* new_state, bool has_irreducible_loops) {
-  TRACE_PHI(tty->print_cr("********** try_merge for block B%d", block_id()));
+  TRACE_PHI(log_trace(phifunctions)("********** try_merge for block B%d", block_id())); //TPF
 
   // local variables used for state iteration
   int index;
@@ -730,7 +730,7 @@ bool BlockBegin::try_merge(ValueStack* new_state, bool has_irreducible_loops) {
 
   ValueStack* existing_state = state();
   if (existing_state == nullptr) {
-    TRACE_PHI(tty->print_cr("first call of try_merge for this block"));
+    TRACE_PHI(log_trace(phifunctions)("first call of try_merge for this block")); //TPF
 
     if (is_set(BlockBegin::was_visited_flag)) {
       // this actually happens for complicated jsr/ret structures
@@ -748,17 +748,17 @@ bool BlockBegin::try_merge(ValueStack* new_state, bool has_irreducible_loops) {
       for_each_local_value(new_state, index, new_value) {
         if (!liveness.at(index) || new_value->type()->is_illegal()) {
           new_state->invalidate_local(index);
-          TRACE_PHI(tty->print_cr("invalidating dead local %d", index));
+          TRACE_PHI(log_trace(phifunctions)("invalidating dead local %d", index)); //TPF
         }
       }
     }
 
     if (is_set(BlockBegin::parser_loop_header_flag)) {
-      TRACE_PHI(tty->print_cr("loop header block, initializing phi functions"));
+      TRACE_PHI(log_trace(phifunctions)("loop header block, initializing phi functions")); //TPF
 
       for_each_stack_value(new_state, index, new_value) {
         new_state->setup_phi_for_stack(this, index);
-        TRACE_PHI(tty->print_cr("creating phi-function %c%d for stack %d", new_state->stack_at(index)->type()->tchar(), new_state->stack_at(index)->id(), index));
+        TRACE_PHI(log_trace(phifunctions)("creating phi-function %c%d for stack %d", new_state->stack_at(index)->type()->tchar(), new_state->stack_at(index)->id(), index)); //TPF
       }
 
       BitMap& requires_phi_function = new_state->scope()->requires_phi_function();
@@ -766,7 +766,7 @@ bool BlockBegin::try_merge(ValueStack* new_state, bool has_irreducible_loops) {
         bool requires_phi = requires_phi_function.at(index) || (new_value->type()->is_double_word() && requires_phi_function.at(index + 1));
         if (requires_phi || !SelectivePhiFunctions || has_irreducible_loops) {
           new_state->setup_phi_for_local(this, index);
-          TRACE_PHI(tty->print_cr("creating phi-function %c%d for local %d", new_state->local_at(index)->type()->tchar(), new_state->local_at(index)->id(), index));
+          TRACE_PHI(log_trace(phifunctions)("creating phi-function %c%d for local %d", new_state->local_at(index)->type()->tchar(), new_state->local_at(index)->id(), index)); //TPF
         }
       }
     }
@@ -775,14 +775,14 @@ bool BlockBegin::try_merge(ValueStack* new_state, bool has_irreducible_loops) {
     set_state(new_state);
 
   } else if (existing_state->is_same(new_state)) {
-    TRACE_PHI(tty->print_cr("existing state found"));
+    TRACE_PHI(log_trace(phifunctions)("existing state found")); //TPF
 
     assert(existing_state->scope() == new_state->scope(), "not matching");
     assert(existing_state->locals_size() == new_state->locals_size(), "not matching");
     assert(existing_state->stack_size() == new_state->stack_size(), "not matching");
 
     if (is_set(BlockBegin::was_visited_flag)) {
-      TRACE_PHI(tty->print_cr("loop header block, phis must be present"));
+      TRACE_PHI(log_trace(phifunctions)("loop header block, phis must be present")); //TPF
 
       if (!is_set(BlockBegin::parser_loop_header_flag)) {
         // this actually happens for complicated jsr/ret structures
@@ -801,11 +801,11 @@ bool BlockBegin::try_merge(ValueStack* new_state, bool has_irreducible_loops) {
           // In really rare cases we will bail out in LIRGenerator::move_to_phi.
           existing_phi->make_illegal();
           existing_state->invalidate_local(index);
-          TRACE_PHI(tty->print_cr("invalidating local %d because of type mismatch", index));
+          TRACE_PHI(log_trace(phifunctions)("invalidating local %d because of type mismatch", index)); //TPF
         }
 
         if (existing_value != new_state->local_at(index) && existing_value->as_Phi() == nullptr) {
-          TRACE_PHI(tty->print_cr("required phi for local %d is missing, irreducible loop?", index));
+          TRACE_PHI(log_trace(phifunctions)("required phi for local %d is missing, irreducible loop?", index)); //TPF
           return false; // BAILOUT in caller
         }
       }
@@ -821,7 +821,7 @@ bool BlockBegin::try_merge(ValueStack* new_state, bool has_irreducible_loops) {
 #endif
 
     } else {
-      TRACE_PHI(tty->print_cr("creating phi functions on demand"));
+      TRACE_PHI(log_trace(phifunctions)("creating phi functions on demand")); //TPF
 
       // create necessary phi functions for stack
       for_each_stack_value(existing_state, index, existing_value) {
@@ -830,7 +830,7 @@ bool BlockBegin::try_merge(ValueStack* new_state, bool has_irreducible_loops) {
 
         if (new_value != existing_value && (existing_phi == nullptr || existing_phi->block() != this)) {
           existing_state->setup_phi_for_stack(this, index);
-          TRACE_PHI(tty->print_cr("creating phi-function %c%d for stack %d", existing_state->stack_at(index)->type()->tchar(), existing_state->stack_at(index)->id(), index));
+          TRACE_PHI(log_trace(phifunctions)("creating phi-function %c%d for stack %d", existing_state->stack_at(index)->type()->tchar(), existing_state->stack_at(index)->id(), index)); //TPF
         }
       }
 
@@ -841,10 +841,10 @@ bool BlockBegin::try_merge(ValueStack* new_state, bool has_irreducible_loops) {
 
         if (new_value == nullptr || new_value->type()->tag() != existing_value->type()->tag()) {
           existing_state->invalidate_local(index);
-          TRACE_PHI(tty->print_cr("invalidating local %d because of type mismatch", index));
+          TRACE_PHI(log_trace(phifunctions)("invalidating local %d because of type mismatch", index)); //TPF
         } else if (new_value != existing_value && (existing_phi == nullptr || existing_phi->block() != this)) {
           existing_state->setup_phi_for_local(this, index);
-          TRACE_PHI(tty->print_cr("creating phi-function %c%d for local %d", existing_state->local_at(index)->type()->tchar(), existing_state->local_at(index)->id(), index));
+          TRACE_PHI(log_trace(phifunctions)("creating phi-function %c%d for local %d", existing_state->local_at(index)->type()->tchar(), existing_state->local_at(index)->id(), index)); //TPF
         }
       }
     }
@@ -856,7 +856,7 @@ bool BlockBegin::try_merge(ValueStack* new_state, bool has_irreducible_loops) {
     return false;
   }
 
-  TRACE_PHI(tty->print_cr("********** try_merge for block B%d successful", block_id()));
+  TRACE_PHI(log_trace(phifunctions)("********** try_merge for block B%d successful", block_id())); //TPF
 
   return true;
 }

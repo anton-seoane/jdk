@@ -3600,12 +3600,14 @@ jint Arguments::parse(const JavaVMInitArgs* initial_cmd_args) {
     if (TraceOptimizeFill) LogConfiguration::configure_stdout(LogLevel::Trace, false, LOG_TAGS(optimizefill));
     if (TraceIterativeGVN) LogConfiguration::configure_stdout(LogLevel::Trace, false, LOG_TAGS(iterativegvn));
     if (TraceLoopLimitCheck) LogConfiguration::configure_stdout(LogLevel::Trace, false, LOG_TAGS(looplimitcheck));
+    if (PrintEliminateLocks) LogConfiguration::configure_stdout(LogLevel::Trace, false, LOG_TAGS(eliminatelocks));
   #endif
   #ifndef PRODUCT
     if (TraceCISCSpill) LogConfiguration::configure_stdout(LogLevel::Trace, false, LOG_TAGS(ciscspill));
     if (TracePhaseCCP) LogConfiguration::configure_stdout(LogLevel::Trace, false, LOG_TAGS(phaseccp));
     if (TraceLivenessQuery) LogConfiguration::configure_stdout(LogLevel::Trace, false, LOG_TAGS(livenessquery));
     if (PrintOptimizePtrCompare) LogConfiguration::configure_stdout(LogLevel::Trace, false, LOG_TAGS(optimizeptrcompare));
+    if (PrintPhiFunctions) LogConfiguration::configure_stdout(LogLevel::Trace, false, LOG_TAGS(phifunctions));
   #endif
   #ifdef ASSERT
     if (TraceMergeStores) LogConfiguration::configure_stdout(LogLevel::Trace, false, LOG_TAGS(mergestores));

@@ -2134,9 +2134,7 @@ bool PhaseMacroExpand::eliminate_locking_node(AbstractLockNode *alock) {
   alock->log_lock_optimization(C, "eliminate_lock");
 
 #ifndef PRODUCT
-  if (PrintEliminateLocks) {
-    tty->print_cr("++++ Eliminated: %d %s '%s'", alock->_idx, (alock->is_Lock() ? "Lock" : "Unlock"), alock->kind_as_string());
-  }
+  log_trace(eliminatelocks)("++++ Eliminated: %d %s '%s'", alock->_idx, (alock->is_Lock() ? "Lock" : "Unlock"), alock->kind_as_string()); //PEL
 #endif
 
   Node* mem  = alock->in(TypeFunc::Memory);

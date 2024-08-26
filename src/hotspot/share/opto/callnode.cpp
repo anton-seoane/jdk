@@ -45,6 +45,7 @@
 #include "runtime/sharedRuntime.hpp"
 #include "utilities/powerOfTwo.hpp"
 #include "code/vmreg.hpp"
+#include "logging/logStream.hpp"
 
 // Portions of code courtesy of Clifford Click
 
@@ -2065,13 +2066,15 @@ Node *LockNode::Ideal(PhaseGVN *phase, bool can_reshape) {
         lock_ops.append(this);
 
   #ifndef PRODUCT
-        if (PrintEliminateLocks) {
+        if (log_is_enabled(Trace, eliminatelocks)) { //PEL
+          LogMessage(eliminatelocks) msg;
+          NonInterleavingLogStream st(LogLevelType::Trace, msg);
           int locks = 0;
           int unlocks = 0;
           if (Verbose) {
-            tty->print_cr("=== Locks coarsening ===");
-            tty->print("Obj: ");
-            obj_node()->dump();
+            st.print_cr("=== Locks coarsening ===");
+            st.print("Obj: ");
+            obj_node()->dump(&st);
           }
           for (int i = 0; i < lock_ops.length(); i++) {
             AbstractLockNode* lock = lock_ops.at(i);
@@ -2080,13 +2083,13 @@ Node *LockNode::Ideal(PhaseGVN *phase, bool can_reshape) {
             else
               unlocks++;
             if (Verbose) {
-              tty->print("Box %d: ", i);
-              box_node()->dump();
-              tty->print(" %d: ", i);
-              lock->dump();
+              st.print("Box %d: ", i);
+              box_node()->dump(&st);
+              st.print(" %d: ", i);
+              lock->dump(&st);
             }
           }
-          tty->print_cr("=== Coarsened %d unlocks and %d locks", unlocks, locks);
+          st.print_cr("=== Coarsened %d unlocks and %d locks", unlocks, locks);
         }
   #endif
 
@@ -2146,23 +2149,25 @@ bool LockNode::is_nested_lock_region(Compile * c) {
   if (unique_lock != this) {
 #ifdef ASSERT
     this->log_lock_optimization(c, "eliminate_lock_INLR_2b", (unique_lock != nullptr ? unique_lock : bad_lock));
-    if (PrintEliminateLocks && Verbose) {
-      tty->print_cr("=============== unique_lock != this ============");
-      tty->print(" this: ");
-      this->dump();
-      tty->print(" box: ");
-      box->dump();
-      tty->print(" obj: ");
-      obj->dump();
+    if (log_is_enabled(Trace, eliminatelocks) && Verbose) { //PEL
+      LogMessage(eliminatelocks) msg;
+      NonInterleavingLogStream st(LogLevelType::Trace, msg);
+      st.print_cr("=============== unique_lock != this ============");
+      st.print(" this: ");
+      this->dump(&st);
+      st.print(" box: ");
+      box->dump(&st);
+      st.print(" obj: ");
+      obj->dump(&st);
       if (unique_lock != nullptr) {
-        tty->print(" unique_lock: ");
-        unique_lock->dump();
+        st.print(" unique_lock: ");
+        unique_lock->dump(&st);
       }
       if (bad_lock != nullptr) {
-        tty->print(" bad_lock: ");
-        bad_lock->dump();
+        st.print(" bad_lock: ");
+        bad_lock->dump(&st);
       }
-      tty->print_cr("===============");
+      st.print_cr("===============");
     }
 #endif
     return false;
