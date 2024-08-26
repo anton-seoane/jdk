@@ -3590,6 +3590,7 @@ jint Arguments::parse(const JavaVMInitArgs* initial_cmd_args) {
   if (TraceLivenessGen) LogConfiguration::configure_stdout(LogLevel::Trace, false, LOG_TAGS(livenessgen));
   if (TraceMethodReplacement) LogConfiguration::configure_stdout(LogLevel::Trace, false, LOG_TAGS(methodreplacement));
   if (TracePcPatching) LogConfiguration::configure_stdout(LogLevel::Trace, false, LOG_TAGS(pcpatching));
+  if (TraceDerivedPointers) LogConfiguration::configure_stdout(LogLevel::Trace, false, LOG_TAGS(derivedpointers));
   #ifndef ASSERT
     if (TraceNewVectors) LogConfiguration::configure_stdout(LogLevel::Trace, false, LOG_TAGS(newvectors));
   #endif

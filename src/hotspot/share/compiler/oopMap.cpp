@@ -922,14 +922,12 @@ void DerivedPointerTable::add(derived_pointer* derived_loc, derived_base* base_l
   // arbitrarily far away from their base.
   // assert(offset >= -1000000, "wrong derived pointer info");
 
-  if (TraceDerivedPointers) {
-    tty->print_cr(
-      "Add derived pointer@" INTPTR_FORMAT
-      " - Derived: " INTPTR_FORMAT
-      " Base: " INTPTR_FORMAT " (@" INTPTR_FORMAT ") (Offset: " INTX_FORMAT ")",
-      p2i(derived_loc), derived_pointer_value(*derived_loc), intptr_t(*base_loc), p2i(base_loc), offset
-    );
-  }
+  log_trace(derivedpointers)( //TDP
+    "Add derived pointer@" INTPTR_FORMAT
+    " - Derived: " INTPTR_FORMAT
+    " Base: " INTPTR_FORMAT " (@" INTPTR_FORMAT ") (Offset: " INTX_FORMAT ")",
+    p2i(derived_loc), derived_pointer_value(*derived_loc), intptr_t(*base_loc), p2i(base_loc), offset
+  );
   // Set derived oop location to point to base.
   *derived_loc = base_loc_as_derived_pointer;
   Entry* entry = new Entry(derived_loc, offset);
@@ -954,11 +952,9 @@ void DerivedPointerTable::update_pointers() {
 
     // assert(offset >= 0 && offset <= (intptr_t)(base->size() << LogHeapWordSize), "offset: %ld base->size: %zu relative: %d", offset, base->size() << LogHeapWordSize, *(intptr_t*)derived_loc <= 0);
 
-    if (TraceDerivedPointers) {
-      tty->print_cr("Updating derived pointer@" INTPTR_FORMAT
-                    " - Derived: " INTPTR_FORMAT "  Base: " INTPTR_FORMAT " (Offset: " INTX_FORMAT ")",
-                    p2i(derived_loc), derived_pointer_value(*derived_loc), p2i(base), offset);
-    }
+    log_trace(derivedpointers)("Updating derived pointer@" INTPTR_FORMAT
+                               " - Derived: " INTPTR_FORMAT "  Base: " INTPTR_FORMAT " (Offset: " INTX_FORMAT ")",
+                               p2i(derived_loc), derived_pointer_value(*derived_loc), p2i(base), offset); //TDP
 
     // Delete entry
     delete entry;
