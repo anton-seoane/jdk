@@ -447,10 +447,8 @@ class BlockMerger: public BlockClosure {
 
     // debugging output
     _merge_count++;
-    if (PrintBlockElimination) {
-      tty->print_cr("%d. merged B%d & B%d (stack size = %d)",
-                    _merge_count, block->block_id(), sux->block_id(), sux->state()->stack_size());
-    }
+    log_trace(blockelimination)("%d. merged B%d & B%d (stack size = %d)",
+                                _merge_count, block->block_id(), sux->block_id(), sux->state()->stack_size()); //PBE
 
 #ifdef DO_DELAYED_VERIFICATION
     _hir->verify_local(blocks_to_verify_later);
@@ -500,9 +498,7 @@ class BlockMerger: public BlockClosure {
               block->set_end(newif);
 
               _merge_count++;
-              if (PrintBlockElimination) {
-                tty->print_cr("%d. replaced If and IfOp at end of B%d with single If", _merge_count, block->block_id());
-              }
+              log_trace(blockelimination)("%d. replaced If and IfOp at end of B%d with single If", _merge_count, block->block_id()); //PBE
 
 #ifdef DO_DELAYED_VERIFICATION
               _hir->verify_local(blocks_to_verify_later);
@@ -796,8 +792,8 @@ bool NullCheckEliminator::merge_state_for(BlockBegin* block, ValueSet* incoming_
     return true;
   } else {
     bool changed = state->set_intersect(incoming_state);
-    if (PrintNullCheckElimination && changed) {
-      tty->print_cr("Block %d's null check state changed", block->block_id());
+    if (changed) {
+      log_trace(nullcheckelimination)("Block %d's null check state changed", block->block_id()); //PNCE
     }
     return changed;
   }
@@ -816,13 +812,11 @@ void NullCheckEliminator::iterate_one(BlockBegin* block) {
   // clear out an old explicit null checks
   set_last_explicit_null_check(nullptr);
 
-  if (PrintNullCheckElimination) {
-    tty->print_cr(" ...iterating block %d in null check elimination for %s::%s%s",
-                  block->block_id(),
-                  ir()->method()->holder()->name()->as_utf8(),
-                  ir()->method()->name()->as_utf8(),
-                  ir()->method()->signature()->as_symbol()->as_utf8());
-  }
+  log_trace(nullcheckelimination)(" ...iterating block %d in null check elimination for %s::%s%s",
+                                  block->block_id(),
+                                  ir()->method()->holder()->name()->as_utf8(),
+                                  ir()->method()->name()->as_utf8(),
+                                  ir()->method()->signature()->as_symbol()->as_utf8()); //PNCE
 
   // Create new state if none present (only happens at root)
   if (state_for(block) == nullptr) {
@@ -841,9 +835,7 @@ void NullCheckEliminator::iterate_one(BlockBegin* block) {
       if (local0 != nullptr) {
         // Local 0 is used in this scope
         tmp_state->put(local0);
-        if (PrintNullCheckElimination) {
-          tty->print_cr("Local 0 (value %d) proven non-null upon entry", local0->id());
-        }
+        log_trace(nullcheckelimination)("Local 0 (value %d) proven non-null upon entry", local0->id());  //PNCE
       }
     }
   }
@@ -923,10 +915,8 @@ void NullCheckEliminator::handle_AccessField(AccessField* x) {
         if (is_reference_type(field_type)) {
           ciObject* obj_val = field_val.as_object();
           if (!obj_val->is_null_object()) {
-            if (PrintNullCheckElimination) {
-              tty->print_cr("AccessField %d proven non-null by static final non-null oop check",
-                            x->id());
-            }
+            log_trace(nullcheckelimination)("AccessField %d proven non-null by static final non-null oop check",
+                                            x->id()); //PNCE
             set_put(x);
           }
         }
@@ -943,22 +933,16 @@ void NullCheckEliminator::handle_AccessField(AccessField* x) {
     if (last_explicit_null_check_obj() == obj && !x->needs_patching()) {
       x->set_explicit_null_check(consume_last_explicit_null_check());
       x->set_needs_null_check(true);
-      if (PrintNullCheckElimination) {
-        tty->print_cr("Folded NullCheck %d into AccessField %d's null check for value %d",
-                      x->explicit_null_check()->id(), x->id(), obj->id());
-      }
+      log_trace(nullcheckelimination)("Folded NullCheck %d into AccessField %d's null check for value %d",
+                                      x->explicit_null_check()->id(), x->id(), obj->id()); //PNCE
     } else {
       x->set_explicit_null_check(nullptr);
       x->set_needs_null_check(false);
-      if (PrintNullCheckElimination) {
-        tty->print_cr("Eliminated AccessField %d's null check for value %d", x->id(), obj->id());
-      }
+      log_trace(nullcheckelimination)("Eliminated AccessField %d's null check for value %d", x->id(), obj->id()); //PNCE
     }
   } else {
     set_put(obj);
-    if (PrintNullCheckElimination) {
-      tty->print_cr("AccessField %d of value %d proves value to be non-null", x->id(), obj->id());
-    }
+    log_trace(nullcheckelimination)("AccessField %d of value %d proves value to be non-null", x->id(), obj->id()); //PNCE
     // Ensure previous passes do not cause wrong state
     x->set_needs_null_check(true);
     x->set_explicit_null_check(nullptr);
@@ -974,22 +958,16 @@ void NullCheckEliminator::handle_ArrayLength(ArrayLength* x) {
     if (last_explicit_null_check_obj() == array) {
       x->set_explicit_null_check(consume_last_explicit_null_check());
       x->set_needs_null_check(true);
-      if (PrintNullCheckElimination) {
-        tty->print_cr("Folded NullCheck %d into ArrayLength %d's null check for value %d",
-                      x->explicit_null_check()->id(), x->id(), array->id());
-      }
+      log_trace(nullcheckelimination)("Folded NullCheck %d into ArrayLength %d's null check for value %d",
+                                      x->explicit_null_check()->id(), x->id(), array->id()); //PNCE
     } else {
       x->set_explicit_null_check(nullptr);
       x->set_needs_null_check(false);
-      if (PrintNullCheckElimination) {
-        tty->print_cr("Eliminated ArrayLength %d's null check for value %d", x->id(), array->id());
-      }
+      log_trace(nullcheckelimination)("Eliminated ArrayLength %d's null check for value %d", x->id(), array->id()); //PNCE
     }
   } else {
     set_put(array);
-    if (PrintNullCheckElimination) {
-      tty->print_cr("ArrayLength %d of value %d proves value to be non-null", x->id(), array->id());
-    }
+    log_trace(nullcheckelimination)("ArrayLength %d of value %d proves value to be non-null", x->id(), array->id()); //PNCE
     // Ensure previous passes do not cause wrong state
     x->set_needs_null_check(true);
     x->set_explicit_null_check(nullptr);
@@ -1005,22 +983,16 @@ void NullCheckEliminator::handle_LoadIndexed(LoadIndexed* x) {
     if (last_explicit_null_check_obj() == array) {
       x->set_explicit_null_check(consume_last_explicit_null_check());
       x->set_needs_null_check(true);
-      if (PrintNullCheckElimination) {
-        tty->print_cr("Folded NullCheck %d into LoadIndexed %d's null check for value %d",
-                      x->explicit_null_check()->id(), x->id(), array->id());
-      }
+      log_trace(nullcheckelimination)("Folded NullCheck %d into LoadIndexed %d's null check for value %d",
+                                      x->explicit_null_check()->id(), x->id(), array->id()); //PNCE
     } else {
       x->set_explicit_null_check(nullptr);
       x->set_needs_null_check(false);
-      if (PrintNullCheckElimination) {
-        tty->print_cr("Eliminated LoadIndexed %d's null check for value %d", x->id(), array->id());
-      }
+      log_trace(nullcheckelimination)("Eliminated LoadIndexed %d's null check for value %d", x->id(), array->id()); //PNCE
     }
   } else {
     set_put(array);
-    if (PrintNullCheckElimination) {
-      tty->print_cr("LoadIndexed %d of value %d proves value to be non-null", x->id(), array->id());
-    }
+    log_trace(nullcheckelimination)("LoadIndexed %d of value %d proves value to be non-null", x->id(), array->id()); //PNCE
     // Ensure previous passes do not cause wrong state
     x->set_needs_null_check(true);
     x->set_explicit_null_check(nullptr);
@@ -1033,15 +1005,11 @@ void NullCheckEliminator::handle_StoreIndexed(StoreIndexed* x) {
   Value array = x->array();
   if (set_contains(array)) {
     // Value is non-null => update AccessArray
-    if (PrintNullCheckElimination) {
-      tty->print_cr("Eliminated StoreIndexed %d's null check for value %d", x->id(), array->id());
-    }
+    log_trace(nullcheckelimination)("Eliminated StoreIndexed %d's null check for value %d", x->id(), array->id()); //PNCE
     x->set_needs_null_check(false);
   } else {
     set_put(array);
-    if (PrintNullCheckElimination) {
-      tty->print_cr("StoreIndexed %d of value %d proves value to be non-null", x->id(), array->id());
-    }
+    log_trace(nullcheckelimination)("StoreIndexed %d of value %d proves value to be non-null", x->id(), array->id()); //PNCE
     // Ensure previous passes do not cause wrong state
     x->set_needs_null_check(true);
   }
@@ -1053,9 +1021,7 @@ void NullCheckEliminator::handle_NullCheck(NullCheck* x) {
   Value obj = x->obj();
   if (set_contains(obj)) {
     // Already proven to be non-null => this NullCheck is useless
-    if (PrintNullCheckElimination) {
-      tty->print_cr("Eliminated NullCheck %d for value %d", x->id(), obj->id());
-    }
+    log_trace(nullcheckelimination)("Eliminated NullCheck %d for value %d", x->id(), obj->id()); //PNCE
     // Don't unpin since that may shrink obj's live range and make it unavailable for debug info.
     // The code generator won't emit LIR for a NullCheck that cannot trap.
     x->set_can_trap(false);
@@ -1066,9 +1032,7 @@ void NullCheckEliminator::handle_NullCheck(NullCheck* x) {
     x->pin(Instruction::PinExplicitNullCheck);
     set_put(obj);
     set_last_explicit_null_check(x);
-    if (PrintNullCheckElimination) {
-      tty->print_cr("NullCheck %d of value %d proves value to be non-null", x->id(), obj->id());
-    }
+    log_trace(nullcheckelimination)("NullCheck %d of value %d proves value to be non-null", x->id(), obj->id()); //PNCE
   }
 }
 
@@ -1083,9 +1047,7 @@ void NullCheckEliminator::handle_Invoke(Invoke* x) {
   Value recv = x->receiver();
   if (!set_contains(recv)) {
     set_put(recv);
-    if (PrintNullCheckElimination) {
-      tty->print_cr("Invoke %d of value %d proves value to be non-null", x->id(), recv->id());
-    }
+    log_trace(nullcheckelimination)("Invoke %d of value %d proves value to be non-null", x->id(), recv->id()); //PNCE
   }
   clear_last_explicit_null_check();
 }
@@ -1093,25 +1055,19 @@ void NullCheckEliminator::handle_Invoke(Invoke* x) {
 
 void NullCheckEliminator::handle_NewInstance(NewInstance* x) {
   set_put(x);
-  if (PrintNullCheckElimination) {
-    tty->print_cr("NewInstance %d is non-null", x->id());
-  }
+  log_trace(nullcheckelimination)("NewInstance %d is non-null", x->id()); //PNCE
 }
 
 
 void NullCheckEliminator::handle_NewArray(NewArray* x) {
   set_put(x);
-  if (PrintNullCheckElimination) {
-    tty->print_cr("NewArray %d is non-null", x->id());
-  }
+  log_trace(nullcheckelimination)("NewArray %d is non-null", x->id()); //PNCE
 }
 
 
 void NullCheckEliminator::handle_ExceptionObject(ExceptionObject* x) {
   set_put(x);
-  if (PrintNullCheckElimination) {
-    tty->print_cr("ExceptionObject %d is non-null", x->id());
-  }
+  log_trace(nullcheckelimination)("ExceptionObject %d is non-null", x->id()); //PNCE
 }
 
 
@@ -1119,15 +1075,11 @@ void NullCheckEliminator::handle_AccessMonitor(AccessMonitor* x) {
   Value obj = x->obj();
   if (set_contains(obj)) {
     // Value is non-null => update AccessMonitor
-    if (PrintNullCheckElimination) {
-      tty->print_cr("Eliminated AccessMonitor %d's null check for value %d", x->id(), obj->id());
-    }
+    log_trace(nullcheckelimination)("Eliminated AccessMonitor %d's null check for value %d", x->id(), obj->id()); //PNCE
     x->set_needs_null_check(false);
   } else {
     set_put(obj);
-    if (PrintNullCheckElimination) {
-      tty->print_cr("AccessMonitor %d of value %d proves value to be non-null", x->id(), obj->id());
-    }
+    log_trace(nullcheckelimination)("AccessMonitor %d of value %d proves value to be non-null", x->id(), obj->id()); //PNCE
     // Ensure previous passes do not cause wrong state
     x->set_needs_null_check(true);
   }
@@ -1151,15 +1103,11 @@ void NullCheckEliminator::handle_Intrinsic(Intrinsic* x) {
   Value recv = x->receiver();
   if (set_contains(recv)) {
     // Value is non-null => update Intrinsic
-    if (PrintNullCheckElimination) {
-      tty->print_cr("Eliminated Intrinsic %d's null check for value %d", vmIntrinsics::as_int(x->id()), recv->id());
-    }
+    log_trace(nullcheckelimination)("Eliminated Intrinsic %d's null check for value %d", vmIntrinsics::as_int(x->id()), recv->id()); //PNCE
     x->set_needs_null_check(false);
   } else {
     set_put(recv);
-    if (PrintNullCheckElimination) {
-      tty->print_cr("Intrinsic %d of value %d proves value to be non-null", vmIntrinsics::as_int(x->id()), recv->id());
-    }
+    log_trace(nullcheckelimination)("Intrinsic %d of value %d proves value to be non-null", vmIntrinsics::as_int(x->id()), recv->id()); //PNCE
     // Ensure previous passes do not cause wrong state
     x->set_needs_null_check(true);
   }
@@ -1183,9 +1131,7 @@ void NullCheckEliminator::handle_Phi(Phi* x) {
 
   if (all_non_null) {
     // Value is non-null => update Phi
-    if (PrintNullCheckElimination) {
-      tty->print_cr("Eliminated Phi %d's null check for phifun because all inputs are non-null", x->id());
-    }
+    log_trace(nullcheckelimination)("Eliminated Phi %d's null check for phifun because all inputs are non-null", x->id()); //PNCE
     x->set_needs_null_check(false);
   } else if (set_contains(x)) {
     set_remove(x);
@@ -1208,9 +1154,7 @@ void NullCheckEliminator::handle_Constant(Constant *x) {
     ObjectConstant* oc = ot->as_ObjectConstant();
     if (oc == nullptr || !oc->value()->is_null_object()) {
       set_put(x);
-      if (PrintNullCheckElimination) {
-        tty->print_cr("Constant %d is non-null", x->id());
-      }
+      log_trace(nullcheckelimination)("Constant %d is non-null", x->id()); //PNCE
     }
   }
 }
@@ -1218,9 +1162,7 @@ void NullCheckEliminator::handle_Constant(Constant *x) {
 void NullCheckEliminator::handle_IfOp(IfOp *x) {
   if (x->type()->is_object() && set_contains(x->tval()) && set_contains(x->fval())) {
     set_put(x);
-    if (PrintNullCheckElimination) {
-      tty->print_cr("IfOp %d is non-null", x->id());
-    }
+    log_trace(nullcheckelimination)("IfOp %d is non-null", x->id()); //PNCE
   }
 }
 
@@ -1229,12 +1171,10 @@ void Optimizer::eliminate_null_checks() {
 
   NullCheckEliminator nce(this);
 
-  if (PrintNullCheckElimination) {
-    tty->print_cr("Starting null check elimination for method %s::%s%s",
-                  ir()->method()->holder()->name()->as_utf8(),
-                  ir()->method()->name()->as_utf8(),
-                  ir()->method()->signature()->as_symbol()->as_utf8());
-  }
+  log_trace(nullcheckelimination)("Starting null check elimination for method %s::%s%s",
+                                  ir()->method()->holder()->name()->as_utf8(),
+                                  ir()->method()->name()->as_utf8(),
+                                  ir()->method()->signature()->as_symbol()->as_utf8()); //PNCE
 
   // Apply to graph
   nce.iterate(ir()->start());
@@ -1271,11 +1211,8 @@ void Optimizer::eliminate_null_checks() {
     }
   }
 
-
-  if (PrintNullCheckElimination) {
-    tty->print_cr("Done with null check elimination for method %s::%s%s",
-                  ir()->method()->holder()->name()->as_utf8(),
-                  ir()->method()->name()->as_utf8(),
-                  ir()->method()->signature()->as_symbol()->as_utf8());
-  }
+  log_trace(nullcheckelimination)("Done with null check elimination for method %s::%s%s",
+                                  ir()->method()->holder()->name()->as_utf8(),
+                                  ir()->method()->name()->as_utf8(),
+                                  ir()->method()->signature()->as_symbol()->as_utf8()); //PNCE
 }
