@@ -255,10 +255,8 @@ void frame::patch_pc(Thread* thread, address pc) {
   assert(_cb == CodeCache::find_blob(pc), "unexpected pc");
   address* pc_addr = (address*)&(own_abi()->return_pc);
 
-  if (TracePcPatching) {
-    tty->print_cr("patch_pc at address  " PTR_FORMAT " [" PTR_FORMAT " -> " PTR_FORMAT "] ",
-                  p2i(&((address*) _sp)[-1]), p2i(((address*) _sp)[-1]), p2i(pc));
-  }
+  log_trace(pcpatching)("patch_pc at address  " PTR_FORMAT " [" PTR_FORMAT " -> " PTR_FORMAT "] ",
+                        p2i(&((address*) _sp)[-1]), p2i(((address*) _sp)[-1]), p2i(pc)); //TPCP
   assert(!Continuation::is_return_barrier_entry(*pc_addr), "return barrier");
   assert(_pc == *pc_addr || pc == *pc_addr || 0 == *pc_addr,
          "must be (pc: " INTPTR_FORMAT " _pc: " INTPTR_FORMAT " pc_addr: " INTPTR_FORMAT

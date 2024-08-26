@@ -169,6 +169,7 @@ class outputStream;
   LOG_TAG(patch) \
   LOG_TAG(patching) \
   LOG_TAG(path) \
+  LOG_TAG(pcpatching) \
   LOG_TAG(perf) \
   LOG_TAG(periodic) \
   LOG_TAG(phaseccp) \

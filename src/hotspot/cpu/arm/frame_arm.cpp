@@ -222,10 +222,8 @@ bool frame::safe_for_sender(JavaThread *thread) {
 void frame::patch_pc(Thread* thread, address pc) {
   assert(_cb == CodeCache::find_blob(pc), "unexpected pc");
   address* pc_addr = &((address *)sp())[-sender_sp_offset+return_addr_offset];
-  if (TracePcPatching) {
-    tty->print_cr("patch_pc at address" INTPTR_FORMAT " [" INTPTR_FORMAT " -> " INTPTR_FORMAT "] ",
-                  p2i(pc_addr), p2i(*pc_addr), p2i(pc));
-  }
+  log_trace(pcpatching)("patch_pc at address" INTPTR_FORMAT " [" INTPTR_FORMAT " -> " INTPTR_FORMAT "] ",
+                        p2i(pc_addr), p2i(*pc_addr), p2i(pc)); //TPCP
   DEBUG_ONLY(address old_pc = _pc;)
   *pc_addr = pc;
   _pc = pc; // must be set before call to get_deopt_original_pc

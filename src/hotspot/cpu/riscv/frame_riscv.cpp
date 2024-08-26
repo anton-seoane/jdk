@@ -260,10 +260,8 @@ void frame::patch_pc(Thread* thread, address pc) {
   address* pc_addr = &(((address*) sp())[-1]);
   address pc_old = *pc_addr;
 
-  if (TracePcPatching) {
-    tty->print_cr("patch_pc at address " INTPTR_FORMAT " [" INTPTR_FORMAT " -> " INTPTR_FORMAT "]",
-                  p2i(pc_addr), p2i(pc_old), p2i(pc));
-  }
+  log_trace(pcpatching)("patch_pc at address " INTPTR_FORMAT " [" INTPTR_FORMAT " -> " INTPTR_FORMAT "]",
+                        p2i(pc_addr), p2i(pc_old), p2i(pc)); //TPCP
 
   assert(!Continuation::is_return_barrier_entry(pc_old), "return barrier");
 

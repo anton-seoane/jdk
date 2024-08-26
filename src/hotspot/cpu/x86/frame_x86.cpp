@@ -270,10 +270,8 @@ void frame::patch_pc(Thread* thread, address pc) {
   assert(_cb == CodeCache::find_blob(pc), "unexpected pc");
   address* pc_addr = &(((address*) sp())[-1]);
 
-  if (TracePcPatching) {
-    tty->print_cr("patch_pc at address " INTPTR_FORMAT " [" INTPTR_FORMAT " -> " INTPTR_FORMAT "]",
-                  p2i(pc_addr), p2i(*pc_addr), p2i(pc));
-  }
+  log_trace(pcpatching)("patch_pc at address " INTPTR_FORMAT " [" INTPTR_FORMAT " -> " INTPTR_FORMAT "]",
+                        p2i(pc_addr), p2i(*pc_addr), p2i(pc)); //TPCP
   // Either the return address is the original one or we are going to
   // patch in the same address that's already there.
 

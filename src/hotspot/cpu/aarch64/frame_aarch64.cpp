@@ -280,13 +280,14 @@ void frame::patch_pc(Thread* thread, address pc) {
   address signed_pc = pauth_sign_return_address(pc);
   address pc_old = pauth_strip_verifiable(*pc_addr);
 
-  if (TracePcPatching) {
-    tty->print("patch_pc at address " INTPTR_FORMAT " [" INTPTR_FORMAT " -> " INTPTR_FORMAT "]",
-                  p2i(pc_addr), p2i(pc_old), p2i(pc));
+  if (log_is_enabled(Trace, pcpatching)) { //TPCP
+    LogMessage(pcpatching) msg;
+    NonInterleavingLogStream st(LogLevelType::Trace, msg);
+    st.print("patch_pc at address " INTPTR_FORMAT " [" INTPTR_FORMAT " -> " INTPTR_FORMAT "]",
+             p2i(pc_addr), p2i(pc_old), p2i(pc));
     if (VM_Version::use_rop_protection()) {
-      tty->print(" [signed " INTPTR_FORMAT " -> " INTPTR_FORMAT "]", p2i(*pc_addr), p2i(signed_pc));
+      st.print(" [signed " INTPTR_FORMAT " -> " INTPTR_FORMAT "]", p2i(*pc_addr), p2i(signed_pc));
     }
-    tty->print_cr("");
   }
 
   assert(!Continuation::is_return_barrier_entry(pc_old), "return barrier");
