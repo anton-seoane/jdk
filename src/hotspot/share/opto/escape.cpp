@@ -403,15 +403,17 @@ bool ConnectionGraph::compute_escape() {
     C->print_method(PHASE_AFTER_EA, 2);
 
 #ifdef ASSERT
-  } else if (Verbose && (PrintEscapeAnalysis || PrintEliminateAllocations)) {
-    tty->print("=== No allocations eliminated for ");
-    C->method()->print_short_name();
+  } else if (Verbose && (PrintEscapeAnalysis || log_is_enabled(Trace, eliminateallocations))) { //PEA
+    LogMessage(eliminateallocations) msg; 
+    NonInterleavingLogStream st(LogLevelType::Trace, msg);
+    st.print("=== No allocations eliminated for ");
+    C->method()->print_short_name(&st);
     if (!EliminateAllocations) {
-      tty->print(" since EliminateAllocations is off ===");
+      st.print(" since EliminateAllocations is off ===");
     } else if(!has_scalar_replaceable_candidates) {
-      tty->print(" since there are no scalar replaceable candidates ===");
+      st.print(" since there are no scalar replaceable candidates ===");
     }
-    tty->cr();
+    st.cr();
 #endif
   }
 
