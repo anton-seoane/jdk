@@ -36,6 +36,7 @@
 #include "opto/parse.hpp"
 #include "runtime/handles.inline.hpp"
 #include "utilities/events.hpp"
+#include "logging/logStream.hpp"
 
 //=============================================================================
 //------------------------------InlineTree-------------------------------------
@@ -168,12 +169,13 @@ bool InlineTree::should_inline(ciMethod* callee_method, ciMethod* caller_method,
       is_init_with_ea(callee_method, caller_method, C)) {
 
     max_inline_size = C->freq_inline_size();
-    if (size <= max_inline_size && TraceFrequencyInlining) {
-      CompileTask::print_inline_indent(inline_level());
-      tty->print_cr("Inlined frequent method (freq=%lf):", freq);
-      CompileTask::print_inline_indent(inline_level());
-      callee_method->print();
-      tty->cr();
+    if (log_is_enabled(Trace, frequencyinlining) && size <= max_inline_size) { //TFI
+      LogMessage(frequencyinlining) msg;
+      NonInterleavingLogStream st(LogLevelType::Trace, msg);
+      CompileTask::print_inline_indent(inline_level(), &st);
+      st.print_cr("Inlined frequent method (freq=%lf):", freq);
+      CompileTask::print_inline_indent(inline_level(), &st);
+      callee_method->print(&st);
     }
   } else {
     // Not hot.  Check for medium-sized pre-existing nmethod at cold sites.

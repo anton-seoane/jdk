@@ -92,6 +92,7 @@ class outputStream;
   LOG_TAG(fpustack) \
   LOG_TAG(free) \
   LOG_TAG(freelist) \
+  LOG_TAG(frequencyinlining) \
   LOG_TAG(gc) \
   NOT_PRODUCT(LOG_TAG(generate)) \
   LOG_TAG(handshake) \
