@@ -109,6 +109,7 @@ class outputStream;
   LOG_TAG(inlining) \
   LOG_TAG(install) \
   LOG_TAG(interpreter) \
+  LOG_TAG(irduringconstruction) \
   LOG_TAG(itables) \
   LOG_TAG(iterativegvn) \
   LOG_TAG(jfr) \

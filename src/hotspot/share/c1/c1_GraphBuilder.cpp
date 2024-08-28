@@ -631,9 +631,11 @@ class MemoryBuffer: public CompilationResourceObj {
         FieldBuffer* buf = _fields.at(index);
         if (buf->at(field) == nullptr && is_default_value(value)) {
 #ifndef PRODUCT
-          if (PrintIRDuringConstruction && Verbose) {
-            tty->print_cr("Eliminated store for object %d:", index);
-            st->print_line();
+          if (log_is_enabled(Trace, irduringconstruction) && Verbose) { //PIDC
+            LogMessage(irduringconstruction) msg;
+            NonInterleavingLogStream nils(LogLevelType::Trace, msg);
+            nils.print_cr("Eliminated store for object %d:", index);
+            st->print_line_on(&nils);
           }
 #endif
           return nullptr;
@@ -702,9 +704,11 @@ class MemoryBuffer: public CompilationResourceObj {
       }
       if (result != nullptr) {
 #ifndef PRODUCT
-        if (PrintIRDuringConstruction && Verbose) {
-          tty->print_cr("Eliminated load: ");
-          load->print_line();
+        if (log_is_enabled(Trace, irduringconstruction) && Verbose) { //PIDC
+          LogMessage(irduringconstruction) msg;
+          NonInterleavingLogStream nils(LogLevelType::Trace, msg);
+          nils.print_cr("Eliminated load: ");
+          load->print_line_on(&nils);
         }
 #endif
         assert(result->type()->tag() == load->type()->tag(), "wrong types");
@@ -2411,11 +2415,13 @@ Instruction* GraphBuilder::append_with_bci(Instruction* instr, int bci) {
   }
 
 #ifndef PRODUCT
-  if (PrintIRDuringConstruction) {
-    InstructionPrinter ip;
+  if (log_is_enabled(Trace, irduringconstruction)) { //PIDC
+    LogMessage(irduringconstruction) msg;
+    NonInterleavingLogStream nils(LogLevelType::Trace, msg);
+    InstructionPrinter ip(true, &nils);
     ip.print_line(i1);
     if (Verbose) {
-      state()->print();
+      state()->print_on(&nils);
     }
   }
 #endif
@@ -2730,14 +2736,18 @@ void GraphBuilder::connect_to_end(BlockBegin* beg) {
 
 BlockEnd* GraphBuilder::iterate_bytecodes_for_block(int bci) {
 #ifndef PRODUCT
-  if (PrintIRDuringConstruction) {
-    tty->cr();
-    InstructionPrinter ip;
-    ip.print_instr(_block); tty->cr();
-    ip.print_stack(_block->state()); tty->cr();
+  if (log_is_enabled(Trace, irduringconstruction)) { //PIDC
+    LogMessage(irduringconstruction) msg;
+    NonInterleavingLogStream nils(LogLevelType::Trace, msg);
+    nils.cr();
+    InstructionPrinter ip(true, &nils);
+    ip.print_instr(_block);
+    nils.cr();
+    ip.print_stack(_block->state());
+    nils.cr();
     ip.print_inline_level(_block);
     ip.print_head();
-    tty->print_cr("locals size: %d stack size: %d", state()->locals_size(), state()->stack_size());
+    nils.print_cr("locals size: %d stack size: %d", state()->locals_size(), state()->stack_size());
   }
 #endif
   _skip_block = false;

@@ -590,6 +590,7 @@ class Instruction: public CompilationResourceObj {
   static void check_state(ValueStack* state)     PRODUCT_RETURN;
   void print()                                   PRODUCT_RETURN;
   void print_line()                              PRODUCT_RETURN;
+  void print_line_on(outputStream* st)           PRODUCT_RETURN;
   void print(InstructionPrinter& ip)             PRODUCT_RETURN;
 };
 

@@ -133,6 +133,11 @@ void Instruction::print_line() {
   ip.print_line(this);
 }
 
+void Instruction::print_line_on(outputStream* st) { //PIDC
+  InstructionPrinter ip(true, st);
+  ip.print_line(this);
+}
+
 
 void Instruction::print(InstructionPrinter& ip) {
   ip.print_head();
