@@ -132,7 +132,7 @@ BlockListBuilder::BlockListBuilder(Compilation* compilation, IRScope* scope, int
   CHECK_BAILOUT();
 
   mark_loops();
-  NOT_PRODUCT(if (PrintInitialBlockList) print());
+  NOT_PRODUCT(print()); //PIBL
 
   // _bci2block still contains blocks with _end == null and > 0 sux in _bci2block_successors.
 
@@ -527,32 +527,35 @@ static int compare_depth_first(BlockBegin** a, BlockBegin** b) {
   return (*a)->depth_first_number() - (*b)->depth_first_number();
 }
 
-void BlockListBuilder::print() {
-  tty->print("----- initial block list of BlockListBuilder for method ");
-  method()->print_short_name();
-  tty->cr();
+void BlockListBuilder::print() { //PIBL
+  if (!log_is_enabled(Trace, initialblocklist)) return;
+  LogMessage(initialblocklist) msg;
+  NonInterleavingLogStream st(LogLevelType::Trace, msg);
+  st.print("----- initial block list of BlockListBuilder for method ");
+  method()->print_short_name(&st);
+  st.cr();
 
   // better readability if blocks are sorted in processing order
   _blocks.sort(compare_depth_first);
 
   for (int i = 0; i < _blocks.length(); i++) {
     BlockBegin* cur = _blocks.at(i);
-    tty->print("%4d: B%-4d bci: %-4d  preds: %-4d ", cur->depth_first_number(), cur->block_id(), cur->bci(), cur->total_preds());
+    st.print("%4d: B%-4d bci: %-4d  preds: %-4d ", cur->depth_first_number(), cur->block_id(), cur->bci(), cur->total_preds());
 
-    tty->print(cur->is_set(BlockBegin::std_entry_flag)               ? " std" : "    ");
-    tty->print(cur->is_set(BlockBegin::osr_entry_flag)               ? " osr" : "    ");
-    tty->print(cur->is_set(BlockBegin::exception_entry_flag)         ? " ex" : "   ");
-    tty->print(cur->is_set(BlockBegin::subroutine_entry_flag)        ? " sr" : "   ");
-    tty->print(cur->is_set(BlockBegin::parser_loop_header_flag)      ? " lh" : "   ");
+    st.print(cur->is_set(BlockBegin::std_entry_flag)               ? " std" : "    ");
+    st.print(cur->is_set(BlockBegin::osr_entry_flag)               ? " osr" : "    ");
+    st.print(cur->is_set(BlockBegin::exception_entry_flag)         ? " ex" : "   ");
+    st.print(cur->is_set(BlockBegin::subroutine_entry_flag)        ? " sr" : "   ");
+    st.print(cur->is_set(BlockBegin::parser_loop_header_flag)      ? " lh" : "   ");
 
     if (number_of_successors(cur) > 0) {
-      tty->print("    sux: ");
+      st.print("    sux: ");
       for (int j = 0; j < number_of_successors(cur); j++) {
         BlockBegin* sux = successor_at(cur, j);
-        tty->print("B%d ", sux->block_id());
+        st.print("B%d ", sux->block_id());
       }
     }
-    tty->cr();
+    st.cr();
   }
 }
 
@@ -799,10 +802,8 @@ BlockBegin* GraphBuilder::ScopeData::block_at(int bci) {
     BlockBegin* block = bci2block()->at(bci);
     if (block != nullptr && block == parent()->bci2block()->at(bci)) {
       BlockBegin* new_block = new BlockBegin(block->bci());
-      if (PrintInitialBlockList) {
-        tty->print_cr("CFG: cloned block %d (bci %d) as block %d for jsr",
-                      block->block_id(), block->bci(), new_block->block_id());
-      }
+      log_trace(initialblocklist)("CFG: cloned block %d (bci %d) as block %d for jsr",
+                                  block->block_id(), block->bci(), new_block->block_id()); //PIBL
       // copy data from cloned blocked
       new_block->set_depth_first_number(block->depth_first_number());
       if (block->is_set(BlockBegin::parser_loop_header_flag)) new_block->set(BlockBegin::parser_loop_header_flag);
@@ -4021,10 +4022,8 @@ bool GraphBuilder::try_inline_full(ciMethod* callee, bool holder_known, bool ign
     cont = new BlockBegin(next_bci());
     // low number so that continuation gets parsed as early as possible
     cont->set_depth_first_number(0);
-    if (PrintInitialBlockList) {
-      tty->print_cr("CFG: created block %d (bci %d) as continuation for inline at bci %d",
-                    cont->block_id(), cont->bci(), bci());
-    }
+    log_trace(initialblocklist)("CFG: created block %d (bci %d) as continuation for inline at bci %d",
+                                cont->block_id(), cont->bci(), bci()); //PIBL
     continuation_existed = false;
   }
   // Record number of predecessors of continuation block before
