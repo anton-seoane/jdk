@@ -75,7 +75,7 @@ void ValueMap::increase_table_size() {
   ValueMapEntryArray new_entries(new_size, new_size, nullptr);
   int new_entry_count = 0;
 
-  TRACE_VALUE_NUMBERING(tty->print_cr("increasing table size from %d to %d", old_size, new_size));
+  TRACE_VALUE_NUMBERING(tty->print_cr("increasing table size from %d to %d", old_size, new_size))
 
   for (int i = old_size - 1; i >= 0; i--) {
     ValueMapEntry* entry;
@@ -118,7 +118,7 @@ Value ValueMap::find_insert(Value x) {
 
         if (!is_killed(f) && f->is_equal(x)) {
           NOT_PRODUCT(_number_of_hits++);
-          TRACE_VALUE_NUMBERING(tty->print_cr("Value Numbering: %s %c%d equal to %c%d  (size %d, entries %d, nesting-diff %d)", x->name(), x->type()->tchar(), x->id(), f->type()->tchar(), f->id(), size(), entry_count(), nesting() - entry->nesting()));
+          TRACE_VALUE_NUMBERING(tty->print_cr("Value Numbering: %s %c%d equal to %c%d  (size %d, entries %d, nesting-diff %d)", x->name(), x->type()->tchar(), x->id(), f->type()->tchar(), f->id(), size(), entry_count(), nesting() - entry->nesting()))
 
           if (entry->nesting() != nesting() && f->as_Constant() == nullptr) {
             // non-constant values of of another block must be pinned,
@@ -141,7 +141,7 @@ Value ValueMap::find_insert(Value x) {
     _entries.at_put(idx, new ValueMapEntry(hash, x, nesting(), entry_at(idx)));
     _entry_count++;
 
-    TRACE_VALUE_NUMBERING(tty->print_cr("Value Numbering: insert %s %c%d  (size %d, entries %d, nesting %d)", x->name(), x->type()->tchar(), x->id(), size(), entry_count(), nesting()));
+    TRACE_VALUE_NUMBERING(tty->print_cr("Value Numbering: insert %s %c%d  (size %d, entries %d, nesting %d)", x->name(), x->type()->tchar(), x->id(), size(), entry_count(), nesting()))
   }
 
   return x;
@@ -171,7 +171,7 @@ Value ValueMap::find_insert(Value x) {
           prev_entry = entry;                                                            \
         }                                                                                \
                                                                                          \
-        TRACE_VALUE_NUMBERING(tty->print_cr("Value Numbering: killed %s %c%d  (size %d, entries %d, nesting-diff %d)", value->name(), value->type()->tchar(), value->id(), size(), entry_count(), nesting() - entry->nesting()));   \
+        TRACE_VALUE_NUMBERING(tty->print_cr("Value Numbering: killed %s %c%d  (size %d, entries %d, nesting-diff %d)", value->name(), value->type()->tchar(), value->id(), size(), entry_count(), nesting() - entry->nesting()))   \
       } else {                                                                           \
         prev_entry = entry;                                                              \
       }                                                                                  \
@@ -329,8 +329,8 @@ class LoopInvariantCodeMotion : public StackObj  {
 LoopInvariantCodeMotion::LoopInvariantCodeMotion(ShortLoopOptimizer *slo, GlobalValueNumbering* gvn, BlockBegin* loop_header, BlockList* loop_blocks)
   : _gvn(gvn), _short_loop_optimizer(slo), _insertion_point(nullptr), _state(nullptr), _insert_is_pred(false) {
 
-  TRACE_VALUE_NUMBERING(tty->print_cr("using loop invariant code motion loop_header = %d", loop_header->block_id()));
-  TRACE_VALUE_NUMBERING(tty->print_cr("** loop invariant code motion for short loop B%d", loop_header->block_id()));
+  TRACE_VALUE_NUMBERING(tty->print_cr("using loop invariant code motion loop_header = %d", loop_header->block_id()))
+  TRACE_VALUE_NUMBERING(tty->print_cr("** loop invariant code motion for short loop B%d", loop_header->block_id()))
 
   BlockBegin* insertion_block = loop_header->dominator();
   if (insertion_block->number_of_preds() == 0) {
@@ -387,7 +387,7 @@ static bool is_dominated_by_inputs(Instruction* insertion_point, Instruction* cu
 }
 
 void LoopInvariantCodeMotion::process_block(BlockBegin* block) {
-  TRACE_VALUE_NUMBERING(tty->print_cr("processing block B%d", block->block_id()));
+  TRACE_VALUE_NUMBERING(tty->print_cr("processing block B%d", block->block_id()))
 
   Instruction* prev = block;
   Instruction* cur = block->next();
@@ -442,8 +442,8 @@ void LoopInvariantCodeMotion::process_block(BlockBegin* block) {
       //  Clear exception handlers
       cur->set_exception_handlers(nullptr);
 
-      TRACE_VALUE_NUMBERING(tty->print_cr("Instruction %c%d is loop invariant", cur->type()->tchar(), cur->id()));
-      TRACE_VALUE_NUMBERING(cur->print_line());
+      TRACE_VALUE_NUMBERING(tty->print_cr("Instruction %c%d is loop invariant", cur->type()->tchar(), cur->id()))
+      TRACE_VALUE_NUMBERING(cur->print_line())
 
       if (cur->state_before() != nullptr) {
         cur->set_state_before(_state->copy());
@@ -461,7 +461,7 @@ void LoopInvariantCodeMotion::process_block(BlockBegin* block) {
 }
 
 bool ShortLoopOptimizer::process(BlockBegin* loop_header) {
-  TRACE_VALUE_NUMBERING(tty->print_cr("** loop header block"));
+  TRACE_VALUE_NUMBERING(tty->print_cr("** loop header block"))
 
   _too_complicated_loop = false;
   _loop_blocks.clear();
@@ -469,7 +469,7 @@ bool ShortLoopOptimizer::process(BlockBegin* loop_header) {
 
   for (int i = 0; i < _loop_blocks.length(); i++) {
     BlockBegin* block = _loop_blocks.at(i);
-    TRACE_VALUE_NUMBERING(tty->print_cr("processing loop block B%d", block->block_id()));
+    TRACE_VALUE_NUMBERING(tty->print_cr("processing loop block B%d", block->block_id()))
 
     if (block->is_set(BlockBegin::exception_entry_flag)) {
       // this would be too complicated
@@ -510,7 +510,7 @@ bool ShortLoopOptimizer::process(BlockBegin* loop_header) {
     LoopInvariantCodeMotion code_motion(this, _gvn, loop_header, &_loop_blocks);
   }
 
-  TRACE_VALUE_NUMBERING(tty->print_cr("** loop successfully optimized"));
+  TRACE_VALUE_NUMBERING(tty->print_cr("** loop successfully optimized"))
   return true;
 }
 
@@ -521,7 +521,7 @@ GlobalValueNumbering::GlobalValueNumbering(IR* ir)
   , _value_maps(ir->linear_scan_order()->length(), ir->linear_scan_order()->length(), nullptr)
   , _has_substitutions(false)
 {
-  TRACE_VALUE_NUMBERING(tty->print_cr("****** start of global value numbering"));
+  TRACE_VALUE_NUMBERING(tty->print_cr("****** start of global value numbering"))
 
   ShortLoopOptimizer short_loop_optimizer(this);
 
@@ -543,7 +543,7 @@ GlobalValueNumbering::GlobalValueNumbering(IR* ir)
 
   for (int i = 1; i < num_blocks; i++) {
     BlockBegin* block = blocks->at(i);
-    TRACE_VALUE_NUMBERING(tty->print_cr("**** processing block B%d", block->block_id()));
+    TRACE_VALUE_NUMBERING(tty->print_cr("**** processing block B%d", block->block_id()))
 
     int num_preds = block->number_of_preds();
     assert(num_preds > 0, "block must have predecessors");
@@ -589,7 +589,7 @@ GlobalValueNumbering::GlobalValueNumbering(IR* ir)
       set_processed(phi);
     );
 
-    TRACE_VALUE_NUMBERING(tty->print("value map before processing block: "); current_map()->print());
+    TRACE_VALUE_NUMBERING(tty->print("value map before processing block: "); current_map()->print())
 
     // visit all instructions of this block
     for (Value instr = block->next(); instr != nullptr; instr = instr->next()) {
@@ -607,7 +607,7 @@ GlobalValueNumbering::GlobalValueNumbering(IR* ir)
     SubstitutionResolver resolver(ir);
   }
 
-  TRACE_VALUE_NUMBERING(tty->print("****** end of global value numbering. "); ValueMap::print_statistics());
+  TRACE_VALUE_NUMBERING(tty->print("****** end of global value numbering. "); ValueMap::print_statistics())
 }
 
 void GlobalValueNumbering::substitute(Instruction* instr) {
@@ -616,7 +616,7 @@ void GlobalValueNumbering::substitute(Instruction* instr) {
   if (subst != instr) {
     assert(!subst->has_subst(), "can't have a substitution");
 
-    TRACE_VALUE_NUMBERING(tty->print_cr("substitution for %c%d set to %c%d", instr->type()->tchar(), instr->id(), subst->type()->tchar(), subst->id()));
+    TRACE_VALUE_NUMBERING(tty->print_cr("substitution for %c%d set to %c%d", instr->type()->tchar(), instr->id(), subst->type()->tchar(), subst->id()))
     instr->set_subst(subst);
     _has_substitutions = true;
   }
