@@ -211,6 +211,7 @@ class outputStream;
   LOG_TAG(scavenge) \
   LOG_TAG(sealed) \
   LOG_TAG(setting) \
+  LOG_TAG(simplestubs) \
   LOG_TAG(smr) \
   LOG_TAG(stackbarrier) \
   LOG_TAG(stackmap) \

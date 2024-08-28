@@ -3614,6 +3614,7 @@ jint Arguments::parse(const JavaVMInitArgs* initial_cmd_args) {
     if (PrintOptimizeStringConcat) LogConfiguration::configure_stdout(LogLevel::Trace, false, LOG_TAGS(optimizestringconcat));
     if (TraceReduceAllocationMerges) LogConfiguration::configure_stdout(LogLevel::Trace, false, LOG_TAGS(reduceallocationmerges));
     if (PrintIRDuringConstruction) LogConfiguration::configure_stdout(LogLevel::Trace, false, LOG_TAGS(irduringconstruction));
+    if (PrintSimpleStubs) LogConfiguration::configure_stdout(LogLevel::Trace, false, LOG_TAGS(simplestubs));
   #endif
   #ifdef ASSERT
     if (TraceMergeStores) LogConfiguration::configure_stdout(LogLevel::Trace, false, LOG_TAGS(mergestores));

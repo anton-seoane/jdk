@@ -268,12 +268,14 @@ void Runtime1::initialize(BufferBlob* blob) {
   for (int id = 0; id < number_of_ids; id++) generate_blob_for(blob, (StubID)id);
   // printing
 #ifndef PRODUCT
-  if (PrintSimpleStubs) {
+  if (log_is_enabled(Trace, simplestubs)) { //PSS
     ResourceMark rm;
+    LogMessage(simplestubs) msg;
+    NonInterleavingLogStream st(LogLevelType::Trace, msg);
     for (int id = 0; id < number_of_ids; id++) {
-      _blobs[id]->print();
+      _blobs[id]->print_on(&st);
       if (_blobs[id]->oop_maps() != nullptr) {
-        _blobs[id]->oop_maps()->print();
+        _blobs[id]->oop_maps()->print_on(&st);
       }
     }
   }
