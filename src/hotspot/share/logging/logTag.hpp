@@ -163,6 +163,7 @@ class outputStream;
   LOG_TAG(oopstorage) \
   LOG_TAG(optimizefill) \
   LOG_TAG(optimizeptrcompare) \
+  LOG_TAG(optimizestringconcat) \
   LOG_TAG(opto) \
   LOG_TAG(optoparse) \
   LOG_TAG(os) \
@@ -195,6 +196,7 @@ class outputStream;
   LOG_TAG(rangelimitcheck) \
   LOG_TAG(record) \
   LOG_TAG(redefine) \
+  LOG_TAG(reduceallocationmerges) \
   LOG_TAG(ref) \
   LOG_TAG(refine) \
   LOG_TAG(region) \

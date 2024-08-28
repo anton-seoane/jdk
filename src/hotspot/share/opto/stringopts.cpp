@@ -34,6 +34,7 @@
 #include "opto/stringopts.hpp"
 #include "runtime/atomic.hpp"
 #include "runtime/stubRoutines.hpp"
+#include "logging/logStream.hpp"
 
 #define __ kit.
 
@@ -408,6 +409,16 @@ Node_List PhaseStringOpts::collect_toString_calls() {
   return string_calls;
 }
 
+void PhaseStringOpts::optimize_string_concat_ul(const char* line, const JVMState* jvms) { //POSC
+  if (!log_is_enabled(Trace, optimizestringconcat)) return;
+  if (line == nullptr || jvms == nullptr) return;
+
+  LogMessage(optimizestringconcat) msg;
+  NonInterleavingLogStream st(LogLevelType::Trace, msg);
+  st.print("%s", line);
+  jvms->dump_spec(&st);
+}
+
 // Recognize a fluent-chain of StringBuilder/Buffer. They are either explicit usages
 // of them or the legacy bytecodes of string concatenation prior to JEP-280. eg.
 //
@@ -447,10 +458,7 @@ StringConcat* PhaseStringOpts::build_candidate(CallStaticJavaNode* call) {
     return nullptr;
   }
 #ifndef PRODUCT
-  if (PrintOptimizeStringConcat) {
-    tty->print("considering toString call in ");
-    call->jvms()->dump_spec(tty); tty->cr();
-  }
+  optimize_string_concat_ul("considering toString call in ", call->jvms()); //POSC
 #endif
 
   StringConcat* sc = new StringConcat(this, call);
@@ -474,10 +482,7 @@ StringConcat* PhaseStringOpts::build_candidate(CallStaticJavaNode* call) {
       if (result == nullptr || !result->is_CheckCastPP() || alloc->in(TypeFunc::Memory)->is_top()) {
         // strange looking allocation
 #ifndef PRODUCT
-        if (PrintOptimizeStringConcat) {
-          tty->print("giving up because allocation looks strange ");
-          alloc->jvms()->dump_spec(tty); tty->cr();
-        }
+        optimize_string_concat_ul("giving up because allocation looks strange ", alloc->jvms()); //POSC
 #endif
         break;
       }
@@ -501,11 +506,7 @@ StringConcat* PhaseStringOpts::build_candidate(CallStaticJavaNode* call) {
               if (type == TypePtr::NULL_PTR) {
                 // StringBuilder(null) throws exception.
 #ifndef PRODUCT
-                if (PrintOptimizeStringConcat) {
-                  tty->print("giving up because StringBuilder(null) throws exception");
-                  alloc->jvms()->dump_spec(tty);
-                  tty->cr();
-                }
+                optimize_string_concat_ul("giving up because StringBuilder(null) throws exception", alloc->jvms()); //POSC
 #endif
                 return nullptr;
               }
@@ -520,12 +521,8 @@ StringConcat* PhaseStringOpts::build_candidate(CallStaticJavaNode* call) {
                 // Initial capacity argument is always negative in which case StringBuilder(int) throws
                 // a NegativeArraySizeException. Bail out from string opts.
 #ifndef PRODUCT
-                if (PrintOptimizeStringConcat) {
-                  tty->print("giving up because a negative argument is passed to StringBuilder(int) which "
-                             "throws a NegativeArraySizeException");
-                  alloc->jvms()->dump_spec(tty);
-                  tty->cr();
-                }
+                optimize_string_concat_ul("giving up because a negative argument is passed to StringBuilder(int) which "
+                                          "throws a NegativeArraySizeException", alloc->jvms()); //POSC
 #endif
                 return nullptr;
               } else if (type->_lo < 0) {
@@ -538,9 +535,7 @@ StringConcat* PhaseStringOpts::build_candidate(CallStaticJavaNode* call) {
             constructor = use;
           } else {
 #ifndef PRODUCT
-            if (PrintOptimizeStringConcat) {
-              tty->print("unexpected constructor signature: %s", sig->as_utf8());
-            }
+            log_trace(optimizestringconcat)("unexpected constructor signature: %s", sig->as_utf8()); //POSC
 #endif
           }
           break;
@@ -549,10 +544,7 @@ StringConcat* PhaseStringOpts::build_candidate(CallStaticJavaNode* call) {
       if (constructor == nullptr) {
         // couldn't find constructor
 #ifndef PRODUCT
-        if (PrintOptimizeStringConcat) {
-          tty->print("giving up because couldn't find constructor ");
-          alloc->jvms()->dump_spec(tty); tty->cr();
-        }
+        optimize_string_concat_ul("giving up because couldn't find constructor ", alloc->jvms()); //POSC
 #endif
         break;
       }
@@ -581,10 +573,7 @@ StringConcat* PhaseStringOpts::build_candidate(CallStaticJavaNode* call) {
       Node* arg = cnode->in(TypeFunc::Parms + 1);
       if (arg == nullptr || arg->is_top()) {
 #ifndef PRODUCT
-        if (PrintOptimizeStringConcat) {
-          tty->print("giving up because the call is effectively dead");
-          cnode->jvms()->dump_spec(tty); tty->cr();
-        }
+        optimize_string_concat_ul("giving up because the call is effectively dead", cnode->jvms()); //POSC
 #endif
         break;
       }
@@ -618,10 +607,13 @@ StringConcat* PhaseStringOpts::build_candidate(CallStaticJavaNode* call) {
     } else {
       // some unhandled signature
 #ifndef PRODUCT
-      if (PrintOptimizeStringConcat) {
-        tty->print("giving up because encountered unexpected signature ");
-        cnode->tf()->dump(); tty->cr();
-        cnode->in(TypeFunc::Parms + 1)->dump();
+      if (log_is_enabled(Trace, optimizestringconcat)) { //POSC
+        LogMessage(optimizestringconcat) msg;
+        NonInterleavingLogStream st(LogLevelType::Trace, msg);
+        st.print("giving up because encountered unexpected signature ");
+        cnode->tf()->dump_on(&st);
+        tty->cr();
+        cnode->in(TypeFunc::Parms + 1)->dump(&st);
       }
 #endif
       break;
@@ -668,18 +660,14 @@ PhaseStringOpts::PhaseStringOpts(PhaseGVN* gvn):
           StringConcat* other = concats.at(o);
           if (other->end() == csj) {
 #ifndef PRODUCT
-            if (PrintOptimizeStringConcat) {
-              tty->print_cr("considering stacked concats");
-            }
+            log_trace(optimizestringconcat)("considering stacked concats"); //POSC
 #endif
 
             StringConcat* merged = sc->merge(other, arg);
             if (merged->validate_control_flow() && merged->validate_mem_flow()) {
 #ifndef PRODUCT
               Atomic::inc(&_stropts_merged);
-              if (PrintOptimizeStringConcat) {
-                tty->print_cr("stacking would succeed");
-              }
+              log_trace(optimizestringconcat)("stacking would succeed"); //POSC
 #endif
               if (c < o) {
                 concats.remove_at(o);
@@ -691,9 +679,7 @@ PhaseStringOpts::PhaseStringOpts(PhaseGVN* gvn):
               goto restart;
             } else {
 #ifndef PRODUCT
-              if (PrintOptimizeStringConcat) {
-                tty->print_cr("stacking would fail");
-              }
+              log_trace(optimizestringconcat)("stacking would fail"); //POSC
 #endif
             }
           }
@@ -785,10 +771,13 @@ bool StringConcat::validate_mem_flow() {
           for (uint i = 1; i < mem->req(); i++) {
             if (i != Compile::AliasIdxBot && mem->in(i) != C->top()) {
 #ifndef PRODUCT
-              if (PrintOptimizeStringConcat) {
-                tty->print("fusion has incorrect memory flow (side effects) for ");
-                _begin->jvms()->dump_spec(tty); tty->cr();
-                path.dump();
+              if (log_is_enabled(Trace, optimizestringconcat)) { //POSC
+                LogMessage(optimizestringconcat) msg;
+                NonInterleavingLogStream st(LogLevelType::Trace, msg);
+                st.print("fusion has incorrect memory flow (side effects) for ");
+                _begin->jvms()->dump_spec(&st);
+                st.cr();
+                path.dump(&st);
               }
 #endif
               return false;
@@ -805,10 +794,13 @@ bool StringConcat::validate_mem_flow() {
           NOT_PRODUCT(path.push(prev);)
           if (!prev->is_Call() || !_control.contains(prev)) {
 #ifndef PRODUCT
-            if (PrintOptimizeStringConcat) {
-              tty->print("fusion has incorrect memory flow (unknown call) for ");
-              _begin->jvms()->dump_spec(tty); tty->cr();
-              path.dump();
+            if (log_is_enabled(Trace, optimizestringconcat)) { //POSC
+              LogMessage(optimizestringconcat) msg;
+              NonInterleavingLogStream st(LogLevelType::Trace, msg);
+              st.print("fusion has incorrect memory flow (unknown call) for ");
+              _begin->jvms()->dump_spec(&st);
+              st.cr();
+              path.dump(&st);
             }
 #endif
             return false;
@@ -816,10 +808,13 @@ bool StringConcat::validate_mem_flow() {
         } else {
           assert(mem->is_Store() || mem->is_LoadStore(), "unexpected node type: %s", mem->Name());
 #ifndef PRODUCT
-          if (PrintOptimizeStringConcat) {
-            tty->print("fusion has incorrect memory flow (unexpected source) for ");
-            _begin->jvms()->dump_spec(tty); tty->cr();
-            path.dump();
+          if (log_is_enabled(Trace, optimizestringconcat)) { //POSC
+            LogMessage(optimizestringconcat) msg;
+            NonInterleavingLogStream st(LogLevelType::Trace, msg);
+            st.print("fusion has incorrect memory flow (unexpected source) for ");
+            _begin->jvms()->dump_spec(&st);
+            st.cr();
+            path.dump(&st);
           }
 #endif
           return false;
@@ -886,11 +881,7 @@ bool StringConcat::validate_mem_flow() {
   }
 
 #ifndef PRODUCT
-  if (PrintOptimizeStringConcat) {
-    tty->print("fusion has correct memory flow for ");
-    _begin->jvms()->dump_spec(tty); tty->cr();
-    tty->cr();
-  }
+  PhaseStringOpts::optimize_string_concat_ul("fusion has correct memory flow for ", _begin->jvms()); //POSC
 #endif
   return true;
 }
@@ -956,10 +947,12 @@ bool StringConcat::validate_control_flow() {
 
       if (b == nullptr) {
 #ifndef PRODUCT
-        if (PrintOptimizeStringConcat) {
-          tty->print_cr("unexpected input to IfNode");
-          iff->in(1)->dump();
-          tty->cr();
+        if (log_is_enabled(Trace, optimizestringconcat)) { //POSC
+          LogMessage(optimizestringconcat) msg;
+          NonInterleavingLogStream st(LogLevelType::Trace, msg);
+          st.print_cr("unexpected input to IfNode");
+          iff->in(1)->dump(&st);
+          st.cr();
         }
 #endif
         fail = true;
@@ -1004,13 +997,14 @@ bool StringConcat::validate_control_flow() {
 
 #ifndef PRODUCT
       // Some unexpected control flow we don't know how to handle.
-      if (PrintOptimizeStringConcat) {
-        tty->print_cr("failing with unknown test");
-        b->dump();
-        cmp->dump();
-        v1->dump();
-        v2->dump();
-        tty->cr();
+      if (log_is_enabled(Trace, optimizestringconcat)) { //POSC
+        LogMessage(optimizestringconcat) msg;
+        NonInterleavingLogStream st(LogLevelType::Trace, msg);
+        st.print_cr("failing with unknown test");
+        b->dump(&st);
+        cmp->dump(&st);
+        v1->dump(&st);
+        v2->dump(&st);
       }
 #endif
       fail = true;
@@ -1021,10 +1015,12 @@ bool StringConcat::validate_control_flow() {
         Node* use = iter.get();
         if (!use->is_CFG() && !use->is_CheckCastPP() && !use->is_Load()) {
 #ifndef PRODUCT
-          if (PrintOptimizeStringConcat) {
-            tty->print_cr("unexpected control use of Initialize");
-            ptr->in(0)->dump(); // Initialize node
-            use->dump(1);
+          if (log_is_enabled(Trace, optimizestringconcat)) { //POSC
+            LogMessage(optimizestringconcat) msg;
+            NonInterleavingLogStream st(LogLevelType::Trace, msg);
+            st.print_cr("unexpected control use of Initialize");
+            ptr->in(0)->dump(&st); // Initialize node
+            use->dump(1, &st);
           }
 #endif
           fail = true;
@@ -1053,10 +1049,12 @@ bool StringConcat::validate_control_flow() {
         continue;
       }
 #ifndef PRODUCT
-      if (PrintOptimizeStringConcat) {
-        tty->print_cr("fusion would fail for region");
-        _begin->dump();
-        ptr->dump(2);
+      if (log_is_enabled(Trace, optimizestringconcat)) { //POSC
+        LogMessage(optimizestringconcat) msg;
+        NonInterleavingLogStream st(LogLevelType::Trace, msg);
+        st.print_cr("fusion would fail for region");
+        _begin->dump(&st);
+        ptr->dump(2, &st);
       }
 #endif
       fail = true;
@@ -1065,25 +1063,29 @@ bool StringConcat::validate_control_flow() {
       // other unknown control
       if (!fail) {
 #ifndef PRODUCT
-        if (PrintOptimizeStringConcat) {
-          tty->print_cr("fusion would fail for");
-          _begin->dump();
+        if (log_is_enabled(Trace, optimizestringconcat)) { //POSC
+          LogMessage(optimizestringconcat) msg;
+          NonInterleavingLogStream st(LogLevelType::Trace, msg);
+          st.print_cr("fusion would fail for");
+          _begin->dump(&st);
         }
 #endif
         fail = true;
       }
 #ifndef PRODUCT
-      if (PrintOptimizeStringConcat) {
-        ptr->dump();
+      if (log_is_enabled(Trace, optimizestringconcat)) { //POSC
+        LogMessage(optimizestringconcat) msg;
+        NonInterleavingLogStream st(LogLevelType::Trace, msg);
+        ptr->dump(&st);
       }
 #endif
       ptr = ptr->in(0);
     }
   }
 #ifndef PRODUCT
-  if (PrintOptimizeStringConcat && fail) {
-    tty->cr();
-  }
+  // if (PrintOptimizeStringConcat && fail) { //POSC not needed
+  //   tty->cr();
+  // }
 #endif
   if (fail) return !fail;
 
@@ -1129,13 +1131,15 @@ bool StringConcat::validate_control_flow() {
         continue;
       }
 #ifndef PRODUCT
-      if (PrintOptimizeStringConcat) {
+      if (log_is_enabled(Trace, optimizestringconcat)) { //POSC
+        LogMessage(optimizestringconcat) msg;
+        NonInterleavingLogStream st(LogLevelType::Trace, msg);
         if (result != last_result) {
           last_result = result;
-          tty->print_cr("extra uses for result:");
-          last_result->dump();
+          st.print_cr("extra uses for result:");
+          last_result->dump(&st);
         }
-        use->dump();
+        use->dump(&st);
       }
 #endif
       fail = true;
@@ -1144,16 +1148,17 @@ bool StringConcat::validate_control_flow() {
   }
 
 #ifndef PRODUCT
-  if (PrintOptimizeStringConcat && !fail) {
-    ttyLocker ttyl;
-    tty->cr();
-    tty->print("fusion has correct control flow (%d %d) for ", null_check_count, _uncommon_traps.size());
-    _begin->jvms()->dump_spec(tty); tty->cr();
+  if (log_is_enabled(Trace, optimizestringconcat) && !fail) {
+    LogMessage(optimizestringconcat) msg;
+    NonInterleavingLogStream st(LogLevelType::Trace, msg);
+    st.cr();
+    st.print("fusion has correct control flow (%d %d) for ", null_check_count, _uncommon_traps.size());
+    _begin->jvms()->dump_spec(&st);
+    st.cr();
     for (int i = 0; i < num_arguments(); i++) {
-      argument(i)->dump();
+      argument(i)->dump(&st);
     }
-    _control.dump();
-    tty->cr();
+    _control.dump(&st);
   }
 #endif
 

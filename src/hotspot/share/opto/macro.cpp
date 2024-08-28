@@ -687,9 +687,11 @@ bool PhaseMacroExpand::can_eliminate_allocation(PhaseIterGVN* igvn, AllocateNode
     }
   }
 
-  if (TraceReduceAllocationMerges && !can_eliminate && reduce_merge_precheck) {
-    tty->print_cr("\tCan't eliminate allocation because '%s': ", fail_eliminate != nullptr ? fail_eliminate : "");
-    DEBUG_ONLY(if (disq_node != nullptr) disq_node->dump();)
+  if (log_is_enabled(Trace, reduceallocationmerges) && !can_eliminate && reduce_merge_precheck) { //TRAM
+    LogMessage(reduceallocationmerges) msg;
+    NonInterleavingLogStream st(LogLevelType::Trace, msg);
+    st.print_cr("\tCan't eliminate allocation because '%s': ", fail_eliminate != nullptr ? fail_eliminate : "");
+    DEBUG_ONLY(if (disq_node != nullptr) disq_node->dump(&st);)
   }
 #endif
   return can_eliminate;

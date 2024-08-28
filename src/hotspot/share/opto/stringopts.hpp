@@ -111,6 +111,7 @@ class PhaseStringOpts : public Phase {
 #ifndef PRODUCT
   static void print_statistics();
  private:
+  static void optimize_string_concat_ul(const char* line, const JVMState* jvms);
   static uint _stropts_replaced;
   static uint _stropts_merged;
   static uint _stropts_total;
