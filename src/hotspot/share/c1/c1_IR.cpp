@@ -126,7 +126,7 @@ bool XHandler::equals(XHandler* other) const {
 // Implementation of IRScope
 BlockBegin* IRScope::build_graph(Compilation* compilation, int osr_bci) {
   GraphBuilder gm(compilation, this);
-  NOT_PRODUCT(if (PrintValueNumbering && Verbose) gm.print_stats());
+  NOT_PRODUCT(if (log_is_enabled(Trace, valuenumbering) && Verbose) gm.print_stats()); //PVN
   if (compilation->bailed_out()) return nullptr;
   return gm.start();
 }
