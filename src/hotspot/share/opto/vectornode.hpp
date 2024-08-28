@@ -135,7 +135,7 @@ class VectorNode : public TypeNode {
   static bool is_scalar_op_that_returns_int_but_vector_op_returns_long(int opc);
 
   static void trace_new_vector(Node* n, const char* context) {
-#ifndef ASSERT
+#ifdef ASSERT
     if (log_is_enabled(Trace, newvectors)) { //TNV
       LogMessage(newvectors) msg;
       NonInterleavingLogStream st(LogLevelType::Trace, msg);
