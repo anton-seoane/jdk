@@ -1188,7 +1188,7 @@ public:
   // Build and verify the loop tree without modifying the graph.  This
   // is useful to verify that all inputs properly dominate their uses.
   static void verify(PhaseIterGVN& igvn) {
-#ifndef ASSERT
+#ifdef ASSERT
     ResourceMark rm;
     Compile::TracePhase tp("idealLoopVerify", &timers[_t_idealLoopVerify]);
     PhaseIdealLoop v(igvn);
