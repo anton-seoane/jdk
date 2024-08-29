@@ -76,6 +76,7 @@ class outputStream;
   LOG_TAG(dependencies) \
   LOG_TAG(derivedpointers) \
   LOG_TAG(director) \
+  LOG_TAG(dominators) \
   NOT_PRODUCT(LOG_TAG(downcall)) \
   LOG_TAG(dump) \
   LOG_TAG(dynamic) \

@@ -3620,6 +3620,7 @@ jint Arguments::parse(const JavaVMInitArgs* initial_cmd_args) {
     if (PrintSimpleStubs) LogConfiguration::configure_stdout(LogLevel::Trace, false, LOG_TAGS(simplestubs));
     if (PrintValueNumbering) LogConfiguration::configure_stdout(LogLevel::Trace, false, LOG_TAGS(valuenumbering));
     if (PrintOptoPeephole) LogConfiguration::configure_stdout(LogLevel::Trace, false, LOG_TAGS(optopeephole));
+    if (PrintDominators) LogConfiguration::configure_stdout(LogLevel::Trace, false, LOG_TAGS(dominators));
   #endif
   #ifdef ASSERT
     if (TraceMergeStores) LogConfiguration::configure_stdout(LogLevel::Trace, false, LOG_TAGS(mergestores));

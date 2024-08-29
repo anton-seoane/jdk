@@ -30,6 +30,7 @@
 #include "opto/machnode.hpp"
 #include "opto/phaseX.hpp"
 #include "opto/rootnode.hpp"
+#include "logging/logStream.hpp"
 
 // Portions of code courtesy of Clifford Click
 
@@ -377,7 +378,7 @@ struct NTarjan {
   NTarjan *EVAL(void);
   void LINK( NTarjan *w, NTarjan *ntarjan0 );
 #ifndef PRODUCT
-  void dump(int offset) const;
+  void dump(int offset, outputStream* out = tty) const;
 #endif
 };
 
@@ -521,11 +522,13 @@ void PhaseIdealLoop::Dominators() {
   _dom_depth[C->top()->_idx] = 1;
 
   // Debug Print of Dominator tree
-  if( PrintDominators ) {
 #ifndef PRODUCT
-    w->dump(0);
-#endif
+  if (log_is_enabled(Trace, dominators)) { //PD
+    LogMessage(dominators) msg;
+    NonInterleavingLogStream st(LogLevelType::Trace, msg);
+    w->dump(0, &st);
   }
+#endif
 }
 
 // Perform DFS search.  Setup 'vertex' as DFS to vertex mapping.  Setup
@@ -638,33 +641,33 @@ void NTarjan::setdepth( uint stack_size, uint *dom_depth ) {
 }
 
 #ifndef PRODUCT
-void NTarjan::dump(int offset) const {
+void NTarjan::dump(int offset, outputStream* out) const {
   // Dump the data from this node
   int i;
   for(i = offset; i >0; i--)  // Use indenting for tree structure
-    tty->print("  ");
-  tty->print("Dominator Node: ");
-  _control->dump();               // Control node for this dom node
-  tty->print("\n");
+    out->print("  ");
+  out->print("Dominator Node: ");
+  _control->dump(out);               // Control node for this dom node
+  out->cr();
   for(i = offset; i >0; i--)      // Use indenting for tree structure
-    tty->print("  ");
-  tty->print("semi:%d, size:%d\n",_semi, _size);
+    out->print("  ");
+  out->print("semi:%d, size:%d\n", _semi, _size);
   for(i = offset; i >0; i--)      // Use indenting for tree structure
-    tty->print("  ");
-  tty->print("DFS Parent: ");
+    out->print("  ");
+  out->print("DFS Parent: ");
   if(_parent != nullptr)
-    _parent->_control->dump();    // Parent in DFS
-  tty->print("\n");
+    _parent->_control->dump(out);    // Parent in DFS
+  out->cr();
   for(i = offset; i >0; i--)      // Use indenting for tree structure
-    tty->print("  ");
-  tty->print("Dom Parent: ");
+    out->print("  ");
+  out->print("Dom Parent: ");
   if(_dom != nullptr)
-    _dom->_control->dump();       // Parent in Dominator Tree
-  tty->print("\n");
+    _dom->_control->dump(out);       // Parent in Dominator Tree
+  out->cr();
 
   // Recurse over remaining tree
-  if( _dom_child ) _dom_child->dump(offset+2);   // Children in dominator tree
-  if( _dom_next  ) _dom_next ->dump(offset  );   // Siblings in dominator tree
+  if( _dom_child ) _dom_child->dump(offset+2, out);   // Children in dominator tree
+  if( _dom_next  ) _dom_next ->dump(offset  , out);   // Siblings in dominator tree
 
 }
 #endif
