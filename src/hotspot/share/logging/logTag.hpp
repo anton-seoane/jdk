@@ -41,6 +41,7 @@ class outputStream;
   LOG_TAG(arguments) \
   LOG_TAG(array) \
   LOG_TAG(attach) \
+  LOG_TAG(bailouts) \
   LOG_TAG(barrier) \
   LOG_TAG(blockelimination) \
   LOG_TAG(blocks) \
@@ -123,6 +124,7 @@ class outputStream;
   LOG_TAG(lambda) \
   LOG_TAG(library) \
   LOG_TAG(link) \
+  LOG_TAG(lir) \
   LOG_TAG(liveness) \
   LOG_TAG(livenessgen) \
   LOG_TAG(livenessquery) \
@@ -170,6 +172,7 @@ class outputStream;
   LOG_TAG(optimizestringconcat) \
   LOG_TAG(opto) \
   LOG_TAG(optoparse) \
+  LOG_TAG(optopeephole) \
   LOG_TAG(os) \
   LOG_TAG(owner) \
   LOG_TAG(page) \

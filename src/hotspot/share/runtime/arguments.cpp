@@ -3595,6 +3595,8 @@ jint Arguments::parse(const JavaVMInitArgs* initial_cmd_args) {
   if (PrintBlockElimination) LogConfiguration::configure_stdout(LogLevel::Trace, false, LOG_TAGS(blockelimination));
   if (TraceFrequencyInlining) LogConfiguration::configure_stdout(LogLevel::Trace, false, LOG_TAGS(frequencyinlining));
   if (PrintInitialBlockList) LogConfiguration::configure_stdout(LogLevel::Trace, false, LOG_TAGS(initialblocklist));
+  if (PrintBailouts) LogConfiguration::configure_stdout(LogLevel::Trace, false, LOG_TAGS(bailouts));
+  if (PrintLIR) LogConfiguration::configure_stdout(LogLevel::Trace, false, LOG_TAGS(lir));
   #ifndef ASSERT
     if (TraceNewVectors) LogConfiguration::configure_stdout(LogLevel::Trace, false, LOG_TAGS(newvectors));
   #endif
@@ -3617,6 +3619,7 @@ jint Arguments::parse(const JavaVMInitArgs* initial_cmd_args) {
     if (PrintIRDuringConstruction) LogConfiguration::configure_stdout(LogLevel::Trace, false, LOG_TAGS(irduringconstruction));
     if (PrintSimpleStubs) LogConfiguration::configure_stdout(LogLevel::Trace, false, LOG_TAGS(simplestubs));
     if (PrintValueNumbering) LogConfiguration::configure_stdout(LogLevel::Trace, false, LOG_TAGS(valuenumbering));
+    if (PrintOptoPeephole) LogConfiguration::configure_stdout(LogLevel::Trace, false, LOG_TAGS(optopeephole));
   #endif
   #ifdef ASSERT
     if (TraceMergeStores) LogConfiguration::configure_stdout(LogLevel::Trace, false, LOG_TAGS(mergestores));

@@ -2246,20 +2246,23 @@ void PhasePeephole::do_transform() {
           int result = m->peephole(block, instruction_index, &_cfg, _regalloc);
           if( result != -1 ) {
 #ifndef PRODUCT
-            if( PrintOptoPeephole ) {
+            if (log_is_enabled(Trace, optopeephole)) { //POP
+              LogMessage(optopeephole) msg;
+              NonInterleavingLogStream st(LogLevelType::Trace, msg);
               // Print method, first time only
-              if( C->method() && method_name_not_printed ) {
-                C->method()->print_short_name(); tty->cr();
+              if (C->method() && method_name_not_printed) {
+                C->method()->print_short_name(&st);
+                st.cr();
                 method_name_not_printed = false;
               }
               // Print this block
               if( Verbose && block_not_printed) {
-                tty->print_cr("in block");
-                block->dump();
+                st.print_cr("in block");
+                block->dump(&st);
                 block_not_printed = false;
               }
               // Print the peephole number
-              tty->print_cr("peephole number: %d", result);
+              st.print_cr("peephole number: %d", result);
             }
             inc_peepholes();
 #endif

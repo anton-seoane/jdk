@@ -1519,7 +1519,7 @@ void LIR_List::cas_int(LIR_Opr addr, LIR_Opr cmp_value, LIR_Opr new_value,
 
 #ifdef PRODUCT
 
-void print_LIR(BlockList* blocks) {
+void print_LIR(BlockList* blocks, outputStream* out) {
 }
 
 #else
@@ -1619,65 +1619,67 @@ void LIR_Address::print_value_on(outputStream* out) const {
 
 // debug output of block header without InstructionPrinter
 //       (because phi functions are not necessary for LIR)
-static void print_block(BlockBegin* x) {
+static void print_block(BlockBegin* x, outputStream* out = tty) {
   // print block id
   BlockEnd* end = x->end();
-  tty->print("B%d ", x->block_id());
+  out->print("B%d ", x->block_id());
 
   // print flags
-  if (x->is_set(BlockBegin::std_entry_flag))               tty->print("std ");
-  if (x->is_set(BlockBegin::osr_entry_flag))               tty->print("osr ");
-  if (x->is_set(BlockBegin::exception_entry_flag))         tty->print("ex ");
-  if (x->is_set(BlockBegin::subroutine_entry_flag))        tty->print("jsr ");
-  if (x->is_set(BlockBegin::backward_branch_target_flag))  tty->print("bb ");
-  if (x->is_set(BlockBegin::linear_scan_loop_header_flag)) tty->print("lh ");
-  if (x->is_set(BlockBegin::linear_scan_loop_end_flag))    tty->print("le ");
+  if (x->is_set(BlockBegin::std_entry_flag))               out->print("std ");
+  if (x->is_set(BlockBegin::osr_entry_flag))               out->print("osr ");
+  if (x->is_set(BlockBegin::exception_entry_flag))         out->print("ex ");
+  if (x->is_set(BlockBegin::subroutine_entry_flag))        out->print("jsr ");
+  if (x->is_set(BlockBegin::backward_branch_target_flag))  out->print("bb ");
+  if (x->is_set(BlockBegin::linear_scan_loop_header_flag)) out->print("lh ");
+  if (x->is_set(BlockBegin::linear_scan_loop_end_flag))    out->print("le ");
 
   // print block bci range
-  tty->print("[%d, %d] ", x->bci(), (end == nullptr ? -1 : end->printable_bci()));
+  out->print("[%d, %d] ", x->bci(), (end == nullptr ? -1 : end->printable_bci()));
 
   // print predecessors and successors
   if (x->number_of_preds() > 0) {
-    tty->print("preds: ");
+    out->print("preds: ");
     for (int i = 0; i < x->number_of_preds(); i ++) {
-      tty->print("B%d ", x->pred_at(i)->block_id());
+      out->print("B%d ", x->pred_at(i)->block_id());
     }
   }
 
   if (end != nullptr && x->number_of_sux() > 0) {
-    tty->print("sux: ");
+    out->print("sux: ");
     for (int i = 0; i < x->number_of_sux(); i ++) {
-      tty->print("B%d ", x->sux_at(i)->block_id());
+      out->print("B%d ", x->sux_at(i)->block_id());
     }
   }
 
   // print exception handlers
   if (x->number_of_exception_handlers() > 0) {
-    tty->print("xhandler: ");
+    out->print("xhandler: ");
     for (int i = 0; i < x->number_of_exception_handlers();  i++) {
-      tty->print("B%d ", x->exception_handler_at(i)->block_id());
+      out->print("B%d ", x->exception_handler_at(i)->block_id());
     }
   }
 
-  tty->cr();
+  out->cr();
 }
 
-void print_LIR(BlockList* blocks) {
-  tty->print_cr("LIR:");
+void print_LIR(BlockList* blocks, outputStream* out) { //LIR
+  out->print_cr("LIR:");
   int i;
   for (i = 0; i < blocks->length(); i++) {
     BlockBegin* bb = blocks->at(i);
-    print_block(bb);
-    tty->print("__id_Instruction___________________________________________"); tty->cr();
-    bb->lir()->print_instructions();
+    print_block(bb, out);
+    out->print("__id_Instruction___________________________________________");
+    out->cr();
+    bb->lir()->print_instructions(out);
   }
 }
 
-void LIR_List::print_instructions() {
+void LIR_List::print_instructions(outputStream* out) {
   for (int i = 0; i < _operations.length(); i++) {
-    _operations.at(i)->print(); tty->cr();
+    _operations.at(i)->print_on(out);
+    out->cr();
   }
-  tty->cr();
+  out->cr();
 }
 
 // LIR_Ops printing routines

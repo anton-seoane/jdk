@@ -2158,7 +2158,7 @@ class LIR_List: public CompilationResourceObj {
   void remove_at(int i)                          { _operations.remove_at(i); }
 
   //---------- printing -------------
-  void print_instructions() PRODUCT_RETURN;
+  void print_instructions(outputStream* out = tty) PRODUCT_RETURN;
 
 
   //---------- instructions -------------
@@ -2385,7 +2385,7 @@ class LIR_List: public CompilationResourceObj {
 #endif
 };
 
-void print_LIR(BlockList* blocks);
+void print_LIR(BlockList* blocks, outputStream* out = tty);
 
 class LIR_InsertionBuffer : public CompilationResourceObj {
  private:

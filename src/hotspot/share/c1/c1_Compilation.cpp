@@ -43,6 +43,7 @@
 #include "memory/resourceArea.hpp"
 #include "runtime/sharedRuntime.hpp"
 #include "runtime/timerTrace.hpp"
+#include "logging/logStream.hpp"
 
 typedef enum {
   _t_compile,
@@ -279,8 +280,10 @@ void Compilation::emit_lir() {
   }
 
   if (BailoutAfterLIR) {
-    if (PrintLIR && !bailed_out()) {
-      print_LIR(hir()->code());
+    if (log_is_enabled(Trace, lir) && !bailed_out()) { //LIR
+      LogMessage(lir) msg;
+      NonInterleavingLogStream st(LogLevelType::Trace, msg);
+      print_LIR(hir()->code(), &st);
     }
     bailout("Bailing out because of -XX:+BailoutAfterLIR");
   }
@@ -651,7 +654,8 @@ void Compilation::bailout(const char* msg) {
   assert(msg != nullptr, "bailout message must exist");
   if (!bailed_out()) {
     // keep first bailout message
-    if (PrintCompilation || PrintBailouts) tty->print_cr("compilation bailout: %s", msg);
+    if (PrintCompilation) tty->print_cr("compilation bailout: %s", msg);
+    else log_trace(bailouts)("compilation bailout: %s", msg); //PB
     _bailout_msg = msg;
     if (CaptureBailoutInformation) {
       _first_failure_details = new CompilationFailureInfo(msg);

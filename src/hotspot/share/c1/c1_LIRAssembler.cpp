@@ -35,6 +35,7 @@
 #include "compiler/oopMap.hpp"
 #include "runtime/os.hpp"
 #include "runtime/vm_version.hpp"
+#include "logging/logStream.hpp"
 
 void LIR_Assembler::patching_epilog(PatchingStub* patch, LIR_PatchCode patch_code, Register obj, CodeEmitInfo* info) {
   // We must have enough patching space so that call can be inserted.
@@ -219,8 +220,10 @@ void LIR_Assembler::emit_exception_entries(ExceptionInfoList* info_list) {
 
 
 void LIR_Assembler::emit_code(BlockList* hir) {
-  if (PrintLIR) {
-    print_LIR(hir);
+  if (log_is_enabled(Trace, lir)) { //LIR
+    LogMessage(lir) msg;
+    NonInterleavingLogStream st(LogLevelType::Trace, msg);
+    print_LIR(hir, &st);
   }
 
   int n = hir->length();
