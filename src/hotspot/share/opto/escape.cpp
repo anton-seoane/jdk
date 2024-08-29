@@ -361,8 +361,10 @@ bool ConnectionGraph::compute_escape() {
   }
 
 #ifndef PRODUCT
-  if (PrintEscapeAnalysis) {
-    dump(ptnodes_worklist); // Dump ConnectionGraph
+  if (log_is_enabled(Trace, escapeanalysis)) { //PESA
+    LogMessage(escapeanalysis) msg;
+    NonInterleavingLogStream st(LogLevelType::Trace, msg);
+    dump(ptnodes_worklist, &st); // Dump ConnectionGraph
   }
 #endif
 
@@ -403,8 +405,8 @@ bool ConnectionGraph::compute_escape() {
     C->print_method(PHASE_AFTER_EA, 2);
 
 #ifdef ASSERT
-  } else if (Verbose && (PrintEscapeAnalysis || log_is_enabled(Trace, eliminateallocations))) { //PEA
-    LogMessage(eliminateallocations) msg; 
+  } else if (Verbose && (log_is_enabled(Trace, escapeanalysis) || log_is_enabled(Trace, eliminateallocations))) { //PEA //PESA
+    LogMessage(eliminateallocations, escapeanalysis) msg; 
     NonInterleavingLogStream st(LogLevelType::Trace, msg);
     st.print("=== No allocations eliminated for ");
     C->method()->print_short_name(&st);
@@ -4978,7 +4980,7 @@ void PointsToNode::dump(bool print_state, outputStream* out, bool newline) const
   }
 }
 
-void ConnectionGraph::dump(GrowableArray<PointsToNode*>& ptnodes_worklist) {
+void ConnectionGraph::dump(GrowableArray<PointsToNode*>& ptnodes_worklist, outputStream* out) {
   bool first = true;
   int ptnodes_length = ptnodes_worklist.length();
   for (int i = 0; i < ptnodes_length; i++) {
@@ -4994,26 +4996,26 @@ void ConnectionGraph::dump(GrowableArray<PointsToNode*>& ptnodes_worklist) {
     if (n->is_Allocate() || (n->is_CallStaticJava() &&
                              n->as_CallStaticJava()->is_boxing_method())) {
       if (first) {
-        tty->cr();
-        tty->print("======== Connection graph for ");
-        _compile->method()->print_short_name();
-        tty->cr();
-        tty->print_cr("invocation #%d: %d iterations and %f sec to build connection graph with %d nodes and worklist size %d",
+        out->cr();
+        out->print("======== Connection graph for ");
+        _compile->method()->print_short_name(out);
+        out->cr();
+        out->print_cr("invocation #%d: %d iterations and %f sec to build connection graph with %d nodes and worklist size %d",
                       _invocation, _build_iterations, _build_time, nodes_size(), ptnodes_worklist.length());
-        tty->cr();
+        out->cr();
         first = false;
       }
-      ptn->dump();
+      ptn->dump(true, out);
       // Print all locals and fields which reference this allocation
       for (UseIterator j(ptn); j.has_next(); j.next()) {
         PointsToNode* use = j.get();
         if (use->is_LocalVar()) {
-          use->dump(Verbose);
+          use->dump(Verbose, out);
         } else if (Verbose) {
-          use->dump();
+          use->dump(true, out);
         }
       }
-      tty->cr();
+      out->cr();
     }
   }
 }

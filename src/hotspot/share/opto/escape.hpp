@@ -681,7 +681,7 @@ public:
   static int _no_escape_counter;
   static int _arg_escape_counter;
   static int _global_escape_counter;
-  void dump(GrowableArray<PointsToNode*>& ptnodes_worklist);
+  void dump(GrowableArray<PointsToNode*>& ptnodes_worklist, outputStream* out = tty); //PESA
   static void print_statistics();
   void escape_state_statistics(GrowableArray<JavaObjectNode*>& java_objects_worklist);
 #endif

@@ -81,6 +81,7 @@ class outputStream;
   LOG_TAG(eliminateallocations) \
   LOG_TAG(eliminatelocks) \
   LOG_TAG(ergo) \
+  LOG_TAG(escapeanalysis) \
   LOG_TAG(event) \
   LOG_TAG(exceptions) \
   LOG_TAG(exit) \

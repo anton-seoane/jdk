@@ -3604,6 +3604,7 @@ jint Arguments::parse(const JavaVMInitArgs* initial_cmd_args) {
     if (TraceLoopLimitCheck) LogConfiguration::configure_stdout(LogLevel::Trace, false, LOG_TAGS(looplimitcheck));
     if (PrintEliminateLocks) LogConfiguration::configure_stdout(LogLevel::Trace, false, LOG_TAGS(eliminatelocks));
     if (PrintEliminateAllocations) LogConfiguration::configure_stdout(LogLevel::Trace, false, LOG_TAGS(eliminateallocations));
+    if (PrintEscapeAnalysis) LogConfiguration::configure_stdout(LogLevel::Trace, false, LOG_TAGS(escapeanalysis));
   #endif
   #ifndef PRODUCT
     if (TraceCISCSpill) LogConfiguration::configure_stdout(LogLevel::Trace, false, LOG_TAGS(ciscspill));
