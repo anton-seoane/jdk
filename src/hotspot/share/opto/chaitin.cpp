@@ -754,6 +754,7 @@ void PhaseChaitin::mark_ssa() {
   _lrg_map.reset_uf_map(max_idx+1);
 }
 
+#ifndef PRODUCT
 void PhaseChaitin::trace_cisc_spill_ul(const char* text, Node* n) {
   if (!log_is_enabled(Trace, ciscspill)) return;
   if (text == nullptr || n == nullptr) return;
@@ -762,6 +763,7 @@ void PhaseChaitin::trace_cisc_spill_ul(const char* text, Node* n) {
   st.print("%s", text);
   n->dump(&st);
 }
+#endif
 
 
 // Gather LiveRanGe information, including register masks.  Modification of

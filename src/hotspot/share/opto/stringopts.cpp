@@ -409,6 +409,7 @@ Node_List PhaseStringOpts::collect_toString_calls() {
   return string_calls;
 }
 
+#ifndef PRODUCT
 void PhaseStringOpts::optimize_string_concat_ul(const char* line, const JVMState* jvms) { //POSC
   if (!log_is_enabled(Trace, optimizestringconcat)) return;
   if (line == nullptr || jvms == nullptr) return;
@@ -418,6 +419,7 @@ void PhaseStringOpts::optimize_string_concat_ul(const char* line, const JVMState
   st.print("%s", line);
   jvms->dump_spec(&st);
 }
+#endif
 
 // Recognize a fluent-chain of StringBuilder/Buffer. They are either explicit usages
 // of them or the legacy bytecodes of string concatenation prior to JEP-280. eg.
