@@ -24,6 +24,7 @@
 #include "precompiled.hpp"
 #include "logging/logDecorators.hpp"
 #include "runtime/os.hpp"
+#include "logging/logSelection.hpp"
 
 template <LogDecorators::Decorator d>
 struct AllBitmask {
@@ -93,3 +94,42 @@ bool LogDecorators::parse(const char* decorator_args, outputStream* errstream) {
   }
   return result;
 }
+
+#define LOG_DEFAULTS_LIST \
+  LOG_DEFAULT(1, Trace, LOG_TAGS(deoptimization))
+
+class LogDecoratorsDefaultValues {
+public:
+  add_default(LogLevel::type level, uint mask, ...) {
+
+  }
+
+private:
+  LogDecoratorsDefaultValue next;
+};
+
+class LogDecoratorsDefaultValue {
+public:
+  LogDecoratorsDefaultValue(LogLevel::type level, uint mask, ...) {
+    size_t i;
+    va_list ap;
+    LogTagType tags[LogTag::MaxTags];
+    va_start(ap, mask);
+    for (i = 0; i < LogTag::MaxTags; i++) {
+      LogTagType tag = static_cast<LogTagType>(va_arg(ap, int));
+      tags[i] = tag;
+      if (tag == LogTag::__NO_TAG) {
+        assert(i > 0, "Must specify at least one tag!");
+        break;
+      }
+    }
+    assert(i < LogTag::MaxTags || static_cast<LogTagType>(va_arg(ap, int)) == LogTag::__NO_TAG,
+          "Too many tags specified! Can only have up to " SIZE_FORMAT " tags in a tag set.", LogTag::MaxTags);
+    va_end(ap);
+
+    _selection_list = LogSelection(tags, false, level);
+  }
+private:
+  LogSelection _selection_list = LogSelection::Invalid;
+  uint _mask;
+};

@@ -27,6 +27,7 @@
 #include "utilities/globalDefinitions.hpp"
 
 class outputStream;
+class LogSelection;
 
 // The list of available decorators:
 // time         - Current time and date in ISO-8601 format

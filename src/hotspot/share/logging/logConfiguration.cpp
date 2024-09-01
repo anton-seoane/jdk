@@ -491,7 +491,7 @@ bool LogConfiguration::parse_log_arguments(const char* outputstr,
     return false;
   }
 
-  LogDecorators decorators;
+  LogDecorators decorators;//(selections);
   if (!decorators.parse(decoratorstr, errstream)) {
     return false;
   }
