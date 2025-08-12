@@ -152,7 +152,7 @@ public abstract class AbstractQueuedLongSynchronizer
     private transient volatile Node tail;
 
     /**
-     * The synchronization state.
+     * @serial The synchronization state.
      */
     private volatile long state;
 
@@ -274,6 +274,40 @@ public abstract class AbstractQueuedLongSynchronizer
             (s instanceof SharedNode) && s.status != 0) {
             s.getAndUnsetStatus(WAITING);
             LockSupport.unpark(s.waiter);
+        }
+    }
+
+    /**
+     * Repeatedly invokes acquire, if its execution throws an Error or a Runtime Exception,
+     * using an Unsafe.park-based backoff
+     * @param node which to reacquire
+     * @param arg the acquire argument
+     */
+    private final void reacquire(Node node, long arg) {
+        try {
+            acquire(node, arg, false, false, false, 0L);
+        } catch (Error | RuntimeException firstEx) {
+            // While we currently do not emit an JFR events in this situation, mainly
+            // because the conditions under which this happens are such that it
+            // cannot be presumed to be possible to actually allocate an event, and
+            // using a preconstructed one would have limited value in serviceability.
+            // Having said that, the following place would be the more appropriate
+            // place to put such logic:
+            //     emit JFR event
+
+            for (long nanos = 1L;;) {
+                U.park(false, nanos); // must use Unsafe park to sleep
+                if (nanos < 1L << 30)            // max about 1 second
+                    nanos <<= 1;
+
+                try {
+                    acquire(node, arg, false, false, false, 0L);
+                } catch (Error | RuntimeException ignored) {
+                    continue;
+                }
+
+                throw firstEx;
+            }
         }
     }
 
@@ -1269,8 +1303,8 @@ public abstract class AbstractQueuedLongSynchronizer
          * <li>Invoke {@link #release} with saved state as argument,
          *     throwing IllegalMonitorStateException if it fails.
          * <li>Block until signalled.
-         * <li>Reacquire by invoking specialized version of
-         *     {@link #acquire} with saved state as argument.
+         * <li>Reacquire by invoking underlying version of
+         *     {@link #acquire(long)} with saved state as argument.
          * </ol>
          */
         public final void awaitUninterruptibly() {
@@ -1299,7 +1333,7 @@ public abstract class AbstractQueuedLongSynchronizer
             }
             LockSupport.setCurrentBlocker(null);
             node.clearStatus();
-            acquire(node, savedState, false, false, false, 0L);
+            reacquire(node, savedState);
             if (interrupted)
                 Thread.currentThread().interrupt();
         }
@@ -1312,8 +1346,8 @@ public abstract class AbstractQueuedLongSynchronizer
          * <li>Invoke {@link #release} with saved state as argument,
          *     throwing IllegalMonitorStateException if it fails.
          * <li>Block until signalled or interrupted.
-         * <li>Reacquire by invoking specialized version of
-         *     {@link #acquire} with saved state as argument.
+         * <li>Reacquire by invoking underlying version of
+         *     {@link #acquire(long)} with saved state as argument.
          * <li>If interrupted while blocked in step 4, throw InterruptedException.
          * </ol>
          */
@@ -1346,7 +1380,7 @@ public abstract class AbstractQueuedLongSynchronizer
             }
             LockSupport.setCurrentBlocker(null);
             node.clearStatus();
-            acquire(node, savedState, false, false, false, 0L);
+            reacquire(node, savedState);
             if (interrupted) {
                 if (cancelled) {
                     unlinkCancelledWaiters(node);
@@ -1364,8 +1398,8 @@ public abstract class AbstractQueuedLongSynchronizer
          * <li>Invoke {@link #release} with saved state as argument,
          *     throwing IllegalMonitorStateException if it fails.
          * <li>Block until signalled, interrupted, or timed out.
-         * <li>Reacquire by invoking specialized version of
-         *     {@link #acquire} with saved state as argument.
+         * <li>Reacquire by invoking underlying version of
+         *     {@link #acquire(long)} with saved state as argument.
          * <li>If interrupted while blocked in step 4, throw InterruptedException.
          * </ol>
          */
@@ -1389,7 +1423,7 @@ public abstract class AbstractQueuedLongSynchronizer
                     LockSupport.parkNanos(this, nanos);
             }
             node.clearStatus();
-            acquire(node, savedState, false, false, false, 0L);
+            reacquire(node, savedState);
             if (cancelled) {
                 unlinkCancelledWaiters(node);
                 if (interrupted)
@@ -1408,8 +1442,8 @@ public abstract class AbstractQueuedLongSynchronizer
          * <li>Invoke {@link #release} with saved state as argument,
          *     throwing IllegalMonitorStateException if it fails.
          * <li>Block until signalled, interrupted, or timed out.
-         * <li>Reacquire by invoking specialized version of
-         *     {@link #acquire} with saved state as argument.
+         * <li>Reacquire by invoking underlying version of
+         *     {@link #acquire(long)} with saved state as argument.
          * <li>If interrupted while blocked in step 4, throw InterruptedException.
          * <li>If timed out while blocked in step 4, return false, else true.
          * </ol>
@@ -1433,7 +1467,7 @@ public abstract class AbstractQueuedLongSynchronizer
                     LockSupport.parkUntil(this, abstime);
             }
             node.clearStatus();
-            acquire(node, savedState, false, false, false, 0L);
+            reacquire(node, savedState);
             if (cancelled) {
                 unlinkCancelledWaiters(node);
                 if (interrupted)
@@ -1451,8 +1485,8 @@ public abstract class AbstractQueuedLongSynchronizer
          * <li>Invoke {@link #release} with saved state as argument,
          *     throwing IllegalMonitorStateException if it fails.
          * <li>Block until signalled, interrupted, or timed out.
-         * <li>Reacquire by invoking specialized version of
-         *     {@link #acquire} with saved state as argument.
+         * <li>Reacquire by invoking underlying version of
+         *     {@link #acquire(long)} with saved state as argument.
          * <li>If interrupted while blocked in step 4, throw InterruptedException.
          * <li>If timed out while blocked in step 4, return false, else true.
          * </ol>
@@ -1478,7 +1512,7 @@ public abstract class AbstractQueuedLongSynchronizer
                     LockSupport.parkNanos(this, nanos);
             }
             node.clearStatus();
-            acquire(node, savedState, false, false, false, 0L);
+            reacquire(node, savedState);
             if (cancelled) {
                 unlinkCancelledWaiters(node);
                 if (interrupted)

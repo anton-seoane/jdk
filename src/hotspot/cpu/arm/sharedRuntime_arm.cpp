@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2023, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2008, 2025, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,7 +22,6 @@
  *
  */
 
-#include "precompiled.hpp"
 #include "asm/assembler.inline.hpp"
 #include "code/compiledIC.hpp"
 #include "code/debugInfoRec.hpp"
@@ -38,6 +37,7 @@
 #include "runtime/sharedRuntime.hpp"
 #include "runtime/safepointMechanism.hpp"
 #include "runtime/stubRoutines.hpp"
+#include "runtime/timerTrace.hpp"
 #include "runtime/vframeArray.hpp"
 #include "utilities/align.hpp"
 #include "utilities/powerOfTwo.hpp"
@@ -612,12 +612,12 @@ static void gen_c2i_adapter(MacroAssembler *masm,
 
 }
 
-AdapterHandlerEntry* SharedRuntime::generate_i2c2i_adapters(MacroAssembler *masm,
-                                                            int total_args_passed,
-                                                            int comp_args_on_stack,
-                                                            const BasicType *sig_bt,
-                                                            const VMRegPair *regs,
-                                                            AdapterFingerPrint* fingerprint) {
+void SharedRuntime::generate_i2c2i_adapters(MacroAssembler *masm,
+                                            int total_args_passed,
+                                            int comp_args_on_stack,
+                                            const BasicType *sig_bt,
+                                            const VMRegPair *regs,
+                                            AdapterHandlerEntry* handler) {
   address i2c_entry = __ pc();
   gen_i2c_adapter(masm, total_args_passed, comp_args_on_stack, sig_bt, regs);
 
@@ -637,7 +637,8 @@ AdapterHandlerEntry* SharedRuntime::generate_i2c2i_adapters(MacroAssembler *masm
   address c2i_entry = __ pc();
   gen_c2i_adapter(masm, total_args_passed, comp_args_on_stack, sig_bt, regs, skip_fixup);
 
-  return AdapterHandlerLibrary::new_entry(fingerprint, i2c_entry, c2i_entry, c2i_unverified_entry);
+  handler->set_entry_points(i2c_entry, c2i_entry, c2i_unverified_entry, nullptr);
+  return;
 }
 
 
@@ -1357,10 +1358,16 @@ uint SharedRuntime::out_preserve_stack_slots() {
   return 0;
 }
 
+VMReg SharedRuntime::thread_register() {
+  Unimplemented();
+  return nullptr;
+}
+
 //------------------------------generate_deopt_blob----------------------------
 void SharedRuntime::generate_deopt_blob() {
   ResourceMark rm;
-  CodeBuffer buffer("deopt_blob", 1024, 1024);
+  const char* name = SharedRuntime::stub_name(StubId::shared_deopt_id);
+  CodeBuffer buffer(name, 1024, 1024);
   int frame_size_in_words;
   OopMapSet* oop_maps;
   int reexecute_offset;
@@ -1601,15 +1608,17 @@ void SharedRuntime::generate_deopt_blob() {
 // setup oopmap, and calls safepoint code to stop the compiled code for
 // a safepoint.
 //
-SafepointBlob* SharedRuntime::generate_handler_blob(address call_ptr, int poll_type) {
+SafepointBlob* SharedRuntime::generate_handler_blob(StubId id, address call_ptr) {
   assert(StubRoutines::forward_exception_entry() != nullptr, "must be generated before");
+  assert(is_polling_page_id(id), "expected a polling page stub id");
 
   ResourceMark rm;
-  CodeBuffer buffer("handler_blob", 256, 256);
+  const char* name = SharedRuntime::stub_name(id);
+  CodeBuffer buffer(name, 256, 256);
   int frame_size_words;
   OopMapSet* oop_maps;
 
-  bool cause_return = (poll_type == POLL_AT_RETURN);
+  bool cause_return = (id == StubId::shared_polling_page_return_handler_id);
 
   MacroAssembler* masm = new MacroAssembler(&buffer);
   address start = __ pc();
@@ -1671,10 +1680,12 @@ SafepointBlob* SharedRuntime::generate_handler_blob(address call_ptr, int poll_t
   return SafepointBlob::create(&buffer, oop_maps, frame_size_words);
 }
 
-RuntimeStub* SharedRuntime::generate_resolve_blob(address destination, const char* name) {
+RuntimeStub* SharedRuntime::generate_resolve_blob(StubId id, address destination) {
   assert(StubRoutines::forward_exception_entry() != nullptr, "must be generated before");
+  assert(is_resolve_id(id), "expected a resolve stub id");
 
   ResourceMark rm;
+  const char* name = SharedRuntime::stub_name(id);
   CodeBuffer buffer(name, 1000, 512);
   int frame_size_words;
   OopMapSet *oop_maps;
@@ -1707,7 +1718,7 @@ RuntimeStub* SharedRuntime::generate_resolve_blob(address destination, const cha
   // Overwrite saved register values
 
   // Place metadata result of VM call into Rmethod
-  __ get_vm_result_2(R1, Rtemp);
+  __ get_vm_result_metadata(R1, Rtemp);
   __ str(R1, Address(SP, RegisterSaver::Rmethod_offset * wordSize));
 
   // Place target address (VM call result) into Rtemp
@@ -1720,7 +1731,7 @@ RuntimeStub* SharedRuntime::generate_resolve_blob(address destination, const cha
 
   RegisterSaver::restore_live_registers(masm);
   const Register Rzero = __ zero_register(Rtemp);
-  __ str(Rzero, Address(Rthread, JavaThread::vm_result_2_offset()));
+  __ str(Rzero, Address(Rthread, JavaThread::vm_result_metadata_offset()));
   __ mov(Rexception_pc, LR);
   __ jump(StubRoutines::forward_exception_entry(), relocInfo::runtime_call_type, Rtemp);
 
@@ -1733,7 +1744,11 @@ RuntimeStub* SharedRuntime::generate_resolve_blob(address destination, const cha
 // Continuation point for throwing of implicit exceptions that are not handled in
 // the current activation. Fabricates an exception oop and initiates normal
 // exception dispatching in this frame.
-RuntimeStub* SharedRuntime::generate_throw_exception(const char* name, address runtime_entry) {
+RuntimeStub* SharedRuntime::generate_throw_exception(StubId id, address runtime_entry) {
+  assert(is_throw_id(id), "expected a throw stub id");
+
+  const char* name = SharedRuntime::stub_name(id);
+
   int insts_size = 128;
   int locs_size  = 32;
 
@@ -1793,7 +1808,8 @@ RuntimeStub* SharedRuntime::generate_jfr_write_checkpoint() {
     framesize // inclusive of return address
   };
 
-  CodeBuffer code("jfr_write_checkpoint", 512, 64);
+  const char* name = SharedRuntime::stub_name(StubId::shared_jfr_write_checkpoint_id);
+  CodeBuffer code(name, 512, 64);
   MacroAssembler* masm = new MacroAssembler(&code);
 
   address start = __ pc();
@@ -1818,7 +1834,7 @@ RuntimeStub* SharedRuntime::generate_jfr_write_checkpoint() {
   oop_maps->add_gc_map(frame_complete, map);
 
   RuntimeStub* stub =
-    RuntimeStub::new_runtime_stub(code.name(),
+    RuntimeStub::new_runtime_stub(name,
                                   &code,
                                   frame_complete,
                                   (framesize >> (LogBytesPerWord - LogBytesPerInt)),
@@ -1836,7 +1852,8 @@ RuntimeStub* SharedRuntime::generate_jfr_return_lease() {
     framesize // inclusive of return address
   };
 
-  CodeBuffer code("jfr_return_lease", 512, 64);
+  const char* name = SharedRuntime::stub_name(StubId::shared_jfr_return_lease_id);
+  CodeBuffer code(name, 512, 64);
   MacroAssembler* masm = new MacroAssembler(&code);
 
   address start = __ pc();
@@ -1858,7 +1875,7 @@ RuntimeStub* SharedRuntime::generate_jfr_return_lease() {
   oop_maps->add_gc_map(frame_complete, map);
 
   RuntimeStub* stub =
-    RuntimeStub::new_runtime_stub(code.name(),
+    RuntimeStub::new_runtime_stub(name,
                                   &code,
                                   frame_complete,
                                   (framesize >> (LogBytesPerWord - LogBytesPerInt)),

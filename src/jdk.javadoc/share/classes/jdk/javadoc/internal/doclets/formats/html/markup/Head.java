@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2024, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2025, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -70,6 +70,7 @@ public class Head extends Content {
     private final List<Content> extraContent;
     private boolean addDefaultScript = true;
     private DocPath canonicalLink;
+    private boolean syntaxHighlight = false;
 
     /**
      * Creates a {@code Head} object, for a given file and HTML version.
@@ -239,6 +240,16 @@ public class Head extends Content {
     }
 
     /**
+     * Enables or disables support for syntax highlighting.
+     * @param value {@code true} to enable syntax highligting
+     * @return this object
+     */
+    public Head setSyntaxHighlight(boolean value) {
+        this.syntaxHighlight = value;
+        return this;
+    }
+
+    /**
      * Adds additional content to be included in the HEAD element.
      *
      * @param contents the content
@@ -272,9 +283,9 @@ public class Head extends Content {
      * @return the HTML
      */
     private Content toContent() {
-        var head = new HtmlTree(HtmlTag.HEAD);
-        head.add(getGeneratedBy(showTimestamp, generatedDate));
-        head.add(HtmlTree.TITLE(title));
+        var head = HtmlTree.of(HtmlTag.HEAD)
+            .add(getGeneratedBy(showTimestamp, generatedDate))
+            .add(HtmlTree.TITLE(title));
 
         head.add(HtmlTree.META("viewport", "width=device-width, initial-scale=1"));
 
@@ -300,9 +311,9 @@ public class Head extends Content {
         }
 
         if (canonicalLink != null) {
-            var link = new HtmlTree(HtmlTag.LINK);
-            link.put(HtmlAttr.REL, "canonical");
-            link.put(HtmlAttr.HREF, canonicalLink.getPath());
+            var link = HtmlTree.of(HtmlTag.LINK)
+                .put(HtmlAttr.REL, "canonical")
+                .put(HtmlAttr.HREF, canonicalLink.getPath());
             head.add(link);
         }
 
@@ -339,6 +350,10 @@ public class Head extends Content {
             addStylesheet(head, DocPaths.RESOURCE_FILES.resolve(path));
         }
 
+        if (syntaxHighlight) {
+            addStylesheet(head, DocPaths.RESOURCE_FILES.resolve(DocPaths.HIGHLIGHT_CSS));
+        }
+
         for (DocPath path : localStylesheets) {
             // Local stylesheets are contained in doc-files, so omit resource-files prefix
             addStylesheet(head, path);
@@ -347,10 +362,13 @@ public class Head extends Content {
 
     private void addStylesheet(HtmlTree head, DocPath stylesheet) {
         head.add(HtmlTree.LINK("stylesheet", "text/css",
-                pathToRoot.resolve(stylesheet).getPath(), "Style"));
+                pathToRoot.resolve(stylesheet).getPath()));
     }
 
     private void addScripts(HtmlTree head) {
+        if (syntaxHighlight) {
+            addScriptElement(head, DocPaths.HIGHLIGHT_JS);
+        }
         if (addDefaultScript) {
             addScriptElement(head, DocPaths.SCRIPT_JS);
         }

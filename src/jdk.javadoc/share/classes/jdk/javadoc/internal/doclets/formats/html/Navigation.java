@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, 2024, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, 2025, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -45,7 +45,6 @@ import jdk.javadoc.internal.html.Content;
 import jdk.javadoc.internal.html.ContentBuilder;
 import jdk.javadoc.internal.html.Entity;
 import jdk.javadoc.internal.html.HtmlAttr;
-import jdk.javadoc.internal.html.HtmlTag;
 import jdk.javadoc.internal.html.HtmlTree;
 import jdk.javadoc.internal.html.Text;
 
@@ -87,8 +86,9 @@ public class Navigation {
         PACKAGE,
         PREVIEW,
         RESTRICTED,
-        SERIALIZED_FORM,
         SEARCH,
+        SEARCH_TAGS,
+        SERIALIZED_FORM,
         SYSTEM_PROPERTIES,
         TREE,
         USE
@@ -274,6 +274,7 @@ public class Navigation {
             case CONSTANT_VALUES:
             case EXTERNAL_SPECS:
             case RESTRICTED:
+            case SEARCH_TAGS:
             case SERIALIZED_FORM:
             case SYSTEM_PROPERTIES:
                 addOverviewLink(target);
@@ -402,7 +403,7 @@ public class Navigation {
                             : Text.of(pkg.getQualifiedName()));
             // Breadcrumb navigation displays nested classes as separate links.
             // Enclosing classes may be undocumented, in which case we just display the class name.
-            case TypeElement type -> (configuration.isGeneratedDoc(type) && !configuration.utils.hasHiddenTag(type))
+            case TypeElement type -> (configuration.isGeneratedDoc(type) && !configuration.utils.isHidden(type))
                     ? links.createLink(pathToRoot.resolve(
                             docPaths.forClass(type)), type.getSimpleName().toString())
                     : HtmlTree.SPAN(Text.of(type.getSimpleName().toString()));
@@ -496,7 +497,8 @@ public class Navigation {
         var inputText = HtmlTree.INPUT(HtmlAttr.InputType.TEXT, HtmlIds.SEARCH_INPUT)
                 .put(HtmlAttr.PLACEHOLDER, resources.getText("doclet.search_placeholder"))
                 .put(HtmlAttr.ARIA_LABEL, resources.getText("doclet.search_in_documentation"))
-                .put(HtmlAttr.AUTOCOMPLETE, "off");
+                .put(HtmlAttr.AUTOCOMPLETE, "off")
+                .put(HtmlAttr.SPELLCHECK, "false");
         var inputReset = HtmlTree.INPUT(HtmlAttr.InputType.RESET, HtmlIds.RESET_SEARCH)
                 .put(HtmlAttr.VALUE, resources.getText("doclet.search_reset"));
         var searchDiv = HtmlTree.DIV(HtmlStyles.navListSearch)
@@ -516,14 +518,14 @@ public class Navigation {
         }
         var navigationBar = HtmlTree.NAV();
 
-        var navContent = new HtmlTree(HtmlTag.DIV);
+        var navContent = HtmlTree.DIV(HtmlStyles.navContent);
         Content skipNavLinks = contents.getContent("doclet.Skip_navigation_links");
         String toggleNavLinks = configuration.getDocResources().getText("doclet.Toggle_navigation_links");
         navigationBar.add(MarkerComments.START_OF_TOP_NAVBAR);
         // The mobile menu button uses three empty spans to produce its animated icon
         HtmlTree iconSpan = HtmlTree.SPAN(HtmlStyles.navBarToggleIcon).add(Entity.NO_BREAK_SPACE);
-        navContent.setStyle(HtmlStyles.navContent).add(HtmlTree.DIV(HtmlStyles.navMenuButton,
-                        new HtmlTree(HtmlTag.BUTTON).setId(HtmlIds.NAVBAR_TOGGLE_BUTTON)
+        navContent.add(HtmlTree.DIV(HtmlStyles.navMenuButton,
+                        HtmlTree.BUTTON(HtmlIds.NAVBAR_TOGGLE_BUTTON)
                                 .put(HtmlAttr.ARIA_CONTROLS, HtmlIds.NAVBAR_TOP.name())
                                 .put(HtmlAttr.ARIA_EXPANDED, String.valueOf(false))
                                 .put(HtmlAttr.ARIA_LABEL, toggleNavLinks)
@@ -535,9 +537,7 @@ public class Navigation {
                                 skipNavLinks.toString())));
         Content aboutContent = userHeader;
 
-        var navList = new HtmlTree(HtmlTag.UL)
-                .setId(HtmlIds.NAVBAR_TOP_FIRSTROW)
-                .setStyle(HtmlStyles.navList)
+        var navList = HtmlTree.UL(HtmlIds.NAVBAR_TOP_FIRSTROW, HtmlStyles.navList)
                 .put(HtmlAttr.TITLE, rowListTitle);
         addMainNavLinks(navList);
         navContent.add(navList);
