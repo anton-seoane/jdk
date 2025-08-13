@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022, 2024, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2022, 2025, Oracle and/or its affiliates. All rights reserved.
  * Copyright (c) 2024, Alibaba Group Holding Limited. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -26,25 +26,14 @@
 
 package jdk.internal.classfile.impl;
 
+import java.lang.classfile.*;
+import java.lang.classfile.constantpool.ClassEntry;
+import java.lang.classfile.constantpool.Utf8Entry;
 import java.lang.constant.ConstantDescs;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.function.Consumer;
-
-import java.lang.classfile.ClassBuilder;
-import java.lang.classfile.ClassElement;
-import java.lang.classfile.ClassModel;
-import java.lang.classfile.ClassFile;
-import java.lang.classfile.CustomAttribute;
-import java.lang.classfile.constantpool.ClassEntry;
-import java.lang.classfile.FieldBuilder;
-import java.lang.classfile.FieldModel;
-import java.lang.classfile.FieldTransform;
-import java.lang.classfile.MethodBuilder;
-import java.lang.classfile.MethodModel;
-import java.lang.classfile.MethodTransform;
-import java.lang.classfile.constantpool.Utf8Entry;
 
 import static java.util.Objects.requireNonNull;
 
@@ -53,7 +42,7 @@ public final class DirectClassBuilder
         implements ClassBuilder {
 
     /** The value of default class access flags */
-    static final int DEFAULT_CLASS_FLAGS = ClassFile.ACC_PUBLIC;
+    static final int DEFAULT_CLASS_FLAGS = ClassFile.ACC_PUBLIC | ClassFile.ACC_SUPER;
     static final Util.Writable[] EMPTY_WRITABLE_ARRAY = {};
     static final ClassEntry[] EMPTY_CLASS_ENTRY_ARRAY = {};
     final ClassEntry thisClassEntry;

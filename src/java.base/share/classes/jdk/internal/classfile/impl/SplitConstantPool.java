@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022, 2024, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2022, 2025, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,18 +24,16 @@
  */
 package jdk.internal.classfile.impl;
 
+import java.lang.classfile.Attributes;
+import java.lang.classfile.BootstrapMethodEntry;
+import java.lang.classfile.ClassReader;
+import java.lang.classfile.attribute.BootstrapMethodsAttribute;
+import java.lang.classfile.constantpool.*;
 import java.lang.constant.ClassDesc;
+import java.lang.constant.DynamicCallSiteDesc;
 import java.lang.constant.MethodTypeDesc;
 import java.util.Arrays;
 import java.util.List;
-
-import java.lang.classfile.Attributes;
-import java.lang.classfile.ClassReader;
-import java.lang.classfile.BootstrapMethodEntry;
-import java.lang.classfile.attribute.BootstrapMethodsAttribute;
-import java.lang.classfile.constantpool.*;
-
-import jdk.internal.constant.ConstantUtils;
 
 import static java.lang.classfile.constantpool.PoolEntry.*;
 import static java.util.Objects.requireNonNull;
@@ -148,6 +146,11 @@ public final class SplitConstantPool implements ConstantPoolBuilder {
                     buf.writeU2(bsmSize);
                     for (int i = 0; i < bsmSize; i++)
                         bootstrapMethodEntry(i).writeTo(buf);
+                }
+
+                @Override
+                public Utf8Entry attributeName() {
+                    return utf8Entry(Attributes.NAME_BOOTSTRAP_METHODS);
                 }
             };
             a.writeTo(buf);
@@ -395,24 +398,6 @@ public final class SplitConstantPool implements ConstantPoolBuilder {
         return null;
     }
 
-    private AbstractPoolEntry.Utf8EntryImpl tryFindUtf8OfRegion(int hash, String target, int start, int end) {
-        EntryMap map = map();
-        while (true) {
-            for (int token = map.firstToken(hash); token != -1; token = map.nextToken(hash, token)) {
-                PoolEntry e = entryByIndex(map.getIndexByToken(token));
-                if (e.tag() == TAG_UTF8
-                        && e instanceof AbstractPoolEntry.Utf8EntryImpl ce
-                        && ce.equalsRegion(target, start, end))
-                    return ce;
-            }
-            if (!doneFullScan) {
-                fullScan();
-                continue;
-            }
-            return null;
-        }
-    }
-
     private AbstractPoolEntry.ClassEntryImpl tryFindClassOrInterface(int hash, ClassDesc cd) {
         while (true) {
             EntryMap map = map();
@@ -430,8 +415,7 @@ public final class SplitConstantPool implements ConstantPoolBuilder {
                     }
 
                     // no symbol available
-                    var desc = cd.descriptorString();
-                    if (ce.ref1.equalsRegion(desc, 1, desc.length() - 1)) {
+                    if (ce.ref1.equalsString(Util.toInternalName(cd))) {
                         // definite match, propagate symbol
                         ce.sym = cd;
                         return ce;
@@ -455,10 +439,11 @@ public final class SplitConstantPool implements ConstantPoolBuilder {
         if (ce != null)
             return ce;
 
-        var utfHash = Util.internalNameHash(desc);
-        var utf = tryFindUtf8OfRegion(AbstractPoolEntry.hashString(utfHash), desc, 1, desc.length() - 1);
+        String internalName = Util.toInternalName(cd);
+        var utfHash = internalName.hashCode();
+        var utf = tryFindUtf8(AbstractPoolEntry.hashString(utfHash), internalName);
         if (utf == null)
-            utf = internalAdd(new AbstractPoolEntry.Utf8EntryImpl(this, size, ConstantUtils.dropFirstAndLastChar(desc), utfHash));
+            utf = internalAdd(new AbstractPoolEntry.Utf8EntryImpl(this, size, internalName, utfHash));
 
         return internalAdd(new AbstractPoolEntry.ClassEntryImpl(this, size, utf, hash, cd));
     }
@@ -513,7 +498,7 @@ public final class SplitConstantPool implements ConstantPoolBuilder {
     @Override
     public AbstractPoolEntry.ClassEntryImpl classEntry(Utf8Entry nameEntry) {
         var ne = maybeCloneUtf8Entry(nameEntry);
-        return classEntry(ne, AbstractPoolEntry.isArrayDescriptor(ne));
+        return classEntry(ne, ne.mayBeArrayDescriptor());
     }
 
     AbstractPoolEntry.ClassEntryImpl classEntry(AbstractPoolEntry.Utf8EntryImpl ne, boolean isArray) {
@@ -537,6 +522,10 @@ public final class SplitConstantPool implements ConstantPoolBuilder {
     AbstractPoolEntry.ClassEntryImpl cloneClassEntry(AbstractPoolEntry.ClassEntryImpl e) {
         var ce = tryFindClassEntry(e.hashCode(), e.ref1);
         if (ce != null) {
+            var mySym = e.sym;
+            if (ce.sym == null && mySym != null) {
+                ce.sym = mySym;
+            }
             return ce;
         }
 

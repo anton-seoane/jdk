@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2024, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2025, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -38,6 +38,7 @@ class outputStream;
   LOG_TAG(age) \
   LOG_TAG(alloc) \
   LOG_TAG(annotation) \
+  LOG_TAG(aot) \
   LOG_TAG(arguments) \
   LOG_TAG(array) \
   LOG_TAG(attach) \
@@ -69,6 +70,7 @@ class outputStream;
   LOG_TAG(data) \
   LOG_TAG(datacreation) \
   LOG_TAG(dcmd) \
+  DEBUG_ONLY(LOG_TAG(deathtest)) /* Log Internal death test tag */ \
   LOG_TAG(decoder) \
   LOG_TAG(defaultmethods) \
   LOG_TAG(deoptimization) \
@@ -137,6 +139,7 @@ class outputStream;
   LOG_TAG(metaspace) \
   LOG_TAG(methodcomparator) \
   LOG_TAG(methodhandles) \
+  LOG_TAG(methodtrace) \
   LOG_TAG(mirror) \
   LOG_TAG(mmu) \
   LOG_TAG(module) \
@@ -164,6 +167,7 @@ class outputStream;
   LOG_TAG(optopipelining) \
   LOG_TAG(os) \
   LOG_TAG(owner) \
+  LOG_TAG(package) \
   LOG_TAG(page) \
   LOG_TAG(pagesize) \
   LOG_TAG(parser) \
@@ -179,7 +183,6 @@ class outputStream;
   LOG_TAG(preorder)  /* Trace all classes loaded in order referenced (not loaded) */ \
   LOG_TAG(preview)   /* Trace loading of preview feature types */ \
   LOG_TAG(promotion) \
-  LOG_TAG(protectiondomain) /* "Trace protection domain verification" */ \
   LOG_TAG(ptrqueue) \
   LOG_TAG(purge) \
   LOG_TAG(rangelimitcheck) \
@@ -226,6 +229,7 @@ class outputStream;
   LOG_TAG(timer) \
   LOG_TAG(tlab) \
   LOG_TAG(tracking) \
+  LOG_TAG(training) \
   LOG_TAG(trimnative) /* trim native heap */ \
   LOG_TAG(unload) /* Trace unloading of classes */ \
   LOG_TAG(unmap) \
@@ -236,6 +240,7 @@ class outputStream;
   LOG_TAG(valuenumbering) \
   LOG_TAG(verification) \
   LOG_TAG(verify) \
+  LOG_TAG(vmatree) \
   LOG_TAG(vmmutex) \
   LOG_TAG(vmoperation) \
   LOG_TAG(vmthread) \

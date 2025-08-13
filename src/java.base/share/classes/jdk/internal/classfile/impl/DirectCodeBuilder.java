@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022, 2024, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2022, 2025, Oracle and/or its affiliates. All rights reserved.
  * Copyright (c) 2024, Alibaba Group Holding Limited. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -25,42 +25,18 @@
  */
 package jdk.internal.classfile.impl;
 
-import java.lang.constant.ClassDesc;
-import java.lang.constant.MethodTypeDesc;
-import java.lang.classfile.Attribute;
-import java.lang.classfile.Attributes;
-import java.lang.classfile.ClassFile;
-import java.lang.classfile.CodeBuilder;
-import java.lang.classfile.CodeElement;
-import java.lang.classfile.CodeModel;
-import java.lang.classfile.CustomAttribute;
-import java.lang.classfile.Label;
-import java.lang.classfile.Opcode;
-import java.lang.classfile.TypeKind;
+import java.lang.classfile.*;
 import java.lang.classfile.attribute.CodeAttribute;
 import java.lang.classfile.attribute.LineNumberTableAttribute;
-import java.lang.classfile.constantpool.ClassEntry;
-import java.lang.classfile.constantpool.ConstantPoolBuilder;
-import java.lang.classfile.constantpool.DoubleEntry;
-import java.lang.classfile.constantpool.FieldRefEntry;
-import java.lang.classfile.constantpool.InterfaceMethodRefEntry;
-import java.lang.classfile.constantpool.InvokeDynamicEntry;
-import java.lang.classfile.constantpool.LoadableConstantEntry;
-import java.lang.classfile.constantpool.LongEntry;
-import java.lang.classfile.constantpool.MemberRefEntry;
-import java.lang.classfile.constantpool.MethodRefEntry;
+import java.lang.classfile.constantpool.*;
 import java.lang.classfile.instruction.CharacterRange;
 import java.lang.classfile.instruction.ExceptionCatch;
 import java.lang.classfile.instruction.LocalVariable;
 import java.lang.classfile.instruction.LocalVariableType;
 import java.lang.classfile.instruction.SwitchCase;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.IdentityHashMap;
-import java.util.List;
-import java.util.Map;
+import java.lang.constant.ClassDesc;
+import java.lang.constant.MethodTypeDesc;
+import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -72,10 +48,8 @@ public final class DirectCodeBuilder
         extends AbstractDirectBuilder<CodeModel>
         implements TerminalCodeBuilder {
     private static final CharacterRange[] EMPTY_CHARACTER_RANGE = {};
-    private static final DeferredLabel[] EMPTY_LABEL_ARRAY = {};
     private static final LocalVariable[] EMPTY_LOCAL_VARIABLE_ARRAY = {};
     private static final LocalVariableType[] EMPTY_LOCAL_VARIABLE_TYPE_ARRAY = {};
-    private static final AbstractPseudoInstruction.ExceptionCatchImpl[] EMPTY_HANDLER_ARRAY = {};
     private static final DeferredLabel[] EMPTY_DEFERRED_LABEL_ARRAY = {};
 
     final List<AbstractPseudoInstruction.ExceptionCatchImpl> handlers = new ArrayList<>();
@@ -97,6 +71,9 @@ public final class DirectCodeBuilder
 
     private DeferredLabel[] deferredLabels = EMPTY_DEFERRED_LABEL_ARRAY;
     private int deferredLabelsCount = 0;
+
+    private int maxStackHint = -1;
+    private int maxLocalsHint = -1;
 
     /* Locals management
        lazily computed maxLocal = -1
@@ -197,6 +174,12 @@ public final class DirectCodeBuilder
         return methodInfo;
     }
 
+    public static void withMaxs(CodeBuilder cob, int stacks, int locals) {
+        var dcb = (DirectCodeBuilder) cob;
+        dcb.maxStackHint = stacks;
+        dcb.maxLocalsHint = locals;
+    }
+
     private UnboundAttribute<CodeAttribute> content = null;
 
     private void writeExceptionHandlers(BufWriterImpl buf) {
@@ -223,7 +206,6 @@ public final class DirectCodeBuilder
             } else {
                 buf.writeU2U2U2(startPc, endPc, handlerPc);
                 buf.writeIndexOrZero(h.catchTypeEntry());
-                handlersSize++;
             }
         }
         if (handlersSize < handlers.size())
@@ -265,6 +247,11 @@ public final class DirectCodeBuilder
                         if (crSize < characterRangesCount)
                             b.patchU2(pos, crSize);
                     }
+
+                    @Override
+                    public Utf8Entry attributeName() {
+                        return constantPool.utf8Entry(Attributes.NAME_CHARACTER_RANGE_TABLE);
+                    }
                 };
                 attributes.withAttribute(a);
             }
@@ -288,6 +275,11 @@ public final class DirectCodeBuilder
                         }
                         if (lvSize < localVariablesCount)
                             b.patchU2(pos, lvSize);
+                    }
+
+                    @Override
+                    public Utf8Entry attributeName() {
+                        return constantPool.utf8Entry(Attributes.NAME_LOCAL_VARIABLE_TABLE);
                     }
                 };
                 attributes.withAttribute(a);
@@ -313,6 +305,11 @@ public final class DirectCodeBuilder
                         if (lvtSize < localVariableTypesCount)
                             b.patchU2(pos, lvtSize);
                     }
+
+                    @Override
+                    public Utf8Entry attributeName() {
+                        return constantPool.utf8Entry(Attributes.NAME_LOCAL_VARIABLE_TYPE_TABLE);
+                    }
                 };
                 attributes.withAttribute(a);
             }
@@ -328,6 +325,8 @@ public final class DirectCodeBuilder
                 if (codeMatch) {
                     var originalAttribute = (CodeImpl) original;
                     buf.writeU2U2(originalAttribute.maxStack(), originalAttribute.maxLocals());
+                } else if (maxLocalsHint >= 0 && maxStackHint >= 0) {
+                    buf.writeU2U2(maxStackHint, maxLocalsHint);
                 } else {
                     StackCounter cntr = StackCounter.of(DirectCodeBuilder.this, buf);
                     buf.writeU2U2(cntr.maxStack(), cntr.maxLocals());
@@ -363,7 +362,6 @@ public final class DirectCodeBuilder
             @Override
             public void writeBody(BufWriterImpl buf) {
                 DirectCodeBuilder dcb = DirectCodeBuilder.this;
-                buf.setLabelContext(dcb);
 
                 int codeLength = curPc();
                 if (codeLength == 0 || codeLength >= 65536) {
@@ -375,6 +373,7 @@ public final class DirectCodeBuilder
                 }
 
                 boolean codeMatch = dcb.original != null && codeAndExceptionsMatch(codeLength);
+                buf.setLabelContext(dcb, codeMatch);
                 var context = dcb.context;
                 if (context.stackMapsWhenRequired()) {
                     if (codeMatch) {
@@ -393,7 +392,12 @@ public final class DirectCodeBuilder
                 buf.writeBytes(dcb.bytecodesBufWriter);
                 dcb.writeExceptionHandlers(buf);
                 dcb.attributes.writeTo(buf);
-                buf.setLabelContext(null);
+                buf.setLabelContext(null, false);
+            }
+
+            @Override
+            public Utf8Entry attributeName() {
+                return constantPool.utf8Entry(Attributes.NAME_CODE);
             }
         };
     }
@@ -440,6 +444,11 @@ public final class DirectCodeBuilder
             b.writeU2(buf.size() / 4);
             b.writeBytes(buf);
         }
+
+        @Override
+        public Utf8Entry attributeName() {
+            return buf.constantPool().utf8Entry(Attributes.NAME_LINE_NUMBER_TABLE);
+        }
     }
 
     private boolean codeAndExceptionsMatch(int codeLength) {
@@ -483,7 +492,7 @@ public final class DirectCodeBuilder
         bytecodesBufWriter.writeU1(opcode.bytecode());
     }
 
-    // Instruction version, refer to opcode
+    // Instruction version, refer to opcode, trusted
     public void writeLocalVar(Opcode opcode, int slot) {
         if (opcode.isWide()) {
             bytecodesBufWriter.writeU2U2(opcode.bytecode(), slot);
@@ -492,12 +501,12 @@ public final class DirectCodeBuilder
         }
     }
 
-    // Shortcut version, refer to and validate slot
-    private void writeLocalVar(int bytecode, int slot) {
-        // TODO validation like (slot & 0xFFFF) == slot
-        if (slot < 256) {
+    // local var access, not a trusted write method, needs slot validation
+    private void localAccess(int bytecode, int slot) {
+        if ((slot & ~0xFF) == 0) {
             bytecodesBufWriter.writeU1U1(bytecode, slot);
         } else {
+            BytecodeHelpers.validateSlot(slot);
             bytecodesBufWriter.writeU1U1U2(WIDE, bytecode, slot);
         }
     }
@@ -536,8 +545,8 @@ public final class DirectCodeBuilder
     }
 
     private void writeShortJump(int bytecode, Label target) {
+        int targetBci = labelToBci(target); // implicit null check
         int instructionPc = curPc();
-        int targetBci = labelToBci(target);
 
         // algebraic union of jump | (instructionPc, target), distinguished by null == target.
         int jumpOrInstructionPc;
@@ -560,6 +569,7 @@ public final class DirectCodeBuilder
     }
 
     private void writeLongJump(int bytecode, Label target) {
+        Objects.requireNonNull(target); // before any write
         int instructionPc = curPc();
         bytecodesBufWriter.writeU1(bytecode);
         writeLongLabelOffset(instructionPc, target);
@@ -607,6 +617,17 @@ public final class DirectCodeBuilder
     }
 
     public void writeLookupSwitch(Label defaultTarget, List<SwitchCase> cases) {
+        cases = new ArrayList<>(cases); // cases may be untrusted
+        for (var each : cases) {
+            Objects.requireNonNull(each); // single null case may exist
+        }
+        cases.sort(new Comparator<>() {
+            @Override
+            public int compare(SwitchCase c1, SwitchCase c2) {
+                return Integer.compare(c1.caseValue(), c2.caseValue());
+            }
+        });
+        // validation end
         int instructionPc = curPc();
         bytecodesBufWriter.writeU1(LOOKUPSWITCH);
         int pad = 4 - (curPc() % 4);
@@ -614,13 +635,6 @@ public final class DirectCodeBuilder
             bytecodesBufWriter.skip(pad); // padding content can be anything
         writeLongLabelOffset(instructionPc, defaultTarget);
         bytecodesBufWriter.writeInt(cases.size());
-        cases = new ArrayList<>(cases);
-        cases.sort(new Comparator<>() {
-            @Override
-            public int compare(SwitchCase c1, SwitchCase c2) {
-                return Integer.compare(c1.caseValue(), c2.caseValue());
-            }
-        });
         for (var c : cases) {
             bytecodesBufWriter.writeInt(c.caseValue());
             var target = c.target();
@@ -629,6 +643,11 @@ public final class DirectCodeBuilder
     }
 
     public void writeTableSwitch(int low, int high, Label defaultTarget, List<SwitchCase> cases) {
+        var caseMap = new HashMap<Integer, Label>(cases.size()); // cases may be untrusted
+        for (var c : cases) {
+            caseMap.put(c.caseValue(), c.target());
+        }
+        // validation end
         int instructionPc = curPc();
         bytecodesBufWriter.writeU1(TABLESWITCH);
         int pad = 4 - (curPc() % 4);
@@ -636,10 +655,6 @@ public final class DirectCodeBuilder
             bytecodesBufWriter.skip(pad); // padding content can be anything
         writeLongLabelOffset(instructionPc, defaultTarget);
         bytecodesBufWriter.writeIntInt(low, high);
-        var caseMap = new HashMap<Integer, Label>(cases.size());
-        for (var c : cases) {
-            caseMap.put(c.caseValue(), c.target());
-        }
         for (long l = low; l<=high; l++) {
             var target = caseMap.getOrDefault((int)l, defaultTarget);
             writeLongLabelOffset(instructionPc, target);
@@ -694,16 +709,22 @@ public final class DirectCodeBuilder
         }
     }
 
-    public void writeLoadConstant(Opcode opcode, LoadableConstantEntry value) {
-        // Make sure Long and Double have LDC2_W and
-        // rewrite to _W if index is >= 256
-        int index = AbstractPoolEntry.maybeClone(constantPool, value).index();
-        if (value instanceof LongEntry || value instanceof DoubleEntry) {
-            opcode = Opcode.LDC2_W;
-        } else if (index >= 256)
-            opcode = Opcode.LDC_W;
+    // value may not be writable to this constant pool
+    public void writeAdaptLoadConstant(Opcode opcode, LoadableConstantEntry value) {
+        var pe = AbstractPoolEntry.maybeClone(constantPool, value);
+        int index = pe.index();
+        if (pe != value && opcode != Opcode.LDC2_W) {
+            // rewrite ldc/ldc_w if external entry; ldc2_w never needs rewrites
+            opcode = index <= 0xFF ? Opcode.LDC : Opcode.LDC_W;
+        }
 
-        assert !opcode.isWide();
+        writeDirectLoadConstant(opcode, pe);
+    }
+
+    // the loadable entry is writable to this constant pool
+    public void writeDirectLoadConstant(Opcode opcode, LoadableConstantEntry pe) {
+        assert !opcode.isWide() && canWriteDirect(pe.constantPool());
+        int index = pe.index();
         if (opcode.sizeIfFixed() == 3) {
             bytecodesBufWriter.writeU1U2(opcode.bytecode(), index);
         } else {
@@ -912,6 +933,7 @@ public final class DirectCodeBuilder
             int slots = Util.parameterSlots(Util.methodTypeSymbol(ref.type())) + 1;
             writeInvokeInterface(opcode, (InterfaceMethodRefEntry) ref, slots);
         } else {
+            Util.checkKind(opcode, Opcode.Kind.INVOKE);
             writeInvokeNormal(opcode, ref);
         }
         return this;
@@ -943,7 +965,8 @@ public final class DirectCodeBuilder
 
     @Override
     public CodeBuilder fieldAccess(Opcode opcode, FieldRefEntry ref) {
-        bytecodesBufWriter.writeIndex(opcode.bytecode(), ref);
+        Util.checkKind(opcode, Opcode.Kind.FIELD_ACCESS);
+        writeFieldAccess(opcode, ref);
         return this;
     }
 
@@ -961,6 +984,7 @@ public final class DirectCodeBuilder
 
     @Override
     public CodeBuilder branch(Opcode op, Label target) {
+        Util.checkKind(op, Opcode.Kind.BRANCH);
         writeBranch(op, target);
         return this;
     }
@@ -982,7 +1006,7 @@ public final class DirectCodeBuilder
         if (slot >= 0 && slot <= 3) {
             bytecodesBufWriter.writeU1(ALOAD_0 + slot);
         } else {
-            writeLocalVar(ALOAD, slot);
+            localAccess(ALOAD, slot);
         }
         return this;
     }
@@ -1010,7 +1034,7 @@ public final class DirectCodeBuilder
         if (slot >= 0 && slot <= 3) {
             bytecodesBufWriter.writeU1(ASTORE_0 + slot);
         } else {
-            writeLocalVar(ASTORE, slot);
+            localAccess(ASTORE, slot);
         }
         return this;
     }
@@ -1093,7 +1117,7 @@ public final class DirectCodeBuilder
         if (slot >= 0 && slot <= 3) {
             bytecodesBufWriter.writeU1(DLOAD_0 + slot);
         } else {
-            writeLocalVar(DLOAD, slot);
+            localAccess(DLOAD, slot);
         }
         return this;
     }
@@ -1127,7 +1151,7 @@ public final class DirectCodeBuilder
         if (slot >= 0 && slot <= 3) {
             bytecodesBufWriter.writeU1(DSTORE_0 + slot);
         } else {
-            writeLocalVar(DSTORE, slot);
+            localAccess(DSTORE, slot);
         }
         return this;
     }
@@ -1239,7 +1263,7 @@ public final class DirectCodeBuilder
         if (slot >= 0 && slot <= 3) {
             bytecodesBufWriter.writeU1(FLOAD_0 + slot);
         } else {
-            writeLocalVar(FLOAD, slot);
+            localAccess(FLOAD, slot);
         }
         return this;
     }
@@ -1273,7 +1297,7 @@ public final class DirectCodeBuilder
         if (slot >= 0 && slot <= 3) {
             bytecodesBufWriter.writeU1(FSTORE_0 + slot);
         } else {
-            writeLocalVar(FSTORE, slot);
+            localAccess(FSTORE, slot);
         }
         return this;
     }
@@ -1499,7 +1523,7 @@ public final class DirectCodeBuilder
         if (slot >= 0 && slot <= 3) {
             bytecodesBufWriter.writeU1(ILOAD_0 + slot);
         } else {
-            writeLocalVar(ILOAD, slot);
+            localAccess(ILOAD, slot);
         }
         return this;
     }
@@ -1599,7 +1623,7 @@ public final class DirectCodeBuilder
         if (slot >= 0 && slot <= 3) {
             bytecodesBufWriter.writeU1(ISTORE_0 + slot);
         } else {
-            writeLocalVar(ISTORE, slot);
+            localAccess(ISTORE, slot);
         }
         return this;
     }
@@ -1624,6 +1648,8 @@ public final class DirectCodeBuilder
 
     @Override
     public CodeBuilder lookupswitch(Label defaultTarget, List<SwitchCase> cases) {
+        Objects.requireNonNull(defaultTarget);
+        // check cases when we sort them
         writeLookupSwitch(defaultTarget, cases);
         return this;
     }
@@ -1678,7 +1704,8 @@ public final class DirectCodeBuilder
 
     @Override
     public CodeBuilder ldc(LoadableConstantEntry entry) {
-        writeLoadConstant(BytecodeHelpers.ldcOpcode(entry), entry);
+        var direct = AbstractPoolEntry.maybeClone(constantPool, entry);
+        writeDirectLoadConstant(BytecodeHelpers.ldcOpcode(direct), direct);
         return this;
     }
 
@@ -1693,7 +1720,7 @@ public final class DirectCodeBuilder
         if (slot >= 0 && slot <= 3) {
             bytecodesBufWriter.writeU1(LLOAD_0 + slot);
         } else {
-            writeLocalVar(LLOAD, slot);
+            localAccess(LLOAD, slot);
         }
         return this;
     }
@@ -1745,7 +1772,7 @@ public final class DirectCodeBuilder
         if (slot >= 0 && slot <= 3) {
             bytecodesBufWriter.writeU1(LSTORE_0 + slot);
         } else {
-            writeLocalVar(LSTORE, slot);
+            localAccess(LSTORE, slot);
         }
         return this;
     }
@@ -1782,6 +1809,7 @@ public final class DirectCodeBuilder
 
     @Override
     public CodeBuilder multianewarray(ClassEntry array, int dims) {
+        BytecodeHelpers.validateMultiArrayDimensions(dims);
         writeNewMultidimensionalArray(dims, array);
         return this;
     }
@@ -1828,6 +1856,8 @@ public final class DirectCodeBuilder
 
     @Override
     public CodeBuilder tableswitch(int low, int high, Label defaultTarget, List<SwitchCase> cases) {
+        Objects.requireNonNull(defaultTarget);
+        // check cases when we write them
         writeTableSwitch(low, high, defaultTarget, cases);
         return this;
     }

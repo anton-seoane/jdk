@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2022, 2025, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,15 +24,12 @@
  */
 package jdk.internal.classfile.impl.verifier;
 
-import static jdk.internal.classfile.impl.RawBytecodeHelper.*;
-
 import jdk.internal.classfile.impl.verifier.VerificationSignature.BasicType;
+
+import static jdk.internal.classfile.impl.RawBytecodeHelper.*;
 import static jdk.internal.classfile.impl.verifier.VerificationSignature.BasicType.*;
 
-/**
- * @see <a href="https://raw.githubusercontent.com/openjdk/jdk/master/src/hotspot/share/interpreter/bytecodes.hpp">hotspot/share/interpreter/bytecodes.hpp</a>
- * @see <a href="https://raw.githubusercontent.com/openjdk/jdk/master/src/hotspot/share/interpreter/bytecodes.cpp">hotspot/share/interpreter/bytecodes.cpp</a>
- */
+/// From `bytecodes.cpp`.
 final class VerificationBytecodes {
 
     static final int _breakpoint = 202,
