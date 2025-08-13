@@ -494,6 +494,7 @@ private:
 
   InlinePrinter _inline_printer;
 
+public:
   template <LogTagType T0, LogTagType T1 = LogTag::__NO_TAG,
             LogTagType T2 = LogTag::__NO_TAG, LogTagType T3 = LogTag::__NO_TAG,
             LogTagType T4 = LogTag::__NO_TAG,
@@ -506,7 +507,6 @@ private:
 #define ul_enabled(C, level, ...)                                              \
   (C->should_print_ul<LOG_TAGS(__VA_ARGS__)>(LogLevelType::level))
 
-public:
   void* barrier_set_state() const { return _barrier_set_state; }
 
   InlinePrinter* inline_printer() { return &_inline_printer; }

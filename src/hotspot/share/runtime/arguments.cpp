@@ -3718,7 +3718,7 @@ jint Arguments::parse(const JavaVMInitArgs* initial_cmd_args) {
   if (TraceOptoPipelining) LogConfiguration::configure_stdout(LogLevel::Trace, false, LOG_TAGS(jit, optopipelining));
 #endif
 #ifdef ASSERT
-  if (TraceMergeStores) LogConfiguration::configure_stdout(LogLevel::Trace, false, LOG_TAGS(jit, mergestores));
+  //if (TraceMergeStores) LogConfiguration::configure_stdout(LogLevel::Trace, false, LOG_TAGS(jit, mergestores));
   if (TraceRangeLimitCheck) LogConfiguration::configure_stdout(LogLevel::Trace, false, LOG_TAGS(jit, rangelimitcheck));
 #endif
 
