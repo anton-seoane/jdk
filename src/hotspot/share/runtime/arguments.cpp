@@ -47,6 +47,7 @@
 #include "oops/instanceKlass.hpp"
 #include "oops/objLayout.hpp"
 #include "oops/oop.inline.hpp"
+#include "opto/c2_globals.hpp"
 #include "prims/jvmtiAgentList.hpp"
 #include "prims/jvmtiExport.hpp"
 #include "runtime/arguments.hpp"
