@@ -21,6 +21,7 @@
  * questions.
  */
 
+#include "logging/logStream.hpp"
 #include "opto/addnode.hpp"
 #include "opto/castnode.hpp"
 #include "opto/convertnode.hpp"
@@ -29,7 +30,6 @@
 #include "opto/superword.hpp"
 #include "opto/superwordVTransformBuilder.hpp"
 #include "opto/vectornode.hpp"
-#include "logging/logStream.hpp"
 
 SuperWord::SuperWord(const VLoopAnalyzer &vloop_analyzer) :
   _vloop_analyzer(vloop_analyzer),

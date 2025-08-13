@@ -29,6 +29,7 @@
 #include "classfile/vmSymbols.hpp"
 #include "compiler/compileLog.hpp"
 #include "libadt/dict.hpp"
+#include "logging/logStream.hpp"
 #include "memory/oopFactory.hpp"
 #include "memory/resourceArea.hpp"
 #include "oops/instanceKlass.hpp"
@@ -47,7 +48,6 @@
 #include "utilities/checkedCast.hpp"
 #include "utilities/powerOfTwo.hpp"
 #include "utilities/stringUtils.hpp"
-#include "logging/logStream.hpp"
 
 // Portions of code courtesy of Clifford Click
 

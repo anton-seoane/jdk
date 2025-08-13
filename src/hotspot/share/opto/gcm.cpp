@@ -23,6 +23,7 @@
  */
 
 #include "libadt/vectset.hpp"
+#include "logging/logStream.hpp"
 #include "memory/allocation.inline.hpp"
 #include "memory/resourceArea.hpp"
 #include "opto/block.hpp"
@@ -36,7 +37,6 @@
 #include "opto/rootnode.hpp"
 #include "opto/runtime.hpp"
 #include "runtime/deoptimization.hpp"
-#include "logging/logStream.hpp"
 
 // Portions of code courtesy of Clifford Click
 

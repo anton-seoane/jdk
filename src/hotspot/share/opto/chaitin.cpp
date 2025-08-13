@@ -24,6 +24,7 @@
 
 #include "compiler/compileLog.hpp"
 #include "compiler/oopMap.hpp"
+#include "logging/logStream.hpp"
 #include "memory/allocation.inline.hpp"
 #include "memory/resourceArea.hpp"
 #include "opto/addnode.hpp"
@@ -41,7 +42,6 @@
 #include "opto/opcodes.hpp"
 #include "opto/rootnode.hpp"
 #include "utilities/align.hpp"
-#include "logging/logStream.hpp"
 
 #ifndef PRODUCT
 void LRG::dump() const {

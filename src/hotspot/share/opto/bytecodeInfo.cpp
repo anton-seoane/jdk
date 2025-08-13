@@ -30,12 +30,12 @@
 #include "compiler/compilerEvent.hpp"
 #include "interpreter/linkResolver.hpp"
 #include "jfr/jfrEvents.hpp"
+#include "logging/logStream.hpp"
 #include "oops/objArrayKlass.hpp"
 #include "opto/callGenerator.hpp"
 #include "opto/parse.hpp"
 #include "runtime/handles.inline.hpp"
 #include "utilities/events.hpp"
-#include "logging/logStream.hpp"
 
 //=============================================================================
 //------------------------------InlineTree-------------------------------------

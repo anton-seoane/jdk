@@ -22,6 +22,7 @@
  *
  */
 
+#include "logging/logStream.hpp"
 #include "memory/allocation.inline.hpp"
 #include "opto/addnode.hpp"
 #include "opto/callnode.hpp"
@@ -30,7 +31,6 @@
 #include "opto/node.hpp"
 #include "opto/opaquenode.hpp"
 #include "opto/predicates.hpp"
-#include "logging/logStream.hpp"
 
 //------------------------------split_thru_region------------------------------
 // Split Node 'n' through merge point.

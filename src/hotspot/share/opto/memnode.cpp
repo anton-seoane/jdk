@@ -28,6 +28,7 @@
 #include "gc/shared/barrierSet.hpp"
 #include "gc/shared/c2/barrierSetC2.hpp"
 #include "gc/shared/tlab_globals.hpp"
+#include "logging/logStream.hpp"
 #include "memory/allocation.inline.hpp"
 #include "memory/resourceArea.hpp"
 #include "oops/objArrayKlass.hpp"
@@ -55,7 +56,6 @@
 #include "utilities/macros.hpp"
 #include "utilities/powerOfTwo.hpp"
 #include "utilities/vmError.hpp"
-#include "logging/logStream.hpp"
 
 // Portions of code courtesy of Clifford Click
 

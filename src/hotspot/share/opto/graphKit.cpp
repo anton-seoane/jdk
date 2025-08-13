@@ -30,6 +30,7 @@
 #include "gc/shared/barrierSet.hpp"
 #include "gc/shared/c2/barrierSetC2.hpp"
 #include "interpreter/interpreter.hpp"
+#include "logging/logStream.hpp"
 #include "memory/resourceArea.hpp"
 #include "opto/addnode.hpp"
 #include "opto/castnode.hpp"
@@ -48,7 +49,6 @@
 #include "runtime/sharedRuntime.hpp"
 #include "utilities/bitMap.inline.hpp"
 #include "utilities/growableArray.hpp"
-#include "logging/logStream.hpp"
 #include "utilities/powerOfTwo.hpp"
 
 //----------------------------GraphKit-----------------------------------------

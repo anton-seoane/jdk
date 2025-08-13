@@ -22,12 +22,12 @@
  *
  */
 
-#include "logging/logStream.hpp"
 #include "ci/bcEscapeAnalyzer.hpp"
 #include "compiler/compileLog.hpp"
 #include "gc/shared/barrierSet.hpp"
 #include "gc/shared/c2/barrierSetC2.hpp"
 #include "libadt/vectset.hpp"
+#include "logging/logStream.hpp"
 #include "memory/allocation.hpp"
 #include "memory/resourceArea.hpp"
 #include "opto/arraycopynode.hpp"

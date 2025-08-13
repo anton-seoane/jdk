@@ -31,8 +31,8 @@
 #include "compiler/compiler_globals.hpp"
 #include "compiler/compilerDefinitions.inline.hpp"
 #include "compiler/compilerDirectives.hpp"
-#include "runtime/deoptimization.hpp"
 #include "logging/log.hpp"
+#include "runtime/deoptimization.hpp"
 
 class CompilationFailureInfo;
 class CompilationResourceObj;

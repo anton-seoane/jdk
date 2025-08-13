@@ -24,6 +24,7 @@
 
 #include "compiler/compileLog.hpp"
 #include "interpreter/linkResolver.hpp"
+#include "logging/logStream.hpp"
 #include "memory/resourceArea.hpp"
 #include "oops/method.hpp"
 #include "opto/addnode.hpp"
@@ -42,7 +43,6 @@
 #include "runtime/sharedRuntime.hpp"
 #include "utilities/bitMap.inline.hpp"
 #include "utilities/copy.hpp"
-#include "logging/logStream.hpp"
 
 // Static array so we can figure out which bytecodes stop us from compiling
 // the most. Some of the non-static variables are needed in bytecodeInfo.cpp

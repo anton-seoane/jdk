@@ -22,6 +22,7 @@
  *
  */
 
+#include "logging/logStream.hpp"
 #include "memory/allocation.hpp"
 #include "opto/addnode.hpp"
 #include "opto/callnode.hpp"
@@ -35,7 +36,7 @@
 #include "opto/predicates.hpp"
 #include "opto/rootnode.hpp"
 #include "opto/subnode.hpp"
-#include "logging/logStream.hpp"
+
 #include <fenv.h>
 #include <math.h>
 

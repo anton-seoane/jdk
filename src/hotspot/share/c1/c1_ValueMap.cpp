@@ -22,11 +22,11 @@
  *
  */
 
-#include "logging/logStream.hpp"
 #include "c1/c1_IR.hpp"
 #include "c1/c1_ValueMap.hpp"
 #include "c1/c1_ValueSet.hpp"
 #include "c1/c1_ValueStack.hpp"
+#include "logging/logStream.hpp"
 #include "utilities/bitMap.inline.hpp"
 
 #ifndef PRODUCT

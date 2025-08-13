@@ -22,15 +22,15 @@
  *
  */
 
-#include "opto/compile.hpp"
 #include "libadt/vectset.hpp"
+#include "logging/logStream.hpp"
 #include "memory/allocation.hpp"
 #include "memory/resourceArea.hpp"
 #include "opto/block.hpp"
+#include "opto/compile.hpp"
 #include "opto/machnode.hpp"
 #include "opto/phaseX.hpp"
 #include "opto/rootnode.hpp"
-#include "logging/logStream.hpp"
 
 // Portions of code courtesy of Clifford Click
 

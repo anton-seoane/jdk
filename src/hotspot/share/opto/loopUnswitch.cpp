@@ -22,6 +22,7 @@
  *
  */
 
+#include "logging/logStream.hpp"
 #include "memory/allocation.inline.hpp"
 #include "opto/castnode.hpp"
 #include "opto/cfgnode.hpp"
@@ -31,7 +32,6 @@
 #include "opto/opaquenode.hpp"
 #include "opto/predicates.hpp"
 #include "opto/rootnode.hpp"
-#include "logging/logStream.hpp"
 
 // Multiversioning:
 // A loop is cloned, and a selector If decides which loop is taken at run-time: the true-path-loop (original) or the

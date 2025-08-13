@@ -25,6 +25,7 @@
 #include "compiler/compileLog.hpp"
 #include "gc/shared/barrierSet.hpp"
 #include "gc/shared/c2/barrierSetC2.hpp"
+#include "logging/logStream.hpp"
 #include "memory/allocation.inline.hpp"
 #include "opto/addnode.hpp"
 #include "opto/callnode.hpp"
@@ -45,7 +46,6 @@
 #include "opto/vectornode.hpp"
 #include "runtime/globals_extension.hpp"
 #include "runtime/stubRoutines.hpp"
-#include "logging/logStream.hpp"
 
 //------------------------------is_loop_exit-----------------------------------
 // Given an IfNode, return the loop-exiting projection or null if both

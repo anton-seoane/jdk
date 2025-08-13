@@ -42,6 +42,7 @@
 #include "gc/shared/c2/barrierSetC2.hpp"
 #include "jfr/jfrEvents.hpp"
 #include "jvm_io.h"
+#include "logging/logStream.hpp"
 #include "memory/allocation.hpp"
 #include "memory/arena.hpp"
 #include "memory/resourceArea.hpp"
@@ -89,7 +90,6 @@
 #include "utilities/copy.hpp"
 #include "utilities/macros.hpp"
 #include "utilities/resourceHash.hpp"
-#include "logging/logStream.hpp"
 
 // -------------------- Compile::mach_constant_base_node -----------------------
 // Constant table base node singleton.

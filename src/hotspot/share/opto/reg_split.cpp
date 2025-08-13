@@ -23,6 +23,7 @@
  */
 
 #include "libadt/vectset.hpp"
+#include "logging/logStream.hpp"
 #include "memory/allocation.inline.hpp"
 #include "memory/resourceArea.inline.hpp"
 #include "opto/addnode.hpp"
@@ -32,7 +33,6 @@
 #include "opto/chaitin.hpp"
 #include "opto/loopnode.hpp"
 #include "opto/machnode.hpp"
-#include "logging/logStream.hpp"
 
 //------------------------------Split--------------------------------------
 // Walk the graph in RPO and for each lrg which spills, propagate reaching
