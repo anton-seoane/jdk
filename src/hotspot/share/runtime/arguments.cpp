@@ -3692,7 +3692,9 @@ jint Arguments::parse(const JavaVMInitArgs* initial_cmd_args) {
     ScavengeRootsInCode = 1;
   }
 
+  #ifdef COMPILER2
   if (TraceLoopOpts) LogConfiguration::configure_stdout(LogLevel::Trace, false, LOG_TAGS(jit, loopopts));
+  #endif
   if (PrintOpto) LogConfiguration::configure_stdout(LogLevel::Trace, false, LOG_TAGS(jit, opto));
   if (TracePartialPeeling) LogConfiguration::configure_stdout(LogLevel::Trace, false, LOG_TAGS(jit, partialpeeling));
   if (TraceOptoParse) LogConfiguration::configure_stdout(LogLevel::Trace, false, LOG_TAGS(jit, optoparse));
