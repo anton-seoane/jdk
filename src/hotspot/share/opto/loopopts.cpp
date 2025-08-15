@@ -30,6 +30,7 @@
 #include "opto/addnode.hpp"
 #include "opto/callnode.hpp"
 #include "opto/castnode.hpp"
+#include "opto/compile.hpp"
 #include "opto/connode.hpp"
 #include "opto/divnode.hpp"
 #include "opto/loopnode.hpp"
@@ -862,7 +863,7 @@ Node *PhaseIdealLoop::conditional_move( Node *region ) {
     register_new_node(cmov, cmov_ctrl);
     _igvn.replace_node(phi, cmov);
 #ifndef PRODUCT
-    if (ul_enabled(C, Trace, jit, loopopts)) {
+    if (ul_enabled_c(Trace, jit, loopopts)) {
       LogMessage(jit, loopopts) msg;
       NonInterleavingLogStream st(LogLevelType::Trace, msg);
       st.print("CMOV  ");
@@ -1466,9 +1467,8 @@ void PhaseIdealLoop::split_if_with_blocks_post(Node *n) {
     if ((ul_enabled(C, Debug, jit, opto) && VerifyLoopOptimizations)) {
       log_trace(jit, opto)("Split-If");
     }
-    if (ul_enabled(C, Trace, jit, loopopts)) {
-      log_trace(jit, loopopts)("Split-If");
-    }
+    log_trace_c2(jit, loopopts)("Split-If");
+
     do_split_if(iff);
     C->print_method(PHASE_AFTER_SPLIT_IF, 4, iff);
     return;
@@ -3821,7 +3821,7 @@ bool PhaseIdealLoop::partial_peel( IdealLoopTree *loop, Node_List &old_new ) {
   }
 
 #ifndef PRODUCT
-  if (ul_enabled(C, Trace, jit, loopopts)) {
+  if (ul_enabled_c(Trace, jit, loopopts)) {
     LogMessage(jit, loopopts) msg;
     NonInterleavingLogStream st(LogLevelType::Trace, msg);
     st.print("PartialPeel  ");

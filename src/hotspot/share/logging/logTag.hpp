@@ -125,6 +125,7 @@ class outputStream;
   LOG_TAG(loader) \
   LOG_TAG(logging) \
   LOG_TAG(looplimitcheck) \
+  LOG_TAG(loopmultiversioning) \
   LOG_TAG(loopopts) \
   LOG_TAG(looppredicate) \
   LOG_TAG(loopunswitching) \

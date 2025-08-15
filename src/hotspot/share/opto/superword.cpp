@@ -1978,7 +1978,7 @@ void VTransform::apply() {
     lpt()->dump_head();
     lpt()->head()->dump();
   }
-  if (ul_enabled(Compile::current(), Trace, jit, loopopts)) {
+  if (ul_enabled_c(Trace, jit, loopopts)) {
     LogMessage(jit, loopopts) msg;
     NonInterleavingLogStream st(LogLevelType::Trace, msg);
     st.print_cr("\nVTransform::apply:");

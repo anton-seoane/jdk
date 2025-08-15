@@ -2567,7 +2567,7 @@ bool PhaseIdealLoop::is_counted_loop(Node* x, IdealLoopTree*&loop, BasicType iv_
   assert(l == loop->_head && l->phi() == phi && l->loopexit_or_null() == lex, "" );
 #endif
 #ifndef PRODUCT
-  if (ul_enabled(C, Trace, jit, loopopts)) {
+  if (ul_enabled_c(Trace, jit, loopopts)) {
     LogMessage(jit, loopopts) msg;
     NonInterleavingLogStream st(LogLevelType::Trace, msg);
     st.print("Counted      ");
@@ -4415,7 +4415,7 @@ void PhaseIdealLoop::replace_parallel_iv(IdealLoopTree *loop) {
     }
 
 #ifndef PRODUCT
-      if (ul_enabled(C, Trace, jit, loopopts)) {
+      if (ul_enabled_c(Trace, jit, loopopts)) {
         LogMessage(jit, loopopts) msg;
         NonInterleavingLogStream st(LogLevelType::Trace, msg);
         st.print("Parallel IV: %d ", phi2->_idx);
@@ -5144,7 +5144,7 @@ void PhaseIdealLoop::build_and_optimize() {
     return;
   }
   DEBUG_ONLY( if (VerifyLoopOptimizations) { verify(); } );
-  if (ul_enabled(C, Trace, jit, loopopts) && C->has_loops()) {
+  if (ul_enabled_c(Trace, jit, loopopts) && C->has_loops()) {
     LogMessage(jit, loopopts) msg;
     NonInterleavingLogStream st(LogLevelType::Trace, msg);
     _ltree_root->dump(&st);
@@ -5316,9 +5316,7 @@ void PhaseIdealLoop::build_and_optimize() {
   if (!C->major_progress() && (C->parse_predicate_count() > 0)) {
     C->mark_parse_predicate_nodes_useless(_igvn);
     assert(C->parse_predicate_count() == 0, "should be zero now");
-    if (TraceLoopOpts) {
-      tty->print_cr("PredicatesOff");
-    }
+    log_trace_c2(jit, loopopts)("PredicatesOff");
     C->set_major_progress();
   }
 }
@@ -5981,7 +5979,7 @@ int PhaseIdealLoop::build_loop_tree_impl(Node* n, int pre_order) {
         // Check for bad CFG here to prevent crash, and bailout of compile
         if (l == nullptr) {
 #ifndef PRODUCT
-          if (ul_enabled(C, Trace, jit, loopopts)) {
+          if (ul_enabled_c(Trace, jit, loopopts)) {
             LogMessage(jit, loopopts) msg;
             NonInterleavingLogStream st(LogLevelType::Trace, msg);
             st.print_cr("bailout: unhandled CFG: infinite irreducible loop");

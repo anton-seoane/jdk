@@ -784,7 +784,7 @@ void PhaseIdealLoop::do_peeling(IdealLoopTree *loop, Node_List &old_new) {
   // no longer a 'main' loop; it will need new pre and post loops before
   // we can do further RCE.
 #ifndef PRODUCT
-  if (ul_enabled(C, Trace, jit, loopopts)) {
+  if (ul_enabled_c(Trace, jit, loopopts)) {
     LogMessage(jit, loopopts) msg;
     NonInterleavingLogStream st(LogLevelType::Trace, msg);
     st.print("Peel         ");
@@ -1400,7 +1400,7 @@ void PhaseIdealLoop::ensure_zero_trip_guard_proj(Node* node, bool is_main_loop) 
 void PhaseIdealLoop::insert_pre_post_loops(IdealLoopTree *loop, Node_List &old_new, bool peel_only) {
 
 #ifndef PRODUCT
-  if (ul_enabled(C, Trace, jit, loopopts)) {
+  if (ul_enabled_c(Trace, jit, loopopts)) {
     LogMessage(jit, loopopts) msg;
     NonInterleavingLogStream st(LogLevelType::Trace, msg);
     if (peel_only)
@@ -1641,7 +1641,7 @@ void PhaseIdealLoop::insert_vector_post_loop(IdealLoopTree *loop, Node_List &old
   }
 
 #ifndef PRODUCT
-  if (ul_enabled(C, Trace, jit, loopopts)) {
+  if (ul_enabled_c(Trace, jit, loopopts)) {
     LogMessage(jit, loopopts) msg;
     NonInterleavingLogStream st(LogLevelType::Trace, msg);
     st.print("PostVector  ");
@@ -1898,7 +1898,7 @@ void PhaseIdealLoop::do_unroll(IdealLoopTree *loop, Node_List &old_new, bool adj
   C->print_method(PHASE_BEFORE_LOOP_UNROLLING, 4, loop_head);
 
 #ifndef PRODUCT
-  if (ul_enabled(C, Trace, jit, loopopts)) {
+  if (ul_enabled_c(Trace, jit, loopopts)) {
     LogMessage(jit, loopopts) msg;
     NonInterleavingLogStream st(LogLevelType::Trace, msg);
     if (loop_head->trip_count() < (uint)LoopUnrollLimit) {
@@ -1910,7 +1910,7 @@ void PhaseIdealLoop::do_unroll(IdealLoopTree *loop, Node_List &old_new, bool adj
   }
 
   if (C->do_vector_loop()) {
-    if (ul_enabled(C, Trace, jit, loopopts, opto)) {
+    if (ul_enabled_c(Trace, jit, loopopts, opto)) {
       LogMessage(jit, loopopts, opto) msg;
       NonInterleavingLogStream st(LogLevelType::Trace, msg);
       Node_Stack stack(C->live_nodes() >> 2);
@@ -2136,7 +2136,7 @@ void PhaseIdealLoop::do_unroll(IdealLoopTree *loop, Node_List &old_new, bool adj
 
 #ifndef PRODUCT
   if (C->do_vector_loop()) {
-    if (ul_enabled(C, Trace, jit, loopopts, opto)) {
+    if (ul_enabled_c(Trace, jit, loopopts, opto)) {
       LogMessage(jit, loopopts, opto) msg;
       NonInterleavingLogStream st(LogLevelType::Trace, msg);
       st.print("\nnew loop after unroll\n");
@@ -2194,7 +2194,7 @@ void PhaseIdealLoop::do_maximally_unroll(IdealLoopTree *loop, Node_List &old_new
   assert(cl->has_exact_trip_count(), "trip count is not exact");
   assert(cl->trip_count() > 0, "");
 #ifndef PRODUCT
-  if (ul_enabled(C, Trace, jit, loopopts)) {
+  if (ul_enabled_c(Trace, jit, loopopts)) {
     LogMessage(jit, loopopts) msg;
     NonInterleavingLogStream st(LogLevelType::Trace, msg);
     st.print("MaxUnroll  " JULONG_FORMAT " ", cl->trip_count());
@@ -2622,7 +2622,7 @@ bool PhaseIdealLoop::is_scaled_iv_plus_extra_offset(Node* exp1, Node* offset3, N
 // Eliminate range-checks and other trip-counter vs loop-invariant tests.
 void PhaseIdealLoop::do_range_check(IdealLoopTree* loop) {
 #ifndef PRODUCT
-  if (ul_enabled(C, Trace, jit, loopopts)) {
+  if (ul_enabled_c(Trace, jit, loopopts)) {
     LogMessage(jit, loopopts) msg;
     NonInterleavingLogStream st(LogLevelType::Trace, msg);
     st.print("RangeCheck   ");
@@ -3246,7 +3246,7 @@ bool IdealLoopTree::do_remove_empty_loop(PhaseIdealLoop *phase) {
     st.print("Removing empty loop with%s zero trip guard",
              needs_guard ? "out" : "");
     this->dump_head(&st);
-  } else if (ul_enabled(_phase->C, Trace, jit, loopopts)) {
+  } else if (ul_enabled_c(Trace, jit, loopopts)) {
     LogMessage(jit, loopopts) msg;
     NonInterleavingLogStream st(LogLevelType::Trace, msg);
     st.print("Empty with%s zero trip guard   ", needs_guard ? "out" : "");
@@ -3432,7 +3432,7 @@ bool IdealLoopTree::do_one_iteration_loop(PhaseIdealLoop *phase) {
   }
 
 #ifndef PRODUCT
-  if (ul_enabled(_phase->C, Trace, jit, loopopts)) {
+  if (ul_enabled_c(Trace, jit, loopopts)) {
     LogMessage(jit, loopopts) msg;
     NonInterleavingLogStream st(LogLevelType::Trace, msg);
     st.print("OneIteration ");
@@ -3976,7 +3976,7 @@ bool PhaseIdealLoop::intrinsify_fill(IdealLoopTree* lpt) {
   }
 
 #ifndef PRODUCT
-  if (ul_enabled(C, Trace, jit, loopopts)) {
+  if (ul_enabled_c(Trace, jit, loopopts)) {
     LogMessage(jit, loopopts) msg;
     NonInterleavingLogStream st(LogLevelType::Trace, msg);
     st.print("ArrayFill    ");

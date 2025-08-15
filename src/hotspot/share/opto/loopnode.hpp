@@ -26,6 +26,7 @@
 #define SHARE_OPTO_LOOPNODE_HPP
 
 #include "opto/cfgnode.hpp"
+#include "opto/compile.hpp"
 #include "opto/multnode.hpp"
 #include "opto/phaseX.hpp"
 #include "opto/predicates.hpp"
@@ -1875,7 +1876,7 @@ public:
 
   ~AutoNodeBudget() {
 #ifndef PRODUCT
-    if (ul_enabled(_phase->C, Trace, jit, loopopts)) {
+    if (ul_enabled_c(Trace, jit, loopopts)) {
       uint request = _phase->nodes_required();
       uint delta   = _phase->C->live_nodes() - _nodes_at_begin;
 

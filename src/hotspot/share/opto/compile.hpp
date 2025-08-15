@@ -34,6 +34,7 @@
 #include "compiler/compilerEvent.hpp"
 #include "libadt/dict.hpp"
 #include "libadt/vectset.hpp"
+#include "logging/logTag.hpp"
 #include "memory/resourceArea.hpp"
 #include "oops/methodData.hpp"
 #include "opto/idealGraphPrinter.hpp"
@@ -504,8 +505,15 @@ public:
            C->directive()->should_ul();
   }
 
-#define ul_enabled(C, level, ...)                                              \
-  (C->should_print_ul<LOG_TAGS(__VA_ARGS__)>(LogLevelType::level))
+  // Wrapper around should_print_ul to strip template notation
+  #define ul_enabled(C, level, ...) (C->should_print_ul<LOG_TAGS(__VA_ARGS__)>(LogLevelType::level))
+  #define ul_enabled_c(level, ...) (Compile::current()->should_print_ul<LOG_TAGS(__VA_ARGS__)>(LogLevelType::level))
+
+  #define log_error_c2(...) (!Compile::current()->should_print_ul<LOG_TAGS(__VA_ARGS__)>(LogLevelType::Error)) ? (void)0 : LogImpl<LOG_TAGS(__VA_ARGS__)>::write<LogLevel::Error>
+  #define log_warning_c2(...) (!Compile::current()->should_print_ul<LOG_TAGS(__VA_ARGS__)>(LogLevelType::Warning)) ? (void)0 : LogImpl<LOG_TAGS(__VA_ARGS__)>::write<LogLevel::Warning>
+  #define log_info_c2(...) (!Compile::current()->should_print_ul<LOG_TAGS(__VA_ARGS__)>(LogLevelType::Info)) ? (void)0 : LogImpl<LOG_TAGS(__VA_ARGS__)>::write<LogLevel::Info>
+  #define log_debug_c2(...) (!Compile::current()->should_print_ul<LOG_TAGS(__VA_ARGS__)>(LogLevelType::Debug)) ? (void)0 : LogImpl<LOG_TAGS(__VA_ARGS__)>::write<LogLevel::Debug>
+  #define log_trace_c2(...) (!Compile::current()->should_print_ul<LOG_TAGS(__VA_ARGS__)>(LogLevelType::Trace)) ? (void)0 : LogImpl<LOG_TAGS(__VA_ARGS__)>::write<LogLevel::Trace>
 
   void* barrier_set_state() const { return _barrier_set_state; }
 
