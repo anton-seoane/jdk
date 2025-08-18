@@ -4643,7 +4643,7 @@ void IdealLoopTree::dump_head(outputStream* out) {
     out->print(" limit_check");
   }
   if (predicates.short_running_long_loop_predicate_block()->is_non_empty()) {
-    tty->print(" short_running");
+    out->print(" short_running");
   }
   if (UseLoopPredicate) {
     if (UseProfiledLoopPredicate && predicates.profiled_loop_predicate_block()->is_non_empty()) {
@@ -4673,14 +4673,14 @@ void IdealLoopTree::dump_head(outputStream* out) {
 
     out->print(" (%0.f iters) ", cl->profile_trip_cnt());
 
-    if (cl->is_pre_loop ())       out->print(" pre" );
-    if (cl->is_main_loop())       out->print(" main");
-    if (cl->is_post_loop())       out->print(" post");
-    if (cl->is_vectorized_loop()) out->print(" vector");
-    if (range_checks_present())   out->print(" rc ");
-    if (cl->is_multiversion_fast_loop())         { tty->print(" multiversion_fast"); }
-    if (cl->is_multiversion_slow_loop())         { tty->print(" multiversion_slow"); }
-    if (cl->is_multiversion_delayed_slow_loop()) { tty->print(" multiversion_delayed_slow"); }
+    if (cl->is_pre_loop ())                       out->print(" pre" );
+    if (cl->is_main_loop())                       out->print(" main");
+    if (cl->is_post_loop())                       out->print(" post");
+    if (cl->is_vectorized_loop())                 out->print(" vector");
+    if (range_checks_present())                   out->print(" rc ");
+    if (cl->is_multiversion_fast_loop())          out->print(" multiversion_fast");
+    if (cl->is_multiversion_slow_loop())          out->print(" multiversion_slow");
+    if (cl->is_multiversion_delayed_slow_loop())  out->print(" multiversion_delayed_slow");
   }
   if (_has_call)      out->print(" has_call");
   if (_has_sfpt)      out->print(" has_sfpt");
