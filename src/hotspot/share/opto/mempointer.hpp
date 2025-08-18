@@ -540,7 +540,7 @@ public:
 #ifndef PRODUCT
   void print_on(outputStream* st) const {
     _scale.print_on(st);
-    tty->print(" * [%d %s]", _variable->_idx, _variable->Name());
+    st->print(" * [%d %s]", _variable->_idx, _variable->Name());
   }
 #endif
 };
