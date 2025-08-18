@@ -2157,7 +2157,7 @@ void PhaseChaitin::dump(const Node* n, outputStream* out) const {
             out->print("%s+%d]", OptoReg::regname(OptoReg::c_frame_pointer),
                        reg2offset_unchecked(first));
         } else {
-          n->in_RegMask(k).dump();
+          n->in_RegMask(k).dump(out);
         }
       }
       out->print("/N%d ", m->_idx);
