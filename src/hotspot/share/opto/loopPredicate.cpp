@@ -606,7 +606,7 @@ BoolNode* PhaseIdealLoop::rc_predicate(Node* ctrl, const int scale, Node* offset
   jint con_offset = offset->is_Con() ? offset->get_int() : 0;
 
   stringStream* predString = nullptr;
-  if (ul_enabled(C, Trace, jit, looppredicate)) {
+  if (ul_enabled_c(Trace, jit, looppredicate)) {
     predString = new (mtCompiler) stringStream();
     predString->print("rc_predicate ");
   }
@@ -617,7 +617,7 @@ BoolNode* PhaseIdealLoop::rc_predicate(Node* ctrl, const int scale, Node* offset
   // same signs and upper, or different signs and not upper.
   if (((stride > 0) == (scale > 0)) == upper) {
     guarantee(limit != nullptr, "sanity");
-    if (ul_enabled(C, Trace, jit, looppredicate)) {
+    if (ul_enabled_c(Trace, jit, looppredicate)) {
       if (limit->is_Con()) {
         predString->print("(%d ", con_limit);
       } else {
@@ -645,7 +645,7 @@ BoolNode* PhaseIdealLoop::rc_predicate(Node* ctrl, const int scale, Node* offset
     }
     register_new_node(max_idx_expr, ctrl);
   } else {
-    if (ul_enabled(C, Trace, jit, looppredicate)) {
+    if (ul_enabled_c(Trace, jit, looppredicate)) {
       if (init->is_Con()) {
         predString->print("%d ", con_init);
       } else {
@@ -658,7 +658,7 @@ BoolNode* PhaseIdealLoop::rc_predicate(Node* ctrl, const int scale, Node* offset
 
   if (scale != 1) {
     ConNode* con_scale = intcon(scale);
-    if (ul_enabled(C, Trace, jit, looppredicate)) {
+    if (ul_enabled_c(Trace, jit, looppredicate)) {
       predString->print("* %d ", scale);
     }
     // Check if (scale * max_idx_expr) may overflow
@@ -685,7 +685,7 @@ BoolNode* PhaseIdealLoop::rc_predicate(Node* ctrl, const int scale, Node* offset
   }
 
   if (offset && (!offset->is_Con() || con_offset != 0)){
-    if (ul_enabled(C, Trace, jit, looppredicate)) {
+    if (ul_enabled_c(Trace, jit, looppredicate)) {
       if (offset->is_Con()) {
         predString->print("+ %d ", con_offset);
       } else {
@@ -728,7 +728,7 @@ BoolNode* PhaseIdealLoop::rc_predicate(Node* ctrl, const int scale, Node* offset
   BoolNode* bol = new BoolNode(cmp, BoolTest::lt);
   register_new_node(bol, ctrl);
 
-  if (ul_enabled(C, Trace, jit, looppredicate)) {
+  if (ul_enabled_c(Trace, jit, looppredicate)) {
     predString->print("<u range");
     log_trace(jit, looppredicate)("%s", predString->base());
     delete predString;
@@ -1024,7 +1024,7 @@ bool PhaseIdealLoop::loop_predication_impl_helper(IdealLoopTree* loop, IfProjNod
     C->print_method(PHASE_AFTER_LOOP_PREDICATION_IC, 4, hoisted_check_predicate_proj->in(0));
 
 #ifndef PRODUCT
-    if (ul_enabled(C, Trace, jit, looppredicate)) {
+    if (ul_enabled_c(Trace, jit, looppredicate)) {
       LogMessage(jit, looppredicate) msg;
       NonInterleavingLogStream st(LogLevelType::Trace, msg);
       st.print("Predicate invariant if%s: %d ", negated ? " negated" : "", new_predicate_iff->_idx);
@@ -1090,9 +1090,7 @@ bool PhaseIdealLoop::loop_predication_impl_helper(IdealLoopTree* loop, IfProjNod
     IfNode* lower_bound_iff = lower_bound_proj->in(0)->as_If();
     _igvn.hash_delete(lower_bound_iff);
     lower_bound_iff->set_req(1, lower_bound_bol);
-    if (ul_enabled(C, Trace, jit, looppredicate)) {
-      log_trace(jit, looppredicate)("lower bound check if: %d", lower_bound_iff->_idx);
-    }
+    log_trace_c2(jit, looppredicate)("lower bound check if: %d", lower_bound_iff->_idx);
 
     // Test the upper bound
     BoolNode* upper_bound_bol = rc_predicate(lower_bound_proj, scale, offset, init, limit, stride, range, true, overflow);
@@ -1102,9 +1100,7 @@ bool PhaseIdealLoop::loop_predication_impl_helper(IdealLoopTree* loop, IfProjNod
     IfNode* upper_bound_iff = upper_bound_proj->in(0)->as_If();
     _igvn.hash_delete(upper_bound_iff);
     upper_bound_iff->set_req(1, upper_bound_bol);
-    if (ul_enabled(C, Trace, jit, looppredicate)) {
-      log_trace(jit, looppredicate)("upper bound check if: %d", upper_bound_iff->_idx);
-    }
+    log_trace_c2(jit, looppredicate)("upper bound check if: %d", upper_bound_iff->_idx);
 
     // Fall through into rest of the cleanup code which will move any dependent nodes to the skeleton predicates of the
     // upper bound test. We always need to create skeleton predicates in order to properly remove dead loops when later
@@ -1123,7 +1119,7 @@ bool PhaseIdealLoop::loop_predication_impl_helper(IdealLoopTree* loop, IfProjNod
     C->print_method(PHASE_AFTER_LOOP_PREDICATION_RC, 4, template_assertion_predicate_proj->in(0));
 
 #ifndef PRODUCT
-    if (ul_enabled_c(Trace, jit, loopopts) && !ul_enabled(C, Trace, jit, looppredicate)) {
+    if (ul_enabled_c(Trace, jit, loopopts) && !ul_enabled_c(Trace, jit, looppredicate)) {
       LogMessage(jit, loopopts) msg;
       NonInterleavingLogStream st(LogLevelType::Trace, msg);
       st.print("Predicate RC ");
@@ -1202,7 +1198,7 @@ bool PhaseIdealLoop::loop_predication_impl(IdealLoopTree* loop) {
 
   if (!loop_predicate_block->has_parse_predicate() && !follow_branches) {
 #ifndef PRODUCT
-    if (ul_enabled(C, Trace, jit, looppredicate)) {
+    if (ul_enabled_c(Trace, jit, looppredicate)) {
       LogMessage(jit, looppredicate) msg;
       NonInterleavingLogStream st(LogLevelType::Trace, msg);
       st.print("Missing Parse Predicates:");
@@ -1317,7 +1313,7 @@ bool PhaseIdealLoop::loop_predication_impl(IdealLoopTree* loop) {
 #ifndef PRODUCT
   // report that the loop predication has been actually performed
   // for this loop
-  if (ul_enabled(C, Trace, jit, looppredicate) && hoisted) {
+  if (ul_enabled_c(Trace, jit, looppredicate) && hoisted) {
     LogMessage(jit, looppredicate) msg;
     NonInterleavingLogStream st(LogLevelType::Trace, msg);
     st.print("Loop Predication Performed:");

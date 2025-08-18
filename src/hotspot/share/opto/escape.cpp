@@ -362,7 +362,7 @@ bool ConnectionGraph::compute_escape() {
   }
 
 #ifndef PRODUCT
-  if (ul_enabled(C, Info, jit, escapeanalysis)) {
+  if (ul_enabled_c(Info, jit, escapeanalysis)) {
     LogMessage(jit, escapeanalysis) msg;
     NonInterleavingLogStream st(LogLevelType::Info, msg);
     dump(ptnodes_worklist, &st); // Dump ConnectionGraph
@@ -406,7 +406,7 @@ bool ConnectionGraph::compute_escape() {
     C->print_method(PHASE_AFTER_EA, 2);
 
 #ifdef ASSERT
-  } else if (ul_enabled(C, Trace, jit, eliminateallocations) || ul_enabled(C, Debug, jit, escapeanalysis)) {
+  } else if (ul_enabled_c(Trace, jit, eliminateallocations) || ul_enabled_c(Debug, jit, escapeanalysis)) {
     stringStream ilk;
     ilk.print("=== No allocations eliminated for ");
     C->method()->print_short_name(&ilk);
@@ -416,7 +416,7 @@ bool ConnectionGraph::compute_escape() {
       ilk.print(" since there are no scalar replaceable candidates ===");
     }
 
-    if (ul_enabled(C, Trace, jit, eliminateallocations)) {
+    if (ul_enabled_c(Trace, jit, eliminateallocations)) {
       log_trace(jit, eliminateallocations)("%s", ilk.freeze());
     } else {
       log_debug(jit, escapeanalysis)("%s", ilk.freeze());

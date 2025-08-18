@@ -1125,7 +1125,7 @@ static void match_alias_type(Compile* C, Node* n, Node* m) {
       n->dump();
       m->dump();
     }
-    if (ul_enabled(C, Debug, jit, opto)) {
+    if (ul_enabled_c(Debug, jit, opto)) {
       LogMessage(opto) msg;
       NonInterleavingLogStream st(LogLevelType::Debug, msg);
       st.print_cr("==== Matcher alias shift %d => %d", nidx, midx);
@@ -1739,9 +1739,8 @@ Node* Matcher::Label_Root(const Node* n, State* svec, Node* control, Node*& mem)
         // is used by any of the other subtrees
         (input_mem == NodeSentinel) ) {
       // Print when we exclude matching due to different memory states at input-loads
-      if (ul_enabled(C, Trace, jit, opto) && (input_mem == NodeSentinel)
-          && !((mem!=(Node*)1) && m->is_Load() && m->in(MemNode::Memory) != mem)) {
-        log_trace(jit, opto)("invalid input_mem");
+      if ((input_mem == NodeSentinel) && !((mem!=(Node*)1) && m->is_Load() && m->in(MemNode::Memory) != mem)) {
+        log_trace_c2(jit, opto)("invalid input_mem");
       }
       // Switch to a register-only opcode; this value must be in a register
       // and cannot be subsumed as part of a larger instruction.

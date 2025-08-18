@@ -967,13 +967,13 @@ void PhaseIterGVN::verify_PhaseIterGVN() {
 #endif
 
   C->verify_graph_edges();
-  if (is_verify_def_use() && ul_enabled(C, Debug, jit, opto)) {
+  if (is_verify_def_use()) {
     if (_verify_counter == _verify_full_passes) {
-      log_debug(jit, opto)("VerifyIterativeGVN: %d transforms and verify passes",
-                           (int) _verify_full_passes);
+      log_debug_c2(jit, opto)("VerifyIterativeGVN: %d transforms and verify passes",
+                              (int) _verify_full_passes);
     } else {
-      log_debug(jit, opto)("VerifyIterativeGVN: %d transforms, %d full verify passes",
-                           (int) _verify_counter, (int) _verify_full_passes);
+      log_debug_c2(jit, opto)("VerifyIterativeGVN: %d transforms, %d full verify passes",
+                              (int) _verify_counter, (int) _verify_full_passes);
     }
   }
 
@@ -3300,7 +3300,7 @@ void PhasePeephole::do_transform() {
           int result = m->peephole(block, instruction_index, &_cfg, _regalloc);
           if( result != -1 ) {
 #ifndef PRODUCT
-            if (ul_enabled(C, Debug, jit, optopeephole)) {
+            if (ul_enabled_c(Debug, jit, optopeephole)) {
               LogMessage(jit, optopeephole) msg;
               NonInterleavingLogStream st(LogLevelType::Debug, msg);
               // Print method, first time only
@@ -3310,7 +3310,7 @@ void PhasePeephole::do_transform() {
                 method_name_not_printed = false;
               }
               // Print this block
-              if (ul_enabled(C, Trace, jit, optopeephole) && block_not_printed) {
+              if (ul_enabled_c(Trace, jit, optopeephole) && block_not_printed) {
                 stringStream ss;
                 ss.print_cr("in block");
                 block->dump(&ss);

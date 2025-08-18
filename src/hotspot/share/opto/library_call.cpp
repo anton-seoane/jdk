@@ -38,6 +38,7 @@
 #include "opto/c2compiler.hpp"
 #include "opto/castnode.hpp"
 #include "opto/cfgnode.hpp"
+#include "opto/compile.hpp"
 #include "opto/convertnode.hpp"
 #include "opto/countbitsnode.hpp"
 #include "opto/idealKit.hpp"
@@ -103,7 +104,7 @@ JVMState* LibraryIntrinsic::generate(JVMState* jvms) {
   Compile* C = kit.C;
   int nodes = C->unique();
 #ifndef PRODUCT
-  if (ul_enabled(C, Trace, jit, inliningorintrinsics)) {
+  if (ul_enabled_c(Trace, jit, inliningorintrinsics)) {
     char buf[1000];
     const char* str = vmIntrinsics::short_name_as_C_string(intrinsic_id(), buf, sizeof(buf));
     log_trace(jit, inliningorintrinsics)("Intrinsic %s", str);
@@ -155,9 +156,7 @@ JVMState* LibraryIntrinsic::generate(JVMState* jvms) {
                      vmIntrinsics::name_at(intrinsic_id()),
                      is_virtual() ? " (virtual)" : "", bci);
     const char *msg = msg_stream.freeze();
-    if (ul_enabled(C, Debug, jit, inliningorintrinsics)) {
-      log_debug(jit, inliningorintrinsics)("%s", msg);
-    }
+    log_debug_c2(jit, inliningorintrinsics)("%s", msg);
   }
   C->gather_intrinsic_statistics(intrinsic_id(), is_virtual(), Compile::_intrinsic_failed);
 
@@ -171,7 +170,7 @@ Node* LibraryIntrinsic::generate_predicate(JVMState* jvms, int predicate) {
   _last_predicate = predicate;
 #ifndef PRODUCT
   assert(is_predicated() && predicate < predicates_count(), "sanity");
-  if (ul_enabled(C, Trace, jit, inliningorintrinsics)) {
+  if (ul_enabled_c(Trace, jit, inliningorintrinsics)) {
     char buf[1000];
     const char* str = vmIntrinsics::short_name_as_C_string(intrinsic_id(), buf, sizeof(buf));
     log_trace(jit, inliningorintrinsics)("Predicate for intrinsic %s", str);
@@ -787,11 +786,9 @@ bool LibraryCallKit::try_to_inline(int predicate) {
       tty->print_cr("*** Warning: Unimplemented intrinsic %s(%d)",
                     vmIntrinsics::name_at(intrinsic_id()), vmIntrinsics::as_int(intrinsic_id()));
     }
-    if (ul_enabled(C, Debug, jit, opto)) {
-      log_debug(jit, opto)("*** Warning: Unimplemented intrinsic %s(%d)",
-                           vmIntrinsics::name_at(intrinsic_id()),
-                           vmIntrinsics::as_int(intrinsic_id()));
-    }
+    log_debug_c2(jit, opto)("*** Warning: Unimplemented intrinsic %s(%d)",
+                            vmIntrinsics::name_at(intrinsic_id()),
+                            vmIntrinsics::as_int(intrinsic_id()));
 #endif
     return false;
   }
@@ -830,12 +827,9 @@ Node* LibraryCallKit::try_to_predicate(int predicate) {
       tty->print_cr("*** Warning: Unimplemented predicate for intrinsic %s(%d)",
                     vmIntrinsics::name_at(intrinsic_id()), vmIntrinsics::as_int(intrinsic_id()));
     }
-    if (ul_enabled(C, Debug, jit, opto)) {
-      log_debug(jit, opto)(
-          "*** Warning: Unimplemented predicate for intrinsic %s(%d)",
-          vmIntrinsics::name_at(intrinsic_id()),
-          vmIntrinsics::as_int(intrinsic_id()));
-    }
+    log_debug_c2(jit, opto)("*** Warning: Unimplemented predicate for intrinsic %s(%d)",
+                            vmIntrinsics::name_at(intrinsic_id()),
+                            vmIntrinsics::as_int(intrinsic_id()));
 #endif
     Node* slow_ctl = control();
     set_control(top()); // No fast path intrinsic
@@ -2357,7 +2351,7 @@ const TypeOopPtr* LibraryCallKit::sharpen_unsafe_type(Compile::AliasType* alias_
   }
   if (result != nullptr) {
 #ifndef PRODUCT
-    if (ul_enabled(C, Debug, jit, inliningorintrinsics)) {
+    if (ul_enabled_c(Debug, jit, inliningorintrinsics)) {
       LogMessage(jit, inliningorintrinsics) msg;
       NonInterleavingLogStream st(LogLevelType::Debug, msg);
       st.print("  from base type:  ");
@@ -4035,7 +4029,7 @@ bool LibraryCallKit::inline_native_Class_query(vmIntrinsics::ID id) {
   if (mirror_con == nullptr)  return false;  // cannot happen?
 
 #ifndef PRODUCT
-  if (ul_enabled(C, Debug, jit, inliningorintrinsics)) {
+  if (ul_enabled_c(Debug, jit, inliningorintrinsics)) {
     ciType* k = mirror_con->java_mirror_type();
     if (k) {
       stringStream ss;
@@ -4881,16 +4875,12 @@ bool LibraryCallKit::inline_native_getClass() {
 // caller sensitive methods.
 bool LibraryCallKit::inline_native_Reflection_getCallerClass() {
 #ifndef PRODUCT
-  if (ul_enabled(C, Trace, jit, inliningorintrinsics)) {
-    log_trace(jit, inliningorintrinsics)("Attempting to inline sun.reflect.Reflection.getCallerClass");
-  }
+  log_trace_c2(jit, inliningorintrinsics)("Attempting to inline sun.reflect.Reflection.getCallerClass");
 #endif
 
   if (!jvms()->has_method()) {
 #ifndef PRODUCT
-    if (ul_enabled(C, Trace, jit, inliningorintrinsics)) {
-      log_trace(jit, inliningorintrinsics)("  Bailing out because intrinsic was inlined at top level");
-    }
+    log_trace_c2(jit, inliningorintrinsics)("  Bailing out because intrinsic was inlined at top level");
 #endif
     return false;
   }
@@ -4912,9 +4902,7 @@ bool LibraryCallKit::inline_native_Reflection_getCallerClass() {
       // Frame 0 and 1 must be caller sensitive (see JVM_GetCallerClass).
       if (!m->caller_sensitive()) {
 #ifndef PRODUCT
-        if (ul_enabled(C, Trace, jit, inliningorintrinsics)) {
-          log_trace(jit, inliningorintrinsics)("  Bailing out: CallerSensitive annotation expected at frame %d", n);
-        }
+        log_trace_c2(jit, inliningorintrinsics)("  Bailing out: CallerSensitive annotation expected at frame %d", n);
 #endif
         return false;  // bail-out; let JVM_GetCallerClass do the work
       }
@@ -4928,7 +4916,7 @@ bool LibraryCallKit::inline_native_Reflection_getCallerClass() {
         set_result(makecon(TypeInstPtr::make(caller_mirror)));
 
 #ifndef PRODUCT
-        if (ul_enabled(C, Trace, jit, inliningorintrinsics)) {
+        if (ul_enabled_c(Trace, jit, inliningorintrinsics)) {
           LogMessage(jit, inliningorintrinsics) msg;
           NonInterleavingLogStream st(LogLevelType::Trace, msg);
           st.print_cr("  Succeeded: caller = %d) %s.%s, JVMS depth = %d", n, caller_klass->name()->as_utf8(), caller_jvms->method()->name()->as_utf8(), jvms()->depth());
@@ -4946,7 +4934,7 @@ bool LibraryCallKit::inline_native_Reflection_getCallerClass() {
   }
 
 #ifndef PRODUCT
-  if (ul_enabled(C, Trace, jit, inliningorintrinsics)) {
+  if (ul_enabled_c(Trace, jit, inliningorintrinsics)) {
     LogMessage(jit, inliningorintrinsics) msg;
     NonInterleavingLogStream st(LogLevelType::Trace, msg);
     st.print_cr("  Bailing out because caller depth exceeded inlining depth = %d", jvms()->depth());

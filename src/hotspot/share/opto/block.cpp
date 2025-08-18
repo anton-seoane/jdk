@@ -382,7 +382,7 @@ PhaseCFG::PhaseCFG(Arena* arena, RootNode* root, Matcher& matcher)
 , _node_to_block_mapping(arena)
 , _node_latency(nullptr)
 #ifndef PRODUCT
-, _trace_opto_pipelining(ul_enabled(C, Debug, jit, optopipelining))
+, _trace_opto_pipelining(ul_enabled_c(Debug, jit, optopipelining))
 #endif
 #ifdef ASSERT
 , _raw_oops(arena)

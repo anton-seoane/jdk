@@ -391,7 +391,7 @@ void PhaseIdealLoop::insert_loop_limit_check_predicate(ParsePredicateSuccessProj
 #ifndef PRODUCT
   // report that the loop predication has been actually performed
   // for this loop
-  if (ul_enabled(C, Trace, jit, looplimitcheck)) {
+  if (ul_enabled_c(Trace, jit, looplimitcheck)) {
     LogMessage(jit, looplimitcheck) msg;
     NonInterleavingLogStream st(LogLevelType::Trace, msg);
     st.print_cr("Counted Loop Limit Check generated:");
@@ -2264,7 +2264,7 @@ bool PhaseIdealLoop::is_counted_loop(Node* x, IdealLoopTree*&loop, BasicType iv_
     if (!loop_limit_check_predicate_block->has_parse_predicate()) {
       // The Loop Limit Check Parse Predicate is not generated if this method trapped here before.
 #ifdef ASSERT
-      if (ul_enabled(C, Trace, jit, looplimitcheck)) {
+      if (ul_enabled_c(Trace, jit, looplimitcheck)) {
         LogMessage(jit, looplimitcheck) msg;
         NonInterleavingLogStream st(LogLevelType::Trace, msg);
         st.print("Missing Loop Limit Check Parse Predicate:");
@@ -2319,7 +2319,7 @@ bool PhaseIdealLoop::is_counted_loop(Node* x, IdealLoopTree*&loop, BasicType iv_
     if (!loop_limit_check_predicate_block->has_parse_predicate()) {
       // The Loop Limit Check Parse Predicate is not generated if this method trapped here before.
 #ifdef ASSERT
-      if (ul_enabled(C, Trace, jit, looplimitcheck)) {
+      if (ul_enabled_c(Trace, jit, looplimitcheck)) {
         LogMessage(jit, looplimitcheck) msg;
         NonInterleavingLogStream st(LogLevelType::Trace, msg);
         st.print("Missing Loop Limit Check Parse Predicate:");

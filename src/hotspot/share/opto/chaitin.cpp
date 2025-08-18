@@ -220,7 +220,7 @@ PhaseChaitin::PhaseChaitin(uint unique, PhaseCFG &cfg, Matcher &matcher, bool sc
   , _lo_degree(0), _lo_stk_degree(0), _hi_degree(0), _simplified(0)
   , _oldphi(unique)
 #ifndef PRODUCT
-  , _trace_spilling(ul_enabled(C, Trace, jit, spilling))
+  , _trace_spilling(ul_enabled_c(Trace, jit, spilling))
 #endif
   , _lrg_map(Thread::current()->resource_area(), unique)
   , _scheduling_info_generated(scheduling_info_generated)
@@ -815,7 +815,7 @@ void PhaseChaitin::mark_ssa() {
 
 #ifndef PRODUCT
 void PhaseChaitin::trace_cisc_spill_ul(const char* text, Node* n) {
-  if (!ul_enabled(C, Trace, jit, ciscspill)) return;
+  if (!ul_enabled_c(Trace, jit, ciscspill)) return;
   if (text == nullptr || n == nullptr) return;
   LogMessage(jit, ciscspill) msg;
   NonInterleavingLogStream st(LogLevelType::Trace, msg);
@@ -2339,7 +2339,7 @@ void PhaseChaitin::dump_for_spill_split_recycle() const {
     tty->cr();
     dump();
   }
-  if (ul_enabled(C, Trace, jit, opto)) {
+  if (ul_enabled_c(Trace, jit, opto)) {
     // Display which live ranges need to be split and the allocator's state
     LogMessage(jit, opto) msg;
     NonInterleavingLogStream st(LogLevelType::Trace, msg);

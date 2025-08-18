@@ -745,7 +745,7 @@ Block* PhaseCFG::raise_above_anti_dependences(Block* LCA, Node* load, const bool
     load->dump(2);
     if (VerifyAliases)  assert(load_alias_idx != Compile::AliasIdxBot, "");
   }
-  if (load_alias_idx == Compile::AliasIdxBot && C->do_aliasing() && ul_enabled(C, Debug, jit, opto)) {
+  if (load_alias_idx == Compile::AliasIdxBot && C->do_aliasing() && ul_enabled_c(Debug, jit, opto)) {
     LogMessage(jit, opto) msg;
     NonInterleavingLogStream st(LogLevelType::Debug, msg);
     st.print_cr("*** Possible Anti-Dependence Bug:  Load consumes all of memory.");

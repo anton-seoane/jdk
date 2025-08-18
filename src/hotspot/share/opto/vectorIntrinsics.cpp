@@ -59,7 +59,7 @@ static bool check_vbox(const TypeInstPtr* vbox_type) {
 #endif
 
 #define log_if_needed(...)                     \
-  if (ul_enabled(C, Debug, jit, intrinsics)) { \
+  if (ul_enabled_c(Debug, jit, intrinsics)) { \
     log_debug(jit, intrinsics)(__VA_ARGS__);   \
   }
 

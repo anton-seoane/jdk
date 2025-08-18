@@ -1164,7 +1164,7 @@ bool PhaseCFG::schedule_local(Block* block, GrowableArray<int>& ready_cnt, Vecto
       st.print("#    select %d: %s", n->_idx, n->Name());
       st.print(", latency:%d", get_latency_for_node(n));
       n->dump(&st);
-      if (ul_enabled(C, Trace, jit, optopipelining)) {
+      if (ul_enabled_c(Trace, jit, optopipelining)) {
         stringStream ss;
         ss.print("#   ready list:");
         for (uint i = 0; i < worklist.size(); i++) { // Inspect entire worklist

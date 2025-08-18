@@ -808,7 +808,7 @@ void PhaseIdealLoop::do_peeling(IdealLoopTree *loop, Node_List &old_new) {
         cl->set_no_multiversion();
       }
 #ifndef PRODUCT
-      if (ul_enabled(C, Debug, jit, opto) && VerifyLoopOptimizations) {
+      if (ul_enabled_c(Debug, jit, opto) && VerifyLoopOptimizations) {
         LogMessage(jit, opto) msg;
         NonInterleavingLogStream st(LogLevelType::Debug, msg);
         st.print("Peeling a 'main' loop; resetting to 'normal' ");
@@ -1919,7 +1919,7 @@ void PhaseIdealLoop::do_unroll(IdealLoopTree *loop, Node_List &old_new, bool adj
       visited.set(loop_head->_idx);
       rpo(loop_head, stack, visited, rpo_list);
       dump(loop, rpo_list.size(), rpo_list, &st);
-    } else if (ul_enabled(C, Trace, jit, opto) && VerifyLoopOptimizations) {
+    } else if (ul_enabled_c(Trace, jit, opto) && VerifyLoopOptimizations) {
       LogMessage(jit, opto) msg;
       NonInterleavingLogStream st(LogLevelType::Debug, msg);
       Node_Stack stack(C->live_nodes() >> 2);
@@ -2158,7 +2158,7 @@ void PhaseIdealLoop::do_unroll(IdealLoopTree *loop, Node_List &old_new, bool adj
         }
         st.print_cr(" ");
       }
-    } else if (ul_enabled(C, Trace, jit, opto) && VerifyLoopOptimizations) {
+    } else if (ul_enabled_c(Trace, jit, opto) && VerifyLoopOptimizations) {
       LogMessage(jit, opto) msg;
       NonInterleavingLogStream st(LogLevelType::Debug, msg);
       st.print("\nnew loop after unroll\n");
@@ -2791,7 +2791,7 @@ void PhaseIdealLoop::do_range_check(IdealLoopTree* loop) {
       Node* next_limit_ctrl = dominated_node(new_limit_ctrl, offset_ctrl, limit_ctrl);
 
 #ifdef ASSERT
-      if (ul_enabled(C, Trace, jit, rangelimitcheck)) {
+      if (ul_enabled_c(Trace, jit, rangelimitcheck)) {
         LogMessage(jit, rangelimitcheck) msg;
         NonInterleavingLogStream st(LogLevelType::Trace, msg);
         st.print_cr("RC bool node%s", flip ? " flipped:" : ":");
@@ -2858,9 +2858,7 @@ void PhaseIdealLoop::do_range_check(IdealLoopTree* loop) {
                                                                       AssertionPredicateType::InitValue);
 
         } else {
-          if (ul_enabled(C, Debug, jit, opto)) {
-            log_debug(jit, opto)("missed RCE opportunity");
-          }
+          log_debug_c2(jit, opto)("missed RCE opportunity");
           continue;             // In release mode, ignore it
         }
       } else {                  // Otherwise work on normal compares
@@ -2889,9 +2887,7 @@ void PhaseIdealLoop::do_range_check(IdealLoopTree* loop) {
           add_constraint(stride_con, lscale_con, offset, mini, limit, next_limit_ctrl, &pre_limit, &main_limit);
           break;
         default:
-          if (ul_enabled(C, Debug, jit, opto)) {
-            log_debug(jit, opto)("missed RCE opportunity");
-          }
+          log_debug_c2(jit, opto)("missed RCE opportunity");
           continue;             // Unhandled case
         }
       }
@@ -3771,7 +3767,7 @@ bool PhaseIdealLoop::match_fill_loop(IdealLoopTree* lpt, Node*& store, Node*& st
 
   if (msg != nullptr) {
 #ifndef PRODUCT
-    if (ul_enabled(C, Trace, jit, optimizefill)) {
+    if (ul_enabled_c(Trace, jit, optimizefill)) {
       LogMessage(jit, optimizefill) logm;
       NonInterleavingLogStream st(LogLevelType::Trace, logm);
       st.print_cr("not fill intrinsic candidate: %s", msg);
@@ -3858,7 +3854,7 @@ bool PhaseIdealLoop::match_fill_loop(IdealLoopTree* lpt, Node*& store, Node*& st
 
   if (msg != nullptr) {
 #ifndef PRODUCT
-    if (ul_enabled(C, Trace, jit, optimizefill)) {
+    if (ul_enabled_c(Trace, jit, optimizefill)) {
       LogMessage(jit, optimizefill) logm;
       NonInterleavingLogStream st(LogLevelType::Trace, logm);
       st.print_cr("not fill intrinsic: %s", msg);
@@ -3923,7 +3919,7 @@ bool PhaseIdealLoop::match_fill_loop(IdealLoopTree* lpt, Node*& store, Node*& st
   }
 
 #ifdef ASSERT
-  if (ul_enabled(C, Trace, jit, optimizefill)) {
+  if (ul_enabled_c(Trace, jit, optimizefill)) {
     LogMessage(jit, optimizefill) logm;
     NonInterleavingLogStream st(LogLevelType::Trace, logm);
     if (msg != nullptr) {
@@ -4021,9 +4017,7 @@ bool PhaseIdealLoop::intrinsify_fill(IdealLoopTree* lpt) {
     len = new SubINode(len, _igvn.intcon(1));
     _igvn.register_new_node_with_optimizer(len);
 #ifndef PRODUCT
-    if (ul_enabled(C, Trace, jit, optimizefill)) {
-      log_trace(jit, optimizefill)("ArrayFill store on backedge, subtract 1 from len.");
-    }
+    log_trace_c2(jit, optimizefill)("ArrayFill store on backedge, subtract 1 from len.");
 #endif
   }
 
@@ -4130,7 +4124,7 @@ bool PhaseIdealLoop::intrinsify_fill(IdealLoopTree* lpt) {
   }
 
 #ifndef PRODUCT
-  if (ul_enabled(C, Trace, jit, optimizefill)) {
+  if (ul_enabled_c(Trace, jit, optimizefill)) {
     LogMessage(jit, optimizefill) logm;
     NonInterleavingLogStream st(LogLevelType::Trace, logm);
     st.print("ArrayFill call   ");

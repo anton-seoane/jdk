@@ -2143,7 +2143,7 @@ Node* GraphKit::uncommon_trap(int trap_request,
     break;
   }
 
-  if (ul_enabled(C, Debug, jit, optoparse)) {
+  if (ul_enabled_c(Debug, jit, optoparse)) {
     char buf[100];
     log_debug(jit, optoparse)("Uncommon trap %s at bci:%d",
                               Deoptimization::format_trap_request(buf, sizeof(buf),
@@ -4035,7 +4035,7 @@ void GraphKit::add_parse_predicate(Deoptimization::DeoptReason reason, const int
   // Too many traps seen?
   if (too_many_traps(reason)) {
 #ifdef ASSERT
-    if (ul_enabled(C, Trace, jit, looppredicate)) {
+    if (ul_enabled_c(Trace, jit, looppredicate)) {
       LogMessage(jit, looppredicate) msg;
       NonInterleavingLogStream st(LogLevelType::Trace, msg);
 

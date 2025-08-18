@@ -523,7 +523,7 @@ CompileWrapper::~CompileWrapper() {
 void Compile::print_compile_messages() {
 #ifndef PRODUCT
   // Check if recompiling
-  if (ul_enabled(C, Debug, jit, opto)) {
+  if (ul_enabled_c(Debug, jit, opto)) {
     stringStream ss;
     if (!subsume_loads()) {
       // Recompiling without allowing machine instructions to subsume loads
@@ -2011,7 +2011,7 @@ void Compile::process_for_unstable_if_traps(PhaseIterGVN& igvn) {
         if (!live_locals.at(i) && !local->is_top() && local != lhs && local!= rhs) {
           uint idx = jvms->locoff() + i;
 #ifdef ASSERT
-          if (ul_enabled(C, Trace, jit, opto)) {
+          if (ul_enabled_c(Trace, jit, opto)) {
             LogMessage(jit, opto) msg;
             NonInterleavingLogStream st(LogLevelType::Trace, msg);
             st.print("[unstable_if] kill local#%d: ", idx);
@@ -2176,7 +2176,7 @@ void Compile::inline_incrementally(PhaseIterGVN& igvn) {
       }
 
       if (live_nodes() > (uint)LiveNodeCountInliningCutoff) {
-        bool do_print_inlining = ul_enabled(C, Debug, jit, inliningorintrinsics);
+        bool do_print_inlining = ul_enabled_c(Debug, jit, inliningorintrinsics);
         if (do_print_inlining || log() != nullptr) {
           // Print inlining message for candidates that we couldn't inline for lack of space.
           for (int i = 0; i < _late_inlines.length(); i++) {

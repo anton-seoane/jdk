@@ -37,6 +37,7 @@
 #include "opto/callGenerator.hpp"
 #include "opto/castnode.hpp"
 #include "opto/cfgnode.hpp"
+#include "opto/compile.hpp"
 #include "opto/mulnode.hpp"
 #include "opto/parse.hpp"
 #include "opto/rootnode.hpp"
@@ -67,7 +68,7 @@ static void trace_type_profile(Compile* C, ciMethod* method, JVMState* jvms,
   int bci = jvms->bci();
   if (TraceTypeProfile || C->print_inlining()) {
     if (!C->print_inlining()) {
-      if (!PrintOpto && !PrintCompilation) {
+      if (!ul_enabled_c(Trace, jit, opto) && !PrintCompilation) {
         method->print_short_name();
         tty->cr();
       }
@@ -79,7 +80,7 @@ static void trace_type_profile(Compile* C, ciMethod* method, JVMState* jvms,
     }
   }
 
-  if (ul_enabled(C, Debug, jit, inlining)) {
+  if (ul_enabled_c(Debug, jit, inlining)) {
     LogMessage(jit, inlining) msg;
     NonInterleavingLogStream st(LogLevelType::Debug, msg);
     print_trace_type_profile(&st, depth, prof_klass, site_count, receiver_count, true);
@@ -542,7 +543,7 @@ void Parse::do_call() {
   // uncommon-trap when callee is unloaded, uninitialized or will not link
   // bailout when too many arguments for register representation
   if (!will_link || can_not_compile_call_site(orig_callee, klass)) {
-    if (ul_enabled(C, Trace, jit, opto)) {
+    if (ul_enabled_c(Trace, jit, opto)) {
       LogMessage(jit, opto) msg;
       NonInterleavingLogStream st(LogLevelType::Trace, msg);
       method()->print_name(&st);
@@ -774,7 +775,7 @@ void Parse::do_call() {
     // If the return type of the method is not loaded, assert that the
     // value we got is a null.  Otherwise, we need to recompile.
     if (!rtype->is_loaded()) {
-      if (ul_enabled(C, Trace, jit, opto)) {
+      if (ul_enabled_c(Trace, jit, opto)) {
         LogMessage(jit, opto) msg;
         NonInterleavingLogStream st(LogLevelType::Trace, msg);
         method()->print_name(&st);
@@ -880,7 +881,7 @@ void Parse::catch_call_exceptions(ciExceptionHandlerStream& handlers) {
 #ifndef PRODUCT
       // We do not expect the same handler bci to take both cold unloaded
       // and hot loaded exceptions.  But, watch for it.
-      if (ul_enabled(C, Trace, jit, opto)) {
+      if (ul_enabled_c(Trace, jit, opto)) {
         LogMessage(jit, opto) msg;
         NonInterleavingLogStream st(LogLevelType::Trace, msg);
         if (extype->is_loaded()) {
@@ -1010,9 +1011,7 @@ void Parse::catch_inline_exceptions(SafePointNode* ex_map) {
 
     if (remaining == 1) {
       push_ex_oop(ex_node);        // Push exception oop for handler
-      if (ul_enabled(C, Trace, jit, opto)) {
-        log_trace(jit, opto)("  Catching every inline exception bci:%d -> handler_bci:%d", bci(), handler_bci);
-      }
+      log_trace_c2(jit, opto)("  Catching every inline exception bci:%d -> handler_bci:%d", bci(), handler_bci);
       // If this is a backwards branch in the bytecodes, add safepoint
       maybe_add_safepoint(handler_bci);
       merge_exception(handler_bci); // jump to handler
@@ -1041,7 +1040,7 @@ void Parse::catch_inline_exceptions(SafePointNode* ex_map) {
       assert(klass->has_subklass() || tinst->klass_is_exact(), "lost exactness");
       Node* ex_oop = _gvn.transform(new CheckCastPPNode(control(), ex_node, tinst));
       push_ex_oop(ex_oop);      // Push exception oop for handler
-      if (ul_enabled(C, Trace, jit, opto)) {
+      if (ul_enabled_c(Trace, jit, opto)) {
         stringStream ss;
         ss.print("  Catching inline exception bci:%d -> handler_bci:%d -- ", bci(), handler_bci);
         klass->print_name_on(&ss);

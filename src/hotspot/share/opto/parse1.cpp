@@ -421,7 +421,7 @@ Parse::Parse(JVMState* caller, ciMethod* parse_method, float expected_uses)
   DEBUG_ONLY(_block_count = -1);
   DEBUG_ONLY(_blocks = (Block*)-1);
 #ifndef PRODUCT
-  if (PrintCompilation || ul_enabled(C, Debug, jit, opto)) {
+  if (PrintCompilation || ul_enabled_c(Debug, jit, opto)) {
     // Make sure I have an inline tree, so I can print messages about it.
     InlineTree::find_subtree_from_root(C->ilt(), caller, parse_method);
   }
@@ -522,7 +522,7 @@ Parse::Parse(JVMState* caller, ciMethod* parse_method, float expected_uses)
     assert(false, "type flow analysis failed during parsing");
     C->record_method_not_compilable(_flow->failure_reason());
 #ifndef PRODUCT
-    if (ul_enabled(C, Trace, jit, opto)) {
+    if (ul_enabled_c(Trace, jit, opto)) {
       if (is_osr_parse()) {
         log_debug(jit, opto)("OSR @%d type flow bailout: %s", _entry_bci,
                              _flow->failure_reason());
@@ -714,8 +714,8 @@ void Parse::do_all_blocks() {
         // been parsed or must be dead.
         Node* c = control();
         Node* result = _gvn.transform(control());
-        if (c != result && ul_enabled(C, Debug, jit, optoparse)) {
-          log_debug(jit, optoparse)("Block #%d replace %d with %d", block->rpo(), c->_idx, result->_idx);
+        if (c != result) {
+          log_debug_c2(jit, optoparse)("Block #%d replace %d with %d", block->rpo(), c->_idx, result->_idx);
         }
         if (result != top()) {
           record_for_igvn(result);
@@ -743,9 +743,7 @@ void Parse::do_all_blocks() {
   for (int rpo = 0; rpo < block_count(); rpo++) {
     Block* block = rpo_at(rpo);
     if (!block->is_parsed()) {
-      if (ul_enabled(C, Debug, jit, optoparse)) {
-        log_debug(jit, optoparse)("Skipped dead block %d at bci:%d", rpo, block->start());
-      }
+      log_debug_c2(jit, optoparse)("Skipped dead block %d at bci:%d", rpo, block->start());
       assert(!block->is_merged(), "no half-processed blocks");
     }
   }
@@ -1029,7 +1027,7 @@ void Parse::do_exits() {
       AllocateNode* alloc = AllocateNode::Ideal_allocation(recorded_alloc);
       alloc->compute_MemBar_redundancy(method());
     }
-    if (ul_enabled(C, Trace, jit, opto)) {
+    if (ul_enabled_c(Trace, jit, opto)) {
       stringStream ss;
       method()->print_name(&ss);
       ss.print_cr(" writes finals and needs a memory barrier");
@@ -1504,7 +1502,7 @@ void Parse::Block::record_state(Parse* p) {
 
 //------------------------------do_one_block-----------------------------------
 void Parse::do_one_block() {
-  if (ul_enabled(C, Debug, jit, optoparse)) {
+  if (ul_enabled_c(Debug, jit, optoparse)) {
     LogMessage(jit, optoparse) msg;
     NonInterleavingLogStream st(LogLevelType::Debug, msg);
 
@@ -1683,7 +1681,7 @@ void Parse::handle_missing_successor(int target_bci) {
 void Parse::merge_common(Parse::Block* target, int pnum) {
   LogMessage(jit, optoparse) msg;
   NonInterleavingLogStream st(LogLevelType::Debug, msg);
-  if (ul_enabled(C, Debug, optoparse)) {
+  if (ul_enabled_c(Debug, jit, optoparse)) {
     st.print("Merging state at block #%d bci:%d", target->rpo(), target->start());
   }
 
@@ -1692,12 +1690,12 @@ void Parse::merge_common(Parse::Block* target, int pnum) {
   clean_stack(sp());
 
   if (!target->is_merged()) {   // No prior mapping at this bci
-    if (ul_enabled(C, Debug, jit, optoparse)) st.print(" with empty state");
+    if (ul_enabled_c(Debug, jit, optoparse)) st.print(" with empty state");
 
     // If this path is dead, do not bother capturing it as a merge.
     // It is "as if" we had 1 fewer predecessors from the beginning.
     if (stopped()) {
-      if (ul_enabled(C, Debug, jit, optoparse)) st.print(", but path is dead and doesn't count");
+      if (ul_enabled_c(Debug, jit, optoparse)) st.print(", but path is dead and doesn't count");
       return;
     }
 
@@ -1739,7 +1737,7 @@ void Parse::merge_common(Parse::Block* target, int pnum) {
     assert(target->is_merged(), "do not come here twice");
 
   } else {                      // Prior mapping at this bci
-    if (ul_enabled(C, Debug, jit, optoparse)) st.print(" with previous state");
+    if (ul_enabled_c(Debug, jit, optoparse)) st.print(" with previous state");
 #ifdef ASSERT
     if (target->is_SEL_head()) {
       target->mark_merged_backedge(block());
@@ -1770,7 +1768,7 @@ void Parse::merge_common(Parse::Block* target, int pnum) {
     if (pnum == 1) {            // Last merge for this Region?
       if (!block()->flow()->is_irreducible_loop_secondary_entry()) {
         Node* result = _gvn.transform(r);
-        if (r != result && ul_enabled(C, Debug, jit, optoparse)) {
+        if (r != result && ul_enabled_c(Debug, jit, optoparse)) {
           st.print("Block #%d replace %d with %d", block()->rpo(), r->_idx, result->_idx);
         }
       }
@@ -1868,7 +1866,7 @@ void Parse::merge_common(Parse::Block* target, int pnum) {
     stop();                     // done with this guy, for now
   }
 
-  if (ul_enabled(C, Debug, jit, optoparse)) st.print(" on path %d", pnum);
+  if (ul_enabled_c(Debug, jit, optoparse)) st.print(" on path %d", pnum);
 
   // Done with this parser state.
   assert(stopped(), "");
@@ -2330,8 +2328,8 @@ void Parse::show_parse_info() {
       tty->cr();
     }
   }
-  const bool both_tags = ul_enabled(C, Debug, jit, opto, inlining);
-  if (!ul_enabled(C, Debug, jit, opto) && !both_tags) return;
+  const bool both_tags = ul_enabled_c(Debug, jit, opto, inlining);
+  if (!ul_enabled_c(Debug, jit, opto) && !both_tags) return;
   if (depth() != 1 && !both_tags)                     return;
   stringStream ss;
   if (C->is_osr_compilation()) {
