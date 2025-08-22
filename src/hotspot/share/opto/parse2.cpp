@@ -43,6 +43,7 @@
 #include "opto/runtime.hpp"
 #include "runtime/deoptimization.hpp"
 #include "runtime/sharedRuntime.hpp"
+#include "utilities/ostream.hpp"
 
 #ifndef PRODUCT
 extern uint explicit_null_checks_inserted,

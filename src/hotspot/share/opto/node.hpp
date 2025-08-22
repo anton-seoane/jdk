@@ -30,6 +30,7 @@
 #include "opto/compile.hpp"
 #include "opto/type.hpp"
 #include "utilities/copy.hpp"
+#include "utilities/ostream.hpp"
 
 // Portions of code courtesy of Clifford Click
 
@@ -1311,9 +1312,9 @@ public:
   };
   void dump_idx(bool align = false, outputStream* st = tty, DumpConfig* dc = nullptr) const;
   void dump_name(outputStream* st = tty, DumpConfig* dc = nullptr) const;
-  void dump(outputStream* out = tty) const; // print node with newline
+  void dump(outputStream* st = tty) const; // print node with newline
   void dump(const char* suffix, bool mark = false, outputStream* st = tty, DumpConfig* dc = nullptr) const; // Print this node.
-  void dump(int depth, outputStream* out = tty) const;        // Print this node, recursively to depth d
+  void dump(int depth, outputStream* st = tty) const;        // Print this node, recursively to depth d
   void dump_ctrl(int depth) const;   // Print control nodes, to depth d
   void dump_comp() const;            // Print this node in compact representation.
   // Print this node in compact representation.

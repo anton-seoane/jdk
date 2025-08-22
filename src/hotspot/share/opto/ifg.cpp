@@ -35,6 +35,7 @@
 #include "opto/machnode.hpp"
 #include "opto/memnode.hpp"
 #include "opto/opcodes.hpp"
+#include "utilities/ostream.hpp"
 
 #include <fenv.h>
 
@@ -832,7 +833,7 @@ void PhaseChaitin::adjust_high_pressure_index(Block* b, uint& block_hrp_index, P
   block_hrp_index = i;
 }
 
-void PhaseChaitin::print_pressure_info(Pressure& pressure, const char *str, outputStream* out) {
+void PhaseChaitin::print_pressure_info(Pressure& pressure, const char *str, outputStream *out) {
   if (str != nullptr) {
     out->print_cr("#  *** %s ***", str);
   }

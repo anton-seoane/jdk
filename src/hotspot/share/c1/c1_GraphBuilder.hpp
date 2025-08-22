@@ -32,6 +32,7 @@
 #include "ci/ciMethodData.hpp"
 #include "ci/ciStreams.hpp"
 #include "compiler/compileLog.hpp"
+#include "utilities/ostream.hpp"
 
 class MemoryBuffer;
 

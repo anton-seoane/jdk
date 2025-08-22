@@ -119,7 +119,8 @@ public:
   bool is_loaded() const;
 
   // Debugging output
-  void print(outputStream* out = tty);
+  void print();
+  void print_on(outputStream* out);
 };
 
 #endif // SHARE_CI_CICONSTANT_HPP

@@ -42,6 +42,7 @@
 #include "opto/opcodes.hpp"
 #include "opto/rootnode.hpp"
 #include "utilities/align.hpp"
+#include "utilities/ostream.hpp"
 
 #ifndef PRODUCT
 void LRG::dump() const {
@@ -2143,9 +2144,9 @@ void PhaseChaitin::dump(const Node* n, outputStream* out) const {
         if (_node_regs) {
           out->print("[");
           OptoReg::Name second = get_reg_second(n->in(k));
-          if (OptoReg::is_valid(second)) {
-            if (OptoReg::is_reg(second))
-              out->print("%s:", Matcher::regName[second]);
+          if( OptoReg::is_valid(second) ) {
+            if( OptoReg::is_reg(second) )
+              out->print("%s:",Matcher::regName[second]);
             else
               out->print("%s+%d:", OptoReg::regname(OptoReg::c_frame_pointer),
                          reg2offset_unchecked(second));
@@ -2172,17 +2173,14 @@ void PhaseChaitin::dump(const Node* n, outputStream* out) const {
       break;
     }
     uint r = (m->_idx < _lrg_map.size()) ? _lrg_map.find_const(m) : 0;
-    out->print("L%d", r);
-    out->print("/N%d ", m->_idx);
+    out->print("L%d",r);
+    out->print("/N%d ",m->_idx);
   }
-  if (n->is_Mach()) {
-    n->as_Mach()->dump_spec(out);
-  } else {
-    n->dump_spec(out);
-  }
-  if (_spilled_once.test(n->_idx)) {
+  if( n->is_Mach() ) n->as_Mach()->dump_spec(out);
+  else n->dump_spec(out);
+  if( _spilled_once.test(n->_idx ) ) {
     out->print(" Spill_1");
-    if (_spilled_twice.test(n->_idx))
+    if( _spilled_twice.test(n->_idx ) )
       out->print(" Spill_2");
   }
   out->print("\n");
@@ -2210,8 +2208,8 @@ void PhaseChaitin::dump(const Block* b, outputStream* out) const {
 }
 
 void PhaseChaitin::dump(outputStream* out) const {
-  out->print("--- Chaitin -- argsize: %d  framesize: %d ---\n",
-             _matcher._new_SP, _framesize);
+  out->print( "--- Chaitin -- argsize: %d  framesize: %d ---\n",
+              _matcher._new_SP, _framesize );
 
   // For all blocks
   for (uint i = 0; i < _cfg.number_of_blocks(); i++) {
@@ -2228,7 +2226,7 @@ void PhaseChaitin::dump(outputStream* out) const {
   // Dump LRG array
   out->print("--- Live RanGe Array ---\n");
   for (uint i2 = 1; i2 < _lrg_map.max_lrg_id(); i2++) {
-    out->print("L%d: ", i2);
+    out->print("L%d: ",i2);
     if (i2 < _ifg->_maxlrg) {
       lrgs(i2).dump_on(out);
     }
@@ -2241,19 +2239,19 @@ void PhaseChaitin::dump(outputStream* out) const {
   // Dump lo-degree list
   out->print("Lo degree: ");
   for(uint i3 = _lo_degree; i3; i3 = lrgs(i3)._next )
-    out->print("L%d ", i3);
+    out->print("L%d ",i3);
   out->cr();
 
   // Dump lo-stk-degree list
   out->print("Lo stk degree: ");
   for(uint i4 = _lo_stk_degree; i4; i4 = lrgs(i4)._next )
-    out->print("L%d ", i4);
+    out->print("L%d ",i4);
   out->cr();
 
   // Dump lo-degree list
   out->print("Hi degree: ");
   for(uint i5 = _hi_degree; i5; i5 = lrgs(i5)._next )
-    out->print("L%d ", i5);
+    out->print("L%d ",i5);
   out->cr();
 }
 
@@ -2487,7 +2485,7 @@ void PhaseChaitin::dump_lrg(uint lidx, bool defs_only, outputStream* out) const 
       out->print_cr("new LRG");
     }
   }
-  if (_ifg && lidx < _ifg->_maxlrg) {
+  if( _ifg && lidx < _ifg->_maxlrg) {
     out->print("Neighbors: %d - ", _ifg->neighbor_cnt(lidx));
     _ifg->neighbors(lidx)->dump(out);
     out->cr();

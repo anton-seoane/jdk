@@ -29,6 +29,7 @@
 #include "opto/addnode.hpp"
 #include "opto/node.hpp"
 #include "utilities/growableArray.hpp"
+#include "utilities/ostream.hpp"
 
 //
 // Adaptation for C2 of the escape analysis algorithm described in:

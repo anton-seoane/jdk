@@ -35,6 +35,7 @@
 #include "opto/opcodes.hpp"
 #include "opto/rootnode.hpp"
 #include "utilities/copy.hpp"
+#include "utilities/ostream.hpp"
 #include "utilities/powerOfTwo.hpp"
 
 void Block_Array::grow(uint i) {
@@ -1257,7 +1258,7 @@ void PhaseCFG::postalloc_expand(PhaseRegAlloc* _ra) {
 
 //------------------------------dump-------------------------------------------
 #ifndef PRODUCT
-void PhaseCFG::_dump_cfg(const Node *end, VectorSet &visited, outputStream* out) const {
+void PhaseCFG::_dump_cfg(const Node *end, VectorSet &visited, outputStream *out) const {
   const Node *x = end->is_block_proj();
   assert(x, "not a CFG");
 
@@ -1280,7 +1281,7 @@ void PhaseCFG::_dump_cfg(const Node *end, VectorSet &visited, outputStream* out)
   get_block_for_node(p)->dump(this, out);
 }
 
-void PhaseCFG::dump(outputStream* out) const {
+void PhaseCFG::dump(outputStream *out) const {
   out->print("\n--- CFG --- %d BBs\n", number_of_blocks());
   if (_blocks.size()) {        // Did we do basic-block layout?
     for (uint i = 0; i < number_of_blocks(); i++) {
@@ -1289,7 +1290,7 @@ void PhaseCFG::dump(outputStream* out) const {
     }
   } else {                      // Else do it with a DFS
     VectorSet visited(_block_arena);
-    _dump_cfg(_root,visited);
+    _dump_cfg(_root,visited, out);
   }
 }
 

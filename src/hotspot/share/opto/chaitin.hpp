@@ -34,6 +34,7 @@
 #include "opto/phase.hpp"
 #include "opto/regalloc.hpp"
 #include "opto/regmask.hpp"
+#include "utilities/ostream.hpp"
 
 class Matcher;
 class PhaseCFG;
@@ -677,7 +678,7 @@ public:
   void raise_pressure(Block* b, LRG& lrg, Pressure& int_pressure, Pressure& float_pressure);
   void compute_entry_block_pressure(Block* b);
   void compute_exit_block_pressure(Block* b);
-  void print_pressure_info(Pressure& pressure, const char *str, outputStream* out = tty);
+  void print_pressure_info(Pressure& pressure, const char *str, outputStream *out = tty);
 
 private:
   // Force the bases of derived pointers to be alive at GC points.

@@ -31,6 +31,7 @@
 #include "opto/machnode.hpp"
 #include "opto/phaseX.hpp"
 #include "opto/rootnode.hpp"
+#include "utilities/ostream.hpp"
 
 // Portions of code courtesy of Clifford Click
 
@@ -391,7 +392,7 @@ struct NTarjan {
   NTarjan *EVAL(void);
   void LINK( NTarjan *w, NTarjan *ntarjan0 );
 #ifndef PRODUCT
-  void dump(int offset, outputStream* out = tty) const;
+  void dump(int offset, outputStream *out = tty) const;
 #endif
 };
 
@@ -654,33 +655,33 @@ void NTarjan::setdepth( uint stack_size, uint *dom_depth ) {
 }
 
 #ifndef PRODUCT
-void NTarjan::dump(int offset, outputStream* out) const {
+void NTarjan::dump(int offset, outputStream *out) const {
   // Dump the data from this node
   int i;
-  for (i = offset; i >0; i--)  // Use indenting for tree structure
+  for(i = offset; i >0; i--)  // Use indenting for tree structure
     out->print("  ");
   out->print("Dominator Node: ");
   _control->dump(out);               // Control node for this dom node
-  out->cr();
-  for( i = offset; i >0; i--)      // Use indenting for tree structure
+  out->print("\n");
+  for(i = offset; i >0; i--)      // Use indenting for tree structure
     out->print("  ");
-  out->print("semi:%d, size:%d\n", _semi, _size);
-  for (i = offset; i >0; i--)      // Use indenting for tree structure
+  out->print("semi:%d, size:%d\n",_semi, _size);
+  for(i = offset; i >0; i--)      // Use indenting for tree structure
     out->print("  ");
   out->print("DFS Parent: ");
-  if (_parent != nullptr)
+  if(_parent != nullptr)
     _parent->_control->dump(out);    // Parent in DFS
-  out->cr();
-  for (i = offset; i >0; i--)      // Use indenting for tree structure
+  out->print("\n");
+  for(i = offset; i >0; i--)      // Use indenting for tree structure
     out->print("  ");
   out->print("Dom Parent: ");
-  if (_dom != nullptr)
+  if(_dom != nullptr)
     _dom->_control->dump(out);       // Parent in Dominator Tree
-  out->cr();
+  out->print("\n");
 
   // Recurse over remaining tree
-  if (_dom_child) _dom_child->dump(offset+2, out);   // Children in dominator tree
-  if (_dom_next)  _dom_next ->dump(offset  , out);   // Siblings in dominator tree
+  if( _dom_child ) _dom_child->dump(offset+2, out);   // Children in dominator tree
+  if( _dom_next  ) _dom_next ->dump(offset, out);   // Siblings in dominator tree
 
 }
 #endif

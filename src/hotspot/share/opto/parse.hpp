@@ -32,6 +32,7 @@
 #include "oops/generateOopMap.hpp"
 #include "opto/graphKit.hpp"
 #include "opto/subnode.hpp"
+#include "utilities/ostream.hpp"
 
 class BytecodeParseHistogram;
 class InlineTree;

@@ -28,6 +28,7 @@
 #include "c1/c1_ValueStack.hpp"
 #include "logging/logStream.hpp"
 #include "utilities/bitMap.inline.hpp"
+#include "utilities/ostream.hpp"
 
 #ifndef PRODUCT
 

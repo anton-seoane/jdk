@@ -178,7 +178,8 @@ public:
   bool is_autobox_cache();
 
   // Debugging output
-  void print(outputStream* out = tty);
+  void print();
+  void print_on(outputStream* out);
   void print_name_on(outputStream* st);
 };
 

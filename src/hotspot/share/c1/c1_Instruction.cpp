@@ -29,6 +29,7 @@
 #include "ci/ciObjArrayKlass.hpp"
 #include "ci/ciTypeArrayKlass.hpp"
 #include "utilities/bitMap.inline.hpp"
+#include "utilities/ostream.hpp"
 
 
 // Implementation of Instruction

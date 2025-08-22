@@ -27,6 +27,7 @@
 #include "opto/compile.hpp"
 #include "opto/indexSet.hpp"
 #include "opto/regmask.hpp"
+#include "utilities/ostream.hpp"
 
 // This file defines the IndexSet class, a set of sparse integer indices.
 // This data structure is used by the compiler in its liveness analysis and
@@ -321,7 +322,7 @@ void IndexSet::swap(IndexSet *set) {
 // Print this set.  Used for debugging.
 
 #ifndef PRODUCT
-void IndexSet::dump(outputStream* out) const {
+void IndexSet::dump(outputStream *out) const {
   IndexSetIterator elements(this);
 
   out->print("{");

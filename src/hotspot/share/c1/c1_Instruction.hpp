@@ -29,6 +29,7 @@
 #include "c1/c1_LIR.hpp"
 #include "c1/c1_ValueType.hpp"
 #include "ci/ciField.hpp"
+#include "utilities/ostream.hpp"
 
 // Predefined classes
 class ciField;
