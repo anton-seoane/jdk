@@ -28,6 +28,7 @@
 #include "gc/shared/barrierSet.hpp"
 #include "gc/shared/c2/barrierSetC2.hpp"
 #include "gc/shared/tlab_globals.hpp"
+#include "logging/logStream.hpp"
 #include "memory/allocation.inline.hpp"
 #include "memory/resourceArea.hpp"
 #include "oops/objArrayKlass.hpp"
@@ -53,6 +54,7 @@
 #include "utilities/align.hpp"
 #include "utilities/copy.hpp"
 #include "utilities/macros.hpp"
+#include "utilities/ostream.hpp"
 #include "utilities/powerOfTwo.hpp"
 #include "utilities/vmError.hpp"
 
@@ -2888,7 +2890,7 @@ private:
   }
 #endif
 
-  NOT_PRODUCT( void trace(const Node_List& merge_list, const Node* merged_input_value, const StoreNode* merged_store) const; )
+  NOT_PRODUCT( void trace(const Node_List& merge_list, const Node* merged_input_value, const StoreNode* merged_store, outputStream* out = tty) const; )
 };
 
 StoreNode* MergePrimitiveStores::run() {
@@ -2931,7 +2933,11 @@ StoreNode* MergePrimitiveStores::run() {
 
   StoreNode* merged_store = make_merged_store(merge_list, merged_input_value);
 
-  NOT_PRODUCT( if (is_trace_success()) { trace(merge_list, merged_input_value, merged_store); } )
+  NOT_PRODUCT( if (is_trace_success() && ul_enabled(Compile::current(), Trace, jit, mergestores)) {
+               LogMessage(jit, mergestores) msg;
+               NonInterleavingLogStream st(LogLevelType::Trace, msg);
+               trace(merge_list, merged_input_value, merged_store, &st); 
+             })
 
   return merged_store;
 }
@@ -3356,7 +3362,7 @@ StoreNode* MergePrimitiveStores::make_merged_store(const Node_List& merge_list, 
 }
 
 #ifndef PRODUCT
-void MergePrimitiveStores::trace(const Node_List& merge_list, const Node* merged_input_value, const StoreNode* merged_store) const {
+void MergePrimitiveStores::trace(const Node_List& merge_list, const Node* merged_input_value, const StoreNode* merged_store, outputStream* out) const {
   stringStream ss;
   ss.print_cr("[TraceMergeStores]: Replace");
   for (int i = (int)merge_list.size() - 1; i >= 0; i--) {
@@ -3365,7 +3371,7 @@ void MergePrimitiveStores::trace(const Node_List& merge_list, const Node* merged
   ss.print_cr("[TraceMergeStores]: with");
   merged_input_value->dump("\n", false, &ss);
   merged_store->dump("\n", false, &ss);
-  tty->print("%s", ss.as_string());
+  out->print("%s", ss.as_string());
 }
 #endif
 

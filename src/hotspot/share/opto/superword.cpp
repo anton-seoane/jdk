@@ -21,6 +21,7 @@
  * questions.
  */
 
+#include "logging/logStream.hpp"
 #include "opto/addnode.hpp"
 #include "opto/castnode.hpp"
 #include "opto/convertnode.hpp"
@@ -205,8 +206,8 @@ void SuperWord::unrolling_analysis(const VLoop &vloop, int &local_loop_unroll_fa
       if (cur_max_vector < local_loop_unroll_factor) {
         is_slp = false;
 #ifndef PRODUCT
-        if (TraceSuperWordLoopUnrollAnalysis) {
-          tty->print_cr("slp analysis fails: unroll limit greater than max vector\n");
+        if (ul_enabled(Compile::current(), Trace, jit, superwordloopunrollanalysis)) {
+          log_trace(jit, superwordloopunrollanalysis)("slp analysis fails: unroll limit greater than max vector\n");
         }
 #endif
         break;
@@ -256,8 +257,9 @@ void SuperWord::unrolling_analysis(const VLoop &vloop, int &local_loop_unroll_fa
     cl->mark_was_slp();
     if (cl->is_main_loop()) {
 #ifndef PRODUCT
-      if (TraceSuperWordLoopUnrollAnalysis) {
-        tty->print_cr("slp analysis: set max unroll to %d", local_loop_unroll_factor);
+      if (ul_enabled(Compile::current(), Trace, jit, superwordloopunrollanalysis)) {
+        log_trace(jit, superwordloopunrollanalysis)("slp analysis: set max unroll to %d",
+                                                    local_loop_unroll_factor);
       }
 #endif
       cl->set_slp_max_unroll(local_loop_unroll_factor);
@@ -1989,10 +1991,17 @@ bool SuperWord::do_vtransform() const {
 // See description at top of "vtransform.hpp".
 void VTransform::apply() {
 #ifndef PRODUCT
-  if (_trace._info || TraceLoopOpts) {
+  if (_trace._info) {
     tty->print_cr("\nVTransform::apply:");
     lpt()->dump_head();
     lpt()->head()->dump();
+  }
+  if (ul_enabled_c(Trace, jit, loopopts)) {
+    LogMessage(jit, loopopts) msg;
+    NonInterleavingLogStream st(LogLevelType::Trace, msg);
+    st.print_cr("\nVTransform::apply:");
+    lpt()->dump_head(&st);
+    lpt()->head()->dump(&st);
   }
   assert(cl()->is_main_loop(), "auto vectorization only for main loops");
   assert(_graph.is_scheduled(), "must already be scheduled");
@@ -2063,8 +2072,9 @@ void VTransform::apply_vectorization() const {
       uint slp_max_unroll_factor = cl()->slp_max_unroll();
       if (slp_max_unroll_factor == max_vector_length) {
 #ifndef PRODUCT
-        if (TraceSuperWordLoopUnrollAnalysis) {
-          tty->print_cr("vector loop(unroll=%d, len=%d)\n", max_vector_length, max_vector_width * BitsPerByte);
+        if (ul_enabled(this->igvn().C, Trace, jit, superwordloopunrollanalysis)) {
+          log_trace(jit, superwordloopunrollanalysis)("vector loop(unroll=%d, len=%d)\n",
+                                                      max_vector_length, max_vector_width * BitsPerByte);
         }
 #endif
         // For atomic unrolled loops which are vector mapped, instigate more unrolling

@@ -30,6 +30,7 @@
 #include "compiler/compilerEvent.hpp"
 #include "interpreter/linkResolver.hpp"
 #include "jfr/jfrEvents.hpp"
+#include "logging/logStream.hpp"
 #include "oops/objArrayKlass.hpp"
 #include "opto/callGenerator.hpp"
 #include "opto/parse.hpp"

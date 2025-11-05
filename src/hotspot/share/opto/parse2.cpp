@@ -43,6 +43,7 @@
 #include "opto/runtime.hpp"
 #include "runtime/deoptimization.hpp"
 #include "runtime/sharedRuntime.hpp"
+#include "utilities/ostream.hpp"
 
 #ifndef PRODUCT
 extern uint explicit_null_checks_inserted,
@@ -353,15 +354,15 @@ public:
     return adjoinRange(other._lo, other._hi, other._dest, other._cnt, false);
   }
 
-  void print() {
+  void print(outputStream* out = tty) {
     if (is_singleton())
-      tty->print(" {%d}=>%d (cnt=%f)", lo(), dest(), cnt());
+      out->print(" {%d}=>%d (cnt=%f)", lo(), dest(), cnt());
     else if (lo() == min_jint)
-      tty->print(" {..%d}=>%d (cnt=%f)", hi(), dest(), cnt());
+      out->print(" {..%d}=>%d (cnt=%f)", hi(), dest(), cnt());
     else if (hi() == max_jint)
-      tty->print(" {%d..}=>%d (cnt=%f)", lo(), dest(), cnt());
+      out->print(" {%d..}=>%d (cnt=%f)", lo(), dest(), cnt());
     else
-      tty->print(" {%d..%d}=>%d (cnt=%f)", lo(), hi(), dest(), cnt());
+      out->print(" {%d..%d}=>%d (cnt=%f)", lo(), hi(), dest(), cnt());
   }
 };
 
@@ -1072,25 +1073,29 @@ void Parse::jump_switch_ranges(Node* key_val, SwitchRange *lo, SwitchRange *hi, 
 
 #ifndef PRODUCT
   _max_switch_depth = MAX2(switch_depth, _max_switch_depth);
-  if (TraceOptoParse && Verbose && WizardMode && switch_depth == 0) {
+  if (ul_enabled_c(Trace, jit, optoparse) && switch_depth == 0) {
+    LogMessage(jit, optoparse) msg;
+    NonInterleavingLogStream st(LogLevelType::Trace, msg);
+
     SwitchRange* r;
     int nsing = 0;
     for( r = lo; r <= hi; r++ ) {
       if( r->is_singleton() )  nsing++;
     }
-    tty->print(">>> ");
-    _method->print_short_name();
-    tty->print_cr(" switch decision tree");
-    tty->print_cr("    %d ranges (%d singletons), max_depth=%d, est_depth=%d",
-                  (int) (hi-lo+1), nsing, _max_switch_depth, _est_switch_depth);
+    st.print(">>> ");
+    _method->print_short_name(&st);
+    st.print_cr(" switch decision tree");
+    st.print_cr("    %d ranges (%d singletons), max_depth=%d, est_depth=%d",
+                (int)(hi - lo + 1), nsing, _max_switch_depth,
+                _est_switch_depth);
     if (_max_switch_depth > _est_switch_depth) {
-      tty->print_cr("******** BAD SWITCH DEPTH ********");
+      st.print_cr("******** BAD SWITCH DEPTH ********");
     }
-    tty->print("   ");
+    st.print("   ");
     for( r = lo; r <= hi; r++ ) {
-      r->print();
+      r->print(&st);
     }
-    tty->cr();
+    st.cr();
   }
 #endif
 }
@@ -1339,10 +1344,12 @@ bool Parse::seems_never_taken(float prob) const {
 //-------------------------------repush_if_args--------------------------------
 // Push arguments of an "if" bytecode back onto the stack by adjusting _sp.
 inline int Parse::repush_if_args() {
-  if (PrintOpto && WizardMode) {
-    tty->print("defending against excessive implicit null exceptions on %s @%d in ",
-               Bytecodes::name(iter().cur_bc()), iter().cur_bci());
-    method()->print_name(); tty->cr();
+  if (ul_enabled_c(Trace, jit, opto)) {
+    stringStream ss;
+    ss.print("defending against excessive implicit null exceptions on %s @%d in ",
+             Bytecodes::name(iter().cur_bc()), iter().cur_bci());
+    method()->print_name(&ss);
+    log_trace(jit, opto)("%s\n", ss.freeze());
   }
   int bc_depth = - Bytecodes::depth(iter().cur_bc());
   assert(bc_depth == 1 || bc_depth == 2, "only two kinds of branches");
@@ -1381,9 +1388,7 @@ void Parse::do_ifnull(BoolTest::mask btest, Node *c) {
   float prob = branch_prediction(cnt, btest, target_bci, c);
   if (prob == PROB_UNKNOWN) {
     // (An earlier version of do_ifnull omitted this trap for OSR methods.)
-    if (PrintOpto && Verbose) {
-      tty->print_cr("Never-taken edge stops compilation at bci %d", bci());
-    }
+    log_trace_c2(jit, opto)("Never-taken edge stops compilation at bci %d", bci());
     repush_if_args(); // to gather stats on loop
     uncommon_trap(Deoptimization::Reason_unreached,
                   Deoptimization::Action_reinterpret,
@@ -1456,9 +1461,7 @@ void Parse::do_if(BoolTest::mask btest, Node* c) {
   float untaken_prob = 1.0 - prob;
 
   if (prob == PROB_UNKNOWN) {
-    if (PrintOpto && Verbose) {
-      tty->print_cr("Never-taken edge stops compilation at bci %d", bci());
-    }
+    log_trace_c2(jit, opto)("Never-taken edge stops compilation at bci %d", bci());
     repush_if_args(); // to gather stats on loop
     uncommon_trap(Deoptimization::Reason_unreached,
                   Deoptimization::Action_reinterpret,
@@ -1886,11 +1889,12 @@ void Parse::do_one_bytecode() {
 
 #ifdef ASSERT
   // for setting breakpoints
-  if (TraceOptoParse) {
-    tty->print(" @");
-    dump_bci(bci());
-    tty->print(" %s", Bytecodes::name(bc()));
-    tty->cr();
+  if (ul_enabled_c(Debug, jit, optoparse)) {
+    LogMessage(jit, optoparse) msg;
+    NonInterleavingLogStream st(LogLevelType::Debug, msg);
+    st.print(" @");
+    dump_bci(bci(), &st);
+    st.print_cr(" %s", Bytecodes::name(bc()));
   }
 #endif
 

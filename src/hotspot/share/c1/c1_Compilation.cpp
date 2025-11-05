@@ -647,8 +647,11 @@ void Compilation::bailout(const char* msg) {
 
   if (!bailed_out()) {
     // keep first bailout message
-    if (PrintCompilation || PrintBailouts) tty->print_cr("compilation bailout: %s", msg);
-    _bailout_msg = msg;
+    if (PrintCompilation) {
+      tty->print_cr("compilation bailout: %s", msg);
+    } else if (ul_enabled(this, Debug, jit, bailouts)) {
+      log_debug(jit, bailouts)("compilation bailout: %s", msg);
+    }
     if (CaptureBailoutInformation) {
       _first_failure_details = new CompilationFailureInfo(msg);
     }

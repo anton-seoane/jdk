@@ -22,6 +22,9 @@
  *
  */
 
+#include "compile.hpp"
+#include "logging/logLevel.hpp"
+#include "logging/logStream.hpp"
 #include "memory/allocation.inline.hpp"
 #include "opto/castnode.hpp"
 #include "opto/cfgnode.hpp"
@@ -411,9 +414,16 @@ void PhaseIdealLoop::do_unswitching(IdealLoopTree* loop, Node_List& old_new) {
 
 void PhaseIdealLoop::do_multiversioning(IdealLoopTree* lpt, Node_List& old_new) {
 #ifndef PRODUCT
-  if (TraceLoopOpts || TraceLoopMultiversioning) {
-    tty->print("Multiversion ");
-    lpt->dump_head();
+  if (ul_enabled_c(Trace, jit, loopopts)) {
+    LogMessage(jit, loopopts) msg;
+    NonInterleavingLogStream st(LogLevelType::Trace, msg);
+    st.print("Multiversion ");
+    lpt->dump_head(&st);
+  } else if (ul_enabled_c(Trace, jit, loopopts, loopmultiversioning)) {
+    LogMessage(jit, loopopts, loopmultiversioning) msg;
+    NonInterleavingLogStream st(LogLevelType::Trace, msg);
+    st.print("Multiversion ");
+    lpt->dump_head(&st);
   }
 #endif
   assert(LoopMultiversioning, "LoopMultiversioning must be enabled");
@@ -572,9 +582,11 @@ bool PhaseIdealLoop::try_resume_optimizations_for_delayed_slow_loop(IdealLoopTre
   cl->set_no_multiversion();
   cl->set_multiversion_slow_loop();
 #ifndef PRODUCT
-  if (TraceLoopOpts) {
-    tty->print("Resume Optimizations ");
-    lpt->dump_head();
+  if (ul_enabled_c(Trace, jit, loopopts)) {
+    LogMessage(jit, loopopts) msg;
+    NonInterleavingLogStream st(LogLevelType::Trace, msg);
+    st.print("Resume Optimizations ");
+    lpt->dump_head(&st);
   }
 #endif
   return true;
@@ -597,40 +609,47 @@ bool PhaseIdealLoop::has_control_dependencies_from_predicates(LoopNode* head) {
 
 #ifndef PRODUCT
 void PhaseIdealLoop::trace_loop_unswitching_impossible(const LoopNode* original_head) {
-  if (TraceLoopUnswitching) {
-    tty->print_cr("Loop Unswitching \"%d %s\" not possible due to control dependencies",
-                  original_head->_idx, original_head->Name());
+  if (ul_enabled(Compile::current(), Trace, jit, loopunswitching)) {
+    log_trace(jit, loopunswitching)("Loop Unswitching \"%d %s\" not possible due to control dependencies",
+                                    original_head->_idx, original_head->Name());
   }
 }
 
 void PhaseIdealLoop::trace_loop_unswitching_count(IdealLoopTree* loop, LoopNode* original_head) {
-  if (TraceLoopOpts) {
-    tty->print("Unswitch   %d ", original_head->unswitch_count() + 1);
-    loop->dump_head();
+  if (ul_enabled_c(Trace, jit, loopopts)) {
+    LogMessage(jit, loopopts) msg;
+    NonInterleavingLogStream st(LogLevelType::Trace, msg);
+    st.print("Unswitch   %d ", original_head->unswitch_count() + 1);
+    loop->dump_head(&st);
   }
 }
 
 void PhaseIdealLoop::trace_loop_unswitching_result(const UnswitchedLoopSelector& unswitched_loop_selector,
                                                    const LoopNode* original_head, const LoopNode* new_head) {
-  if (TraceLoopUnswitching) {
+  if (ul_enabled(Compile::current(), Trace, jit, loopunswitching)) {
+    LogMessage(jit, loopunswitching) logm;
+    NonInterleavingLogStream st(LogLevelType::Trace, logm);
     IfNode* unswitch_candidate = unswitched_loop_selector.unswitch_candidate();
     IfNode* loop_selector = unswitched_loop_selector.loop_selector().selector();
-    tty->print_cr("Loop Unswitching:");
-    tty->print_cr("- Unswitch-Candidate-If: %d %s", unswitch_candidate->_idx, unswitch_candidate->Name());
-    tty->print_cr("- Loop-Selector-If: %d %s", loop_selector->_idx, loop_selector->Name());
-    tty->print_cr("- True-Path-Loop (=Orig): %d %s", original_head->_idx, original_head->Name());
-    tty->print_cr("- False-Path-Loop (=Clone): %d %s", new_head->_idx, new_head->Name());
+    st.print_cr("Loop Unswitching:");
+    st.print_cr("- Unswitch-Candidate-If: %d %s", unswitch_candidate->_idx, unswitch_candidate->Name());
+    st.print_cr("- Loop-Selector-If: %d %s", loop_selector->_idx, loop_selector->Name());
+    st.print_cr("- True-Path-Loop (=Orig): %d %s", original_head->_idx, original_head->Name());
+    st.print_cr("- False-Path-Loop (=Clone): %d %s", new_head->_idx, new_head->Name());
   }
 }
 
 void PhaseIdealLoop::trace_loop_multiversioning_result(const LoopSelector& loop_selector,
                                                        const LoopNode* original_head, const LoopNode* new_head) {
-  if (TraceLoopMultiversioning) {
+  if (ul_enabled_c(Trace, jit, loopopts, loopmultiversioning)) {
+    LogMessage(jit, loopopts, loopmultiversioning) msg;
+    NonInterleavingLogStream st(LogLevelType::Trace, msg);
+
     IfNode* selector_if = loop_selector.selector();
-    tty->print_cr("Loop Multiversioning:");
-    tty->print_cr("- Loop-Selector-If: %d %s", selector_if->_idx, selector_if->Name());
-    tty->print_cr("- True-Path-Loop (=Orig / Fast): %d %s", original_head->_idx, original_head->Name());
-    tty->print_cr("- False-Path-Loop (=Clone / Slow): %d %s", new_head->_idx, new_head->Name());
+    st.print_cr("Loop Multiversioning:");
+    st.print_cr("- Loop-Selector-If: %d %s", selector_if->_idx, selector_if->Name());
+    st.print_cr("- True-Path-Loop (=Orig / Fast): %d %s", original_head->_idx, original_head->Name());
+    st.print_cr("- False-Path-Loop (=Clone / Slow): %d %s", new_head->_idx, new_head->Name());
   }
 }
 #endif

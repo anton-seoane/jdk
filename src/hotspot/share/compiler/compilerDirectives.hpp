@@ -40,6 +40,7 @@
     cflags(BreakAtExecute,          bool, false, BreakAtExecute) \
     cflags(BreakAtCompile,          bool, false, BreakAtCompile) \
     cflags(Log,                     bool, LogCompilation, Unknown) \
+    cflags(UL,                      bool, false, UL) \
     cflags(MemLimit,                intx, 0, MemLimit) \
     cflags(MemStat,                 uintx, 0, MemStat) \
     cflags(PrintAssembly,           bool, PrintAssembly, PrintAssembly) \
@@ -154,6 +155,7 @@ public:
   bool is_c2(CompilerDirectives* directive) const;
   bool should_collect_memstat() const;
   bool should_print_memstat() const;
+  bool should_ul() const;
   size_t mem_limit() const;
   bool should_crash_at_mem_limit() const; // true: crash false: stop compilation
 
