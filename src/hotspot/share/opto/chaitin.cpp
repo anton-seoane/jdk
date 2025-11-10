@@ -1650,12 +1650,12 @@ uint PhaseChaitin::Select( ) {
             LogMessage(jit, spilling) msg;
             NonInterleavingLogStream st(LogLevelType::Trace, msg);
             st.print("L%d ", lidx);
-            rm.dump(&st);
+            trace_mask.dump(&st);
             st.print(" intersected L%d ", neighbor);
             nlrg.mask().dump(&st);
             st.print(" removed ");
-            rm.SUBTRACT(lrg->mask());
-            rm.dump(&st);
+            trace_mask.subtract(lrg->mask());
+            trace_mask.dump(&st);
             st.print(" leaving ");
             lrg->mask().dump(&st);
             st.cr();

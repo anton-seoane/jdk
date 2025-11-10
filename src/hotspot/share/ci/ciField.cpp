@@ -435,13 +435,7 @@ bool ciField::is_autobox_cache() {
 
 // ------------------------------------------------------------------
 // ciField::print
-void ciField::print() {
-  print_on(tty);
-}
-
-// ------------------------------------------------------------------
-// ciField::print
-void ciField::print_on(outputStream* out) {
+void ciField::print(outputStream* out) {
   out->print("<ciField name=");
   _holder->print_name_on(out);
   out->print(".");
@@ -457,7 +451,7 @@ void ciField::print_on(outputStream* out) {
   out->print(" is_constant=%s", bool_to_str(_is_constant));
   if (_is_constant && is_static()) {
     out->print(" constant_value=");
-    _constant_value.print_on(out);
+    _constant_value.print(out);
   }
   out->print(">");
 }

@@ -653,6 +653,165 @@ public:
     _scale.print_on(st);
     st->print(" * [%d %s]", _variable->_idx, _variable->Name());
   }
+  static void print_on(outputStream* st, NoOverflowInt con, const GrowableArray<MemPointerSummand>& summands) {
+    st->print("Summands (%d): con(", summands.length());
+    con.print_on(st);
+    st->print(")");
+    for (int i = 0; i < summands.length(); i++) {
+      st->print(" + ");
+      summands.at(i).print_on(tty);
+    }
+    st->cr();
+  }
+#endif
+};
+
+// We need two different ways of tracking the summands:
+// - MemPointerRawSummand: designed to keep track of the original form of
+//                         the pointer, preserving its overflow behavior.
+// - MemPointerSummand:    designed to allow simplification of the MemPointer
+//                         form, does not preserve the original form and
+//                         ignores overflow from ConvI2L.
+//
+// The MemPointerSummand is designed to allow the simplification of
+// the MemPointer form as much as possible, to allow aliasing checks
+// to be as simple as possible. For example, the C2 IR pointer:
+//
+//   pointer = AddP(
+//               AddP(
+//                 base,
+//                 LShiftL(
+//                   ConvI2L(
+//                     AddI(AddI(i, LShiftI(j, 2)), con1)
+//                   ),
+//                   1
+//                 )
+//               ),
+//               con2
+//             )
+//
+// and more readable:
+//
+//   pointer = base + 2L * ConvI2L(i + 4 * j + con1) + con2
+//
+// is simplified to this MemPointer form, using only MemPointerSummands,
+// which ignore the possible overflow in ConvI2L:
+//
+//   pointer = base + 2L * ConvI2L(i) + 8L * ConvI2L(j) + con
+//   con = 2L * con1 + con2
+//
+// This is really convenient, because this way we are able to ignore
+// the ConvI2L in the aliasing anaylsis computation, and we can collect
+// all constants to a single constant. Even with this simplicication,
+// we are able to prove the correctness of the aliasing checks.
+//
+// However, there is one thing we are not able to do with this simplification:
+// we cannot reconstruct the original pointer expression, because the
+// simplification ignores overflows that could happen inside the ConvI2L:
+//
+//   2L * ConvI2L(i + 4 * j + con1) != 2L * ConvI2L(i) + 8L * ConvI2L(j) + 2L * con1
+//
+// The MemPointerRawSummand is designed to keep track of the original form
+// of the pointer, preserving its overflow behaviour. We observe that the
+// only critical point for overflows is at the ConvI2L. Thus, we give each
+// ConvI2L a "int group" id > 0, and all raw summands belonging to that ConvI2L
+// have that id. This allows us to reconstruct which raw summands need to
+// be added together before the ConvI2L. Any raw summands that do not belong
+// to a ConvI2L (i.e. the summands with long variables) have "int group"
+// id = 0, since they do not belong to any such "int group" and can be
+// directly added together. For raw summands belonging to an "int group",
+// we need to track the scale inside (scaleI) and outside (scaleL) the
+// ConvI2L. With the example from above:
+//
+//   pointer = base + 2L * ConvI2L(i + 4 * j + con1) + con2
+//
+//   _variable  = base  _variable  = i  _variable  = j  _variable  = null  _variable  = null
+//   _scaleI    = 1     _scaleI    = 1  _scaleI    = 4  _scaleI    = con1  _scaleI    = 1
+//   _scaleL    = 1     _scaleL    = 2  _scaleL    = 2  _scaleL    = 2     _scaleL    = con2
+//   _int_group = 0     _int_group = 1  _int_group = 1  _int_group = 1     _int_group = 0
+//
+// Note: we also need to track constants as separate raw summands. For
+//       this, we say that a raw summand tracks a constant iff _variable == null,
+//       and we store the constant value in _scaleI (for int constant) and in
+//       _scaleL (for long constants).
+//
+class MemPointerRawSummand : public StackObj {
+private:
+  Node* _variable;
+  NoOverflowInt _scaleI;
+  NoOverflowInt _scaleL;
+  int _int_group;
+
+public:
+  MemPointerRawSummand(Node* variable, NoOverflowInt scaleI, NoOverflowInt scaleL, int int_group) :
+    _variable(variable), _scaleI(scaleI), _scaleL(scaleL), _int_group(int_group) {}
+
+  MemPointerRawSummand() :
+    MemPointerRawSummand(nullptr, NoOverflowInt::make_NaN(), NoOverflowInt::make_NaN(), -1) {}
+
+  static MemPointerRawSummand make_trivial(Node* variable) {
+    assert(variable != nullptr, "must have variable");
+    return MemPointerRawSummand(variable, NoOverflowInt(1), NoOverflowInt(1), 0);
+  }
+
+  static MemPointerRawSummand make_con(NoOverflowInt scaleI, NoOverflowInt scaleL, int int_group) {
+    return MemPointerRawSummand(nullptr, scaleI, scaleL, int_group);
+  }
+
+  bool is_valid() const { return _int_group >= 0; }
+  bool is_con() const { assert(is_valid(), ""); return _variable == nullptr; }
+  Node* variable() const { assert(is_valid(), ""); return _variable; }
+  NoOverflowInt scaleI() const { assert(is_valid(), ""); return _scaleI; }
+  NoOverflowInt scaleL() const { assert(is_valid(), ""); return _scaleL; }
+  int int_group() const { assert(is_valid(), ""); return _int_group; }
+
+  MemPointerSummand to_summand() const {
+    assert(!is_con(), "must be variable");
+    return MemPointerSummand(variable(), scaleL() * scaleI());
+  }
+
+  NoOverflowInt to_con() const {
+    assert(is_con(), "must be constant");
+    return scaleL() * scaleI();
+  }
+
+  static int cmp_by_int_group_and_variable_idx(MemPointerRawSummand* p1, MemPointerRawSummand* p2) {
+    int int_group_diff = p1->int_group() - p2->int_group();
+    if (int_group_diff != 0) { return int_group_diff; }
+
+    if (p1->is_con()) {
+      return p2->is_con() ? 0 : 1;
+    }
+    if (p2->is_con()) {
+      return -1;
+    }
+    return p1->variable()->_idx - p2->variable()->_idx;
+  }
+
+#ifndef PRODUCT
+  void print_on(outputStream* st) const {
+    if (!is_valid()) {
+      st->print("<invalid>");
+    } else {
+      st->print("<%d: ", _int_group);
+      _scaleL.print_on(st);
+      st->print(" * ");
+      _scaleI.print_on(st);
+      if (!is_con()) {
+        st->print(" * [%d %s]", _variable->_idx, _variable->Name());
+      }
+      st->print(">");
+    }
+  }
+
+  static void print_on(outputStream* st, const GrowableArray<MemPointerRawSummand>& summands) {
+    st->print("Raw Summands (%d): ", summands.length());
+    for (int i = 0; i < summands.length(); i++) {
+      if (i > 0) { st->print(" + "); }
+      summands.at(i).print_on(tty);
+    }
+    st->cr();
+  }
 #endif
 };
 
