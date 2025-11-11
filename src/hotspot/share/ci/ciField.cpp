@@ -35,7 +35,6 @@
 #include "runtime/fieldDescriptor.inline.hpp"
 #include "runtime/handles.inline.hpp"
 #include "runtime/reflection.hpp"
-#include "utilities/ostream.hpp"
 
 // ciField
 //
