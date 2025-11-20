@@ -653,7 +653,6 @@ public:
     _scale.print_on(st);
     st->print(" * [%d %s]", _variable->_idx, _variable->Name());
   }
-
   static void print_on(outputStream* st, NoOverflowInt con, const GrowableArray<MemPointerSummand>& summands) {
     st->print("Summands (%d): con(", summands.length());
     con.print_on(st);

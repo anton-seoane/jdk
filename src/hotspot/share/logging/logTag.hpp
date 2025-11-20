@@ -43,6 +43,7 @@ class outputStream;
   LOG_TAG(array) \
   LOG_TAG(asan) \
   LOG_TAG(attach) \
+  LOG_TAG(bailouts) \
   LOG_TAG(barrier) \
   LOG_TAG(blocks) \
   LOG_TAG(bot) \
@@ -51,6 +52,7 @@ class outputStream;
   LOG_TAG(cause) \
   LOG_TAG(cds) \
   LOG_TAG(census) \
+  LOG_TAG(ciscspill) \
   LOG_TAG(class) \
   LOG_TAG(classhisto) \
   LOG_TAG(cleanup) \
@@ -75,10 +77,13 @@ class outputStream;
   LOG_TAG(deoptimization) \
   LOG_TAG(dependencies) \
   LOG_TAG(director) \
+  LOG_TAG(dominators) \
   NOT_PRODUCT(LOG_TAG(downcall)) \
   LOG_TAG(dump) \
   LOG_TAG(dynamic) \
+  LOG_TAG(eliminateallocations) \
   LOG_TAG(ergo) \
+  LOG_TAG(escapeanalysis) \
   LOG_TAG(event) \
   LOG_TAG(exceptions) \
   LOG_TAG(exit) \
@@ -102,8 +107,10 @@ class outputStream;
   LOG_TAG(init) \
   LOG_TAG(inlinecache)\
   LOG_TAG(inlining) \
+  LOG_TAG(inliningorintrinsics) \
   LOG_TAG(install) \
   LOG_TAG(interpreter) \
+  LOG_TAG(intrinsics) \
   LOG_TAG(itables) \
   LOG_TAG(jfr) \
   LOG_TAG(jit) \
@@ -118,12 +125,18 @@ class outputStream;
   LOG_TAG(load) /* Trace all classes loaded */ \
   LOG_TAG(loader) \
   LOG_TAG(logging) \
+  LOG_TAG(looplimitcheck) \
+  LOG_TAG(loopmultiversioning) \
+  LOG_TAG(loopopts) \
+  LOG_TAG(looppredicate) \
+  LOG_TAG(loopunswitching) \
   LOG_TAG(malloc) \
   LOG_TAG(map) \
   LOG_TAG(mark) \
   LOG_TAG(marking) \
   LOG_TAG(membername) \
   LOG_TAG(memops) \
+  LOG_TAG(mergestores) \
   LOG_TAG(metadata) \
   LOG_TAG(metaspace) \
   LOG_TAG(methodcomparator) \
@@ -140,6 +153,7 @@ class outputStream;
   LOG_TAG(nmethod) \
   LOG_TAG(nmt) \
   LOG_TAG(normalize) \
+  LOG_TAG(nullcheckelimination) \
   LOG_TAG(numa) \
   LOG_TAG(objecttagging) \
   LOG_TAG(obsolete) \
@@ -148,12 +162,18 @@ class outputStream;
   LOG_TAG(oopmap) \
   LOG_TAG(oops) \
   LOG_TAG(oopstorage) \
+  LOG_TAG(optimizefill) \
+  LOG_TAG(opto) \
+  LOG_TAG(optoparse) \
+  LOG_TAG(optopeephole) \
+  LOG_TAG(optopipelining) \
   LOG_TAG(os) \
   LOG_TAG(owner) \
   LOG_TAG(package) \
   LOG_TAG(page) \
   LOG_TAG(pagesize) \
   LOG_TAG(parser) \
+  LOG_TAG(partialpeeling) \
   LOG_TAG(patch) \
   LOG_TAG(path) \
   LOG_TAG(perf) \
@@ -167,6 +187,7 @@ class outputStream;
   LOG_TAG(promotion) \
   LOG_TAG(ptrqueue) \
   LOG_TAG(purge) \
+  LOG_TAG(rangelimitcheck) \
   LOG_TAG(record) \
   LOG_TAG(redefine) \
   LOG_TAG(ref) \
@@ -181,6 +202,7 @@ class outputStream;
   LOG_TAG(sealed) \
   LOG_TAG(setting) \
   LOG_TAG(smr) \
+  LOG_TAG(spilling) \
   LOG_TAG(stackbarrier) \
   LOG_TAG(stackmap) \
   LOG_TAG(stacktrace) \
@@ -195,6 +217,7 @@ class outputStream;
   LOG_TAG(stringtable) \
   LOG_TAG(stubs) \
   LOG_TAG(subclass) \
+  LOG_TAG(superwordloopunrollanalysis) \
   LOG_TAG(survivor) \
   LOG_TAG(suspend) \
   LOG_TAG(sweep) \
@@ -216,6 +239,7 @@ class outputStream;
   NOT_PRODUCT(LOG_TAG(upcall)) \
   LOG_TAG(update) \
   LOG_TAG(valuebasedclasses) \
+  LOG_TAG(valuenumbering) \
   LOG_TAG(verification) \
   LOG_TAG(verify) \
   LOG_TAG(vmatree) \

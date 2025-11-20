@@ -27,6 +27,7 @@
 #include "gc/shared/barrierSet.hpp"
 #include "gc/shared/c2/barrierSetC2.hpp"
 #include "libadt/vectset.hpp"
+#include "logging/logStream.hpp"
 #include "memory/allocation.hpp"
 #include "memory/resourceArea.hpp"
 #include "opto/arraycopynode.hpp"
@@ -236,15 +237,17 @@ bool ConnectionGraph::compute_escape() {
   }
 
 #ifndef PRODUCT
-  if (_compile->directive()->TraceEscapeAnalysisOption) {
-    tty->print("+++++ Initial worklist for ");
-    _compile->method()->print_name();
-    tty->print_cr(" (ea_inv=%d)", _invocation);
+  if (ul_enabled(_compile, Trace, jit, escapeanalysis)) {
+    LogMessage(jit, escapeanalysis) msg;
+    NonInterleavingLogStream st(LogLevelType::Trace, msg);
+    st.print("+++++ Initial worklist for ");
+    _compile->method()->print_name(&st);
+    st.print_cr(" (ea_inv=%d)", _invocation);
     for (int i = 0; i < ptnodes_worklist.length(); i++) {
       PointsToNode* ptn = ptnodes_worklist.at(i);
-      ptn->dump();
+      ptn->dump(true, &st);
     }
-    tty->print_cr("+++++ Calculating escape states and scalar replaceability");
+    st.print_cr("+++++ Calculating escape states and scalar replaceability");
   }
 #endif
 
@@ -369,8 +372,10 @@ bool ConnectionGraph::compute_escape() {
   }
 
 #ifndef PRODUCT
-  if (PrintEscapeAnalysis) {
-    dump(ptnodes_worklist); // Dump ConnectionGraph
+  if (ul_enabled_c(Info, jit, escapeanalysis)) {
+    LogMessage(jit, escapeanalysis) msg;
+    NonInterleavingLogStream st(LogLevelType::Info, msg);
+    dump(ptnodes_worklist, &st); // Dump ConnectionGraph
   }
 #endif
 
@@ -412,15 +417,21 @@ bool ConnectionGraph::compute_escape() {
     }
 
 #ifdef ASSERT
-  } else if (Verbose && (PrintEscapeAnalysis || PrintEliminateAllocations)) {
-    tty->print("=== No allocations eliminated for ");
-    C->method()->print_short_name();
+  } else if (ul_enabled_c(Trace, jit, eliminateallocations) || ul_enabled_c(Debug, jit, escapeanalysis)) {
+    stringStream ilk;
+    ilk.print("=== No allocations eliminated for ");
+    C->method()->print_short_name(&ilk);
     if (!EliminateAllocations) {
-      tty->print(" since EliminateAllocations is off ===");
+      ilk.print(" since EliminateAllocations is off ===");
     } else if(!has_scalar_replaceable_candidates) {
-      tty->print(" since there are no scalar replaceable candidates ===");
+      ilk.print(" since there are no scalar replaceable candidates ===");
     }
-    tty->cr();
+
+    if (ul_enabled_c(Trace, jit, eliminateallocations)) {
+      log_trace(jit, eliminateallocations)("%s", ilk.freeze());
+    } else {
+      log_debug(jit, escapeanalysis)("%s", ilk.freeze());
+    }
 #endif
   }
 
@@ -5098,7 +5109,7 @@ void PointsToNode::dump(bool print_state, outputStream* out, bool newline) const
   }
 }
 
-void ConnectionGraph::dump(GrowableArray<PointsToNode*>& ptnodes_worklist) {
+void ConnectionGraph::dump(GrowableArray<PointsToNode*>& ptnodes_worklist, outputStream* out) {
   bool first = true;
   int ptnodes_length = ptnodes_worklist.length();
   for (int i = 0; i < ptnodes_length; i++) {
@@ -5114,26 +5125,26 @@ void ConnectionGraph::dump(GrowableArray<PointsToNode*>& ptnodes_worklist) {
     if (n->is_Allocate() || (n->is_CallStaticJava() &&
                              n->as_CallStaticJava()->is_boxing_method())) {
       if (first) {
-        tty->cr();
-        tty->print("======== Connection graph for ");
-        _compile->method()->print_short_name();
-        tty->cr();
-        tty->print_cr("invocation #%d: %d iterations and %f sec to build connection graph with %d nodes and worklist size %d",
+        out->cr();
+        out->print("======== Connection graph for ");
+        _compile->method()->print_short_name(out);
+        out->cr();
+        out->print_cr("invocation #%d: %d iterations and %f sec to build connection graph with %d nodes and worklist size %d",
                       _invocation, _build_iterations, _build_time, nodes_size(), ptnodes_worklist.length());
-        tty->cr();
+        out->cr();
         first = false;
       }
-      ptn->dump();
+      ptn->dump(true, out);
       // Print all locals and fields which reference this allocation
       for (UseIterator j(ptn); j.has_next(); j.next()) {
         PointsToNode* use = j.get();
         if (use->is_LocalVar()) {
-          use->dump(Verbose);
+          use->dump(Verbose, out);
         } else if (Verbose) {
-          use->dump();
+          use->dump(true, out);
         }
       }
-      tty->cr();
+      out->cr();
     }
   }
 }
@@ -5163,18 +5174,20 @@ void ConnectionGraph::escape_state_statistics(GrowableArray<JavaObjectNode*>& ja
 }
 
 void ConnectionGraph::trace_es_update_helper(PointsToNode* ptn, PointsToNode::EscapeState es, bool fields, const char* reason) const {
-  if (_compile->directive()->TraceEscapeAnalysisOption) {
+  if (ul_enabled(_compile, Trace, jit, escapeanalysis)) {
+    LogMessage(jit, escapeanalysis) msg;
+    NonInterleavingLogStream st(LogLevelType::Trace, msg);
     assert(ptn != nullptr, "should not be null");
     assert(reason != nullptr, "should not be null");
-    ptn->dump_header(true);
+    ptn->dump_header(true, &st);
     PointsToNode::EscapeState new_es = fields ? ptn->escape_state() : es;
     PointsToNode::EscapeState new_fields_es = fields ? es : ptn->fields_escape_state();
-    tty->print_cr("-> %s(%s) %s", esc_names[(int)new_es], esc_names[(int)new_fields_es], reason);
+    st.print_cr("-> %s(%s) %s", esc_names[(int)new_es], esc_names[(int)new_fields_es], reason);
   }
 }
 
 const char* ConnectionGraph::trace_propagate_message(PointsToNode* from) const {
-  if (_compile->directive()->TraceEscapeAnalysisOption) {
+  if (ul_enabled(_compile, Trace, jit, escapeanalysis)) {
     stringStream ss;
     ss.print("propagated from: ");
     from->dump(true, &ss, false);
@@ -5185,7 +5198,7 @@ const char* ConnectionGraph::trace_propagate_message(PointsToNode* from) const {
 }
 
 const char* ConnectionGraph::trace_arg_escape_message(CallNode* call) const {
-  if (_compile->directive()->TraceEscapeAnalysisOption) {
+  if (ul_enabled(_compile, Trace, jit, escapeanalysis)) {
     stringStream ss;
     ss.print("escapes as arg to:");
     call->dump("", false, &ss);
@@ -5196,7 +5209,7 @@ const char* ConnectionGraph::trace_arg_escape_message(CallNode* call) const {
 }
 
 const char* ConnectionGraph::trace_merged_message(PointsToNode* other) const {
-  if (_compile->directive()->TraceEscapeAnalysisOption) {
+  if (ul_enabled(_compile, Trace, jit, escapeanalysis)) {
     stringStream ss;
     ss.print("is merged with other object: ");
     other->dump_header(true, &ss);

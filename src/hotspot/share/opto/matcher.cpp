@@ -24,6 +24,7 @@
 
 #include "gc/shared/barrierSet.hpp"
 #include "gc/shared/c2/barrierSetC2.hpp"
+#include "logging/logStream.hpp"
 #include "memory/allocation.inline.hpp"
 #include "memory/resourceArea.hpp"
 #include "oops/compressedOops.hpp"
@@ -1001,10 +1002,17 @@ static void match_alias_type(Compile* C, Node* n, Node* m) {
     }
   }
   if (nidx != midx) {
-    if (PrintOpto || (PrintMiscellaneous && (WizardMode || Verbose))) {
+    if ((PrintMiscellaneous && (WizardMode || Verbose))) {
       tty->print_cr("==== Matcher alias shift %d => %d", nidx, midx);
       n->dump();
       m->dump();
+    }
+    if (ul_enabled_c(Debug, jit, opto)) {
+      LogMessage(opto) msg;
+      NonInterleavingLogStream st(LogLevelType::Debug, msg);
+      st.print_cr("==== Matcher alias shift %d => %d", nidx, midx);
+      n->dump(&st);
+      m->dump(&st);
     }
     assert(C->subsume_loads() && C->must_alias(nat, midx),
            "must not lose alias info when matching");
@@ -1607,9 +1615,8 @@ Node* Matcher::Label_Root(const Node* n, State* svec, Node* control, Node*& mem)
         // is used by any of the other subtrees
         (input_mem == NodeSentinel) ) {
       // Print when we exclude matching due to different memory states at input-loads
-      if (PrintOpto && (Verbose && WizardMode) && (input_mem == NodeSentinel)
-          && !((mem!=(Node*)1) && m->is_Load() && m->in(MemNode::Memory) != mem)) {
-        tty->print_cr("invalid input_mem");
+      if ((input_mem == NodeSentinel) && !((mem!=(Node*)1) && m->is_Load() && m->in(MemNode::Memory) != mem)) {
+        log_trace_c2(jit, opto)("invalid input_mem");
       }
       // Switch to a register-only opcode; this value must be in a register
       // and cannot be subsumed as part of a larger instruction.

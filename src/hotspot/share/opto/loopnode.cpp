@@ -27,6 +27,7 @@
 #include "gc/shared/barrierSet.hpp"
 #include "gc/shared/c2/barrierSetC2.hpp"
 #include "libadt/vectset.hpp"
+#include "logging/logStream.hpp"
 #include "memory/allocation.inline.hpp"
 #include "memory/resourceArea.hpp"
 #include "opto/addnode.hpp"
@@ -391,9 +392,11 @@ void PhaseIdealLoop::insert_loop_limit_check_predicate(ParsePredicateSuccessProj
 #ifndef PRODUCT
   // report that the loop predication has been actually performed
   // for this loop
-  if (TraceLoopLimitCheck) {
-    tty->print_cr("Counted Loop Limit Check generated:");
-    DEBUG_ONLY( bol->dump(2); )
+  if (ul_enabled_c(Trace, jit, looplimitcheck)) {
+    LogMessage(jit, looplimitcheck) msg;
+    NonInterleavingLogStream st(LogLevelType::Trace, msg);
+    st.print_cr("Counted Loop Limit Check generated:");
+    DEBUG_ONLY( bol->dump(2, &st); )
   }
 #endif
 }
@@ -2264,10 +2267,12 @@ bool PhaseIdealLoop::is_counted_loop(Node* x, IdealLoopTree*&loop, BasicType iv_
     if (!loop_limit_check_predicate_block->has_parse_predicate()) {
       // The Loop Limit Check Parse Predicate is not generated if this method trapped here before.
 #ifdef ASSERT
-      if (TraceLoopLimitCheck) {
-        tty->print("Missing Loop Limit Check Parse Predicate:");
-        loop->dump_head();
-        x->dump(1);
+      if (ul_enabled_c(Trace, jit, looplimitcheck)) {
+        LogMessage(jit, looplimitcheck) msg;
+        NonInterleavingLogStream st(LogLevelType::Trace, msg);
+        st.print("Missing Loop Limit Check Parse Predicate:");
+        loop->dump_head(&st);
+        x->dump(1, &st);
       }
 #endif
       return false;
@@ -2317,10 +2322,12 @@ bool PhaseIdealLoop::is_counted_loop(Node* x, IdealLoopTree*&loop, BasicType iv_
     if (!loop_limit_check_predicate_block->has_parse_predicate()) {
       // The Loop Limit Check Parse Predicate is not generated if this method trapped here before.
 #ifdef ASSERT
-      if (TraceLoopLimitCheck) {
-        tty->print("Missing Loop Limit Check Parse Predicate:");
-        loop->dump_head();
-        x->dump(1);
+      if (ul_enabled_c(Trace, jit, looplimitcheck)) {
+        LogMessage(jit, looplimitcheck) msg;
+        NonInterleavingLogStream st(LogLevelType::Trace, msg);
+        st.print("Missing Loop Limit Check Parse Predicate:");
+        loop->dump_head(&st);
+        x->dump(1, &st);
       }
 #endif
       return false;
@@ -2563,9 +2570,11 @@ bool PhaseIdealLoop::is_counted_loop(Node* x, IdealLoopTree*&loop, BasicType iv_
   assert(l == loop->_head && l->phi() == phi && l->loopexit_or_null() == lex, "" );
 #endif
 #ifndef PRODUCT
-  if (TraceLoopOpts) {
-    tty->print("Counted      ");
-    loop->dump_head();
+  if (ul_enabled_c(Trace, jit, loopopts)) {
+    LogMessage(jit, loopopts) msg;
+    NonInterleavingLogStream st(LogLevelType::Trace, msg);
+    st.print("Counted      ");
+    loop->dump_head(&st);
   }
 #endif
 
@@ -4418,10 +4427,12 @@ void PhaseIdealLoop::replace_parallel_iv(IdealLoopTree *loop) {
     }
 
 #ifndef PRODUCT
-    if (TraceLoopOpts) {
-      tty->print("Parallel IV: %d ", phi2->_idx);
-      loop->dump_head();
-    }
+      if (ul_enabled_c(Trace, jit, loopopts)) {
+        LogMessage(jit, loopopts) msg;
+        NonInterleavingLogStream st(LogLevelType::Trace, msg);
+        st.print("Parallel IV: %d ", phi2->_idx);
+        loop->dump_head(&st);
+      }
 #endif
 
     // Convert to using the trip counter.  The parallel induction
@@ -4633,25 +4644,25 @@ uint IdealLoopTree::est_loop_flow_merge_sz() const {
 #ifndef PRODUCT
 //------------------------------dump_head--------------------------------------
 // Dump 1 liner for loop header info
-void IdealLoopTree::dump_head() {
-  tty->sp(2 * _nest);
-  tty->print("Loop: N%d/N%d ", _head->_idx, _tail->_idx);
-  if (_irreducible) tty->print(" IRREDUCIBLE");
+void IdealLoopTree::dump_head(outputStream* out) {
+  out->sp(2 * _nest);
+  out->print("Loop: N%d/N%d ", _head->_idx, _tail->_idx);
+  if (_irreducible) out->print(" IRREDUCIBLE");
   Node* entry = _head->is_Loop() ? _head->as_Loop()->skip_strip_mined(-1)->in(LoopNode::EntryControl)
                                  : _head->in(LoopNode::EntryControl);
   const Predicates predicates(entry);
   if (predicates.loop_limit_check_predicate_block()->is_non_empty()) {
-    tty->print(" limit_check");
+    out->print(" limit_check");
   }
   if (predicates.short_running_long_loop_predicate_block()->is_non_empty()) {
-    tty->print(" short_running");
+    out->print(" short_running");
   }
   if (UseLoopPredicate) {
     if (UseProfiledLoopPredicate && predicates.profiled_loop_predicate_block()->is_non_empty()) {
-      tty->print(" profile_predicated");
+      out->print(" profile_predicated");
     }
     if (predicates.loop_predicate_block()->is_non_empty()) {
-      tty->print(" predicated");
+      out->print(" predicated");
     }
   }
   if (UseAutoVectorizationPredicate && predicates.auto_vectorization_check_block()->is_non_empty()) {
@@ -4659,57 +4670,63 @@ void IdealLoopTree::dump_head() {
   }
   if (_head->is_CountedLoop()) {
     CountedLoopNode *cl = _head->as_CountedLoop();
-    tty->print(" counted");
+    out->print(" counted");
 
     Node* init_n = cl->init_trip();
     if (init_n  != nullptr &&  init_n->is_Con())
-      tty->print(" [%d,", cl->init_trip()->get_int());
+      out->print(" [%d,", cl->init_trip()->get_int());
     else
-      tty->print(" [int,");
+      out->print(" [int,");
     Node* limit_n = cl->limit();
     if (limit_n  != nullptr &&  limit_n->is_Con())
-      tty->print("%d),", cl->limit()->get_int());
+      out->print("%d),", cl->limit()->get_int());
     else
-      tty->print("int),");
+      out->print("int),");
     int stride_con  = cl->stride_con();
-    if (stride_con > 0) tty->print("+");
-    tty->print("%d", stride_con);
+    if (stride_con > 0) out->print("+");
+    out->print("%d", stride_con);
 
-    tty->print(" (%0.f iters) ", cl->profile_trip_cnt());
+    out->print(" (%0.f iters) ", cl->profile_trip_cnt());
 
-    if (cl->is_pre_loop ()) tty->print(" pre" );
-    if (cl->is_main_loop()) tty->print(" main");
-    if (cl->is_post_loop()) tty->print(" post");
-    if (cl->is_vectorized_loop()) tty->print(" vector");
-    if (range_checks_present()) tty->print(" rc ");
-    if (cl->is_multiversion_fast_loop())         { tty->print(" multiversion_fast"); }
-    if (cl->is_multiversion_slow_loop())         { tty->print(" multiversion_slow"); }
-    if (cl->is_multiversion_delayed_slow_loop()) { tty->print(" multiversion_delayed_slow"); }
+    if (cl->is_pre_loop ())                       out->print(" pre" );
+    if (cl->is_main_loop())                       out->print(" main");
+    if (cl->is_post_loop())                       out->print(" post");
+    if (cl->is_vectorized_loop())                 out->print(" vector");
+    if (range_checks_present())                   out->print(" rc ");
+    if (cl->is_multiversion_fast_loop())          out->print(" multiversion_fast");
+    if (cl->is_multiversion_slow_loop())          out->print(" multiversion_slow");
+    if (cl->is_multiversion_delayed_slow_loop())  out->print(" multiversion_delayed_slow");
   }
-  if (_has_call) tty->print(" has_call");
-  if (_has_sfpt) tty->print(" has_sfpt");
-  if (_rce_candidate) tty->print(" rce");
+  if (_has_call)      out->print(" has_call");
+  if (_has_sfpt)      out->print(" has_sfpt");
+  if (_rce_candidate) out->print(" rce");
   if (_safepts != nullptr && _safepts->size() > 0) {
-    tty->print(" sfpts={"); _safepts->dump_simple(); tty->print(" }");
+    out->print(" sfpts={");
+    _safepts->dump_simple(out);
+    out->print(" }");
   }
   if (_required_safept != nullptr && _required_safept->size() > 0) {
-    tty->print(" req={"); _required_safept->dump_simple(); tty->print(" }");
+    out->print(" req={");
+    _required_safept->dump_simple(out);
+    out->print(" }");
   }
   if (Verbose) {
-    tty->print(" body={"); _body.dump_simple(); tty->print(" }");
+    out->print(" body={");
+    _body.dump_simple(out);
+    out->print(" }");
   }
   if (_head->is_Loop() && _head->as_Loop()->is_strip_mined()) {
-    tty->print(" strip_mined");
+    out->print(" strip_mined");
   }
-  tty->cr();
+  out->cr();
 }
 
 //------------------------------dump-------------------------------------------
 // Dump loops by loop tree
-void IdealLoopTree::dump() {
-  dump_head();
-  if (_child) _child->dump();
-  if (_next)  _next ->dump();
+void IdealLoopTree::dump(outputStream* out) {
+  dump_head(out);
+  if (_child) _child->dump(out);
+  if (_next)  _next ->dump(out);
 }
 
 #endif
@@ -5160,8 +5177,10 @@ void PhaseIdealLoop::build_and_optimize() {
     return;
   }
   DEBUG_ONLY( if (VerifyLoopOptimizations) { verify(); } );
-  if (TraceLoopOpts && C->has_loops()) {
-    _ltree_root->dump();
+  if (ul_enabled_c(Trace, jit, loopopts) && C->has_loops()) {
+    LogMessage(jit, loopopts) msg;
+    NonInterleavingLogStream st(LogLevelType::Trace, msg);
+    _ltree_root->dump(&st);
   }
 #endif
 
@@ -5319,9 +5338,7 @@ void PhaseIdealLoop::build_and_optimize() {
   if (!C->major_progress() && (C->parse_predicate_count() > 0)) {
     C->mark_parse_predicate_nodes_useless(_igvn);
     assert(C->parse_predicate_count() == 0, "should be zero now");
-    if (TraceLoopOpts) {
-      tty->print_cr("PredicatesOff");
-    }
+    log_trace_c2(jit, loopopts)("PredicatesOff");
     C->set_major_progress();
   }
 }
@@ -5984,9 +6001,11 @@ int PhaseIdealLoop::build_loop_tree_impl(Node* n, int pre_order) {
         // Check for bad CFG here to prevent crash, and bailout of compile
         if (l == nullptr) {
 #ifndef PRODUCT
-          if (TraceLoopOpts) {
-            tty->print_cr("bailout: unhandled CFG: infinite irreducible loop");
-            m->dump();
+          if (ul_enabled_c(Trace, jit, loopopts)) {
+            LogMessage(jit, loopopts) msg;
+            NonInterleavingLogStream st(LogLevelType::Trace, msg);
+            st.print_cr("bailout: unhandled CFG: infinite irreducible loop");
+            m->dump(&st);
           }
 #endif
           // This is a rare case that we do not want to handle in C2.
@@ -7105,8 +7124,8 @@ void PhaseIdealLoop::dump() const {
   dump(_ltree_root, rpo_list.size(), rpo_list);
 }
 
-void PhaseIdealLoop::dump(IdealLoopTree* loop, uint idx, Node_List &rpo_list) const {
-  loop->dump_head();
+void PhaseIdealLoop::dump(IdealLoopTree* loop, uint idx, Node_List &rpo_list, outputStream* out) const {
+  loop->dump_head(out);
 
   // Now scan for CFG nodes in the same loop
   for (uint j = idx; j > 0; j--) {
@@ -7117,15 +7136,15 @@ void PhaseIdealLoop::dump(IdealLoopTree* loop, uint idx, Node_List &rpo_list) co
     if (get_loop(n) != loop) { // Wrong loop nest
       if (get_loop(n)->_head == n &&    // Found nested loop?
           get_loop(n)->_parent == loop)
-        dump(get_loop(n), rpo_list.size(), rpo_list);     // Print it nested-ly
+        dump(get_loop(n), rpo_list.size(), rpo_list, out);     // Print it nested-ly
       continue;
     }
 
     // Dump controlling node
-    tty->sp(2 * loop->_nest);
-    tty->print("C");
+    out->sp(2 * loop->_nest);
+    out->print("C");
     if (n == C->root()) {
-      n->dump();
+      n->dump(out);
     } else {
       Node* cached_idom   = idom_no_update(n);
       Node* computed_idom = n->in(0);
@@ -7136,10 +7155,10 @@ void PhaseIdealLoop::dump(IdealLoopTree* loop, uint idx, Node_List &rpo_list) co
         // the cached idom returned from idom_no_update.
         cached_idom = find_non_split_ctrl(cached_idom);
       }
-      tty->print(" ID:%d", computed_idom->_idx);
-      n->dump();
+      out->print(" ID:%d", computed_idom->_idx);
+      n->dump(out);
       if (cached_idom != computed_idom) {
-        tty->print_cr("*** BROKEN IDOM!  Computed as: %d, cached as: %d",
+        out->print_cr("*** BROKEN IDOM!  Computed as: %d, cached as: %d",
                       computed_idom->_idx, cached_idom->_idx);
       }
     }
@@ -7150,11 +7169,11 @@ void PhaseIdealLoop::dump(IdealLoopTree* loop, uint idx, Node_List &rpo_list) co
         Node* m = C->root()->find(k);
         if (m && m->outcnt() > 0) {
           if (!(has_ctrl(m) && get_ctrl_no_update(m) == n)) {
-            tty->print_cr("*** BROKEN CTRL ACCESSOR!  _loop_or_ctrl[k] is %p, ctrl is %p",
+            out->print_cr("*** BROKEN CTRL ACCESSOR!  _loop_or_ctrl[k] is %p, ctrl is %p",
                           _loop_or_ctrl[k], has_ctrl(m) ? get_ctrl_no_update(m) : nullptr);
           }
-          tty->sp(2 * loop->_nest + 1);
-          m->dump();
+          out->sp(2 * loop->_nest + 1);
+          m->dump(out);
         }
       }
     }

@@ -24,6 +24,7 @@
 
 #include "compiler/compileLog.hpp"
 #include "interpreter/linkResolver.hpp"
+#include "logging/logStream.hpp"
 #include "memory/resourceArea.hpp"
 #include "oops/method.hpp"
 #include "opto/addnode.hpp"
@@ -420,7 +421,7 @@ Parse::Parse(JVMState* caller, ciMethod* parse_method, float expected_uses)
   DEBUG_ONLY(_block_count = -1);
   DEBUG_ONLY(_blocks = (Block*)-1);
 #ifndef PRODUCT
-  if (PrintCompilation || PrintOpto) {
+  if (PrintCompilation || ul_enabled_c(Debug, jit, opto)) {
     // Make sure I have an inline tree, so I can print messages about it.
     InlineTree::find_subtree_from_root(C->ilt(), caller, parse_method);
   }
@@ -521,18 +522,19 @@ Parse::Parse(JVMState* caller, ciMethod* parse_method, float expected_uses)
     assert(false, "type flow analysis failed during parsing");
     C->record_method_not_compilable(_flow->failure_reason());
 #ifndef PRODUCT
-      if (PrintOpto && (Verbose || WizardMode)) {
-        if (is_osr_parse()) {
-          tty->print_cr("OSR @%d type flow bailout: %s", _entry_bci, _flow->failure_reason());
-        } else {
-          tty->print_cr("type flow bailout: %s", _flow->failure_reason());
-        }
-        if (Verbose) {
-          method()->print();
-          method()->print_codes();
-          _flow->print();
-        }
+    if (ul_enabled_c(Trace, jit, opto)) {
+      if (is_osr_parse()) {
+        log_debug(jit, opto)("OSR @%d type flow bailout: %s", _entry_bci,
+                             _flow->failure_reason());
+      } else {
+        log_debug(jit, opto)("type flow bailout: %s", _flow->failure_reason());
       }
+      LogMessage(jit, opto) msg;
+      NonInterleavingLogStream st(LogLevelType::Trace, msg);
+      method()->print(&st);
+      method()->print_codes_on(&st);
+      _flow->print_on(&st);
+    }
 #endif
   }
 
@@ -712,8 +714,8 @@ void Parse::do_all_blocks() {
         // been parsed or must be dead.
         Node* c = control();
         Node* result = _gvn.transform(control());
-        if (c != result && TraceOptoParse) {
-          tty->print_cr("Block #%d replace %d with %d", block->rpo(), c->_idx, result->_idx);
+        if (c != result) {
+          log_debug_c2(jit, optoparse)("Block #%d replace %d with %d", block->rpo(), c->_idx, result->_idx);
         }
         if (result != top()) {
           record_for_igvn(result);
@@ -741,9 +743,7 @@ void Parse::do_all_blocks() {
   for (int rpo = 0; rpo < block_count(); rpo++) {
     Block* block = rpo_at(rpo);
     if (!block->is_parsed()) {
-      if (TraceOptoParse) {
-        tty->print_cr("Skipped dead block %d at bci:%d", rpo, block->start());
-      }
+      log_debug_c2(jit, optoparse)("Skipped dead block %d at bci:%d", rpo, block->start());
       assert(!block->is_merged(), "no half-processed blocks");
     }
   }
@@ -1027,9 +1027,11 @@ void Parse::do_exits() {
       AllocateNode* alloc = AllocateNode::Ideal_allocation(recorded_alloc);
       alloc->compute_MemBar_redundancy(method());
     }
-    if (PrintOpto && (Verbose || WizardMode)) {
-      method()->print_name();
-      tty->print_cr(" writes finals/@Stable and needs a memory barrier");
+    if (ul_enabled_c(Trace, jit, opto)) {
+      stringStream ss;
+      method()->print_name(&ss);
+      ss.print_cr(" writes finals and needs a memory barrier");
+      log_trace(jit, opto)("%s", ss.freeze());
     }
   }
 
@@ -1507,23 +1509,26 @@ void Parse::Block::record_state(Parse* p) {
 
 //------------------------------do_one_block-----------------------------------
 void Parse::do_one_block() {
-  if (TraceOptoParse) {
+  if (ul_enabled_c(Debug, jit, optoparse)) {
+    LogMessage(jit, optoparse) msg;
+    NonInterleavingLogStream st(LogLevelType::Debug, msg);
+
     Block *b = block();
     int ns = b->num_successors();
     int nt = b->all_successors();
 
-    tty->print("Parsing block #%d at bci [%d,%d), successors:",
-                  block()->rpo(), block()->start(), block()->limit());
+    st.print("Parsing block #%d at bci [%d,%d), successors:",
+             block()->rpo(), block()->start(), block()->limit());
     for (int i = 0; i < nt; i++) {
-      tty->print((( i < ns) ? " %d" : " %d(exception block)"), b->successor_at(i)->rpo());
+      st.print((( i < ns) ? " %d" : " %d(exception block)"), b->successor_at(i)->rpo());
     }
     if (b->is_loop_head()) {
-      tty->print("  loop head");
+      st.print("  loop head");
     }
     if (b->is_irreducible_loop_entry()) {
-      tty->print("  irreducible");
+      st.print("  irreducible");
     }
-    tty->cr();
+    st.cr();
   }
 
   assert(block()->is_merged(), "must be merged before being parsed");
@@ -1681,8 +1686,10 @@ void Parse::handle_missing_successor(int target_bci) {
 
 //--------------------------merge_common---------------------------------------
 void Parse::merge_common(Parse::Block* target, int pnum) {
-  if (TraceOptoParse) {
-    tty->print("Merging state at block #%d bci:%d", target->rpo(), target->start());
+  LogMessage(jit, optoparse) msg;
+  NonInterleavingLogStream st(LogLevelType::Debug, msg);
+  if (ul_enabled_c(Debug, jit, optoparse)) {
+    st.print("Merging state at block #%d bci:%d", target->rpo(), target->start());
   }
 
   // Zap extra stack slots to top
@@ -1690,12 +1697,12 @@ void Parse::merge_common(Parse::Block* target, int pnum) {
   clean_stack(sp());
 
   if (!target->is_merged()) {   // No prior mapping at this bci
-    if (TraceOptoParse) { tty->print(" with empty state");  }
+    if (ul_enabled_c(Debug, jit, optoparse)) st.print(" with empty state");
 
     // If this path is dead, do not bother capturing it as a merge.
     // It is "as if" we had 1 fewer predecessors from the beginning.
     if (stopped()) {
-      if (TraceOptoParse)  tty->print_cr(", but path is dead and doesn't count");
+      if (ul_enabled_c(Debug, jit, optoparse)) st.print(", but path is dead and doesn't count");
       return;
     }
 
@@ -1737,7 +1744,7 @@ void Parse::merge_common(Parse::Block* target, int pnum) {
     assert(target->is_merged(), "do not come here twice");
 
   } else {                      // Prior mapping at this bci
-    if (TraceOptoParse) {  tty->print(" with previous state"); }
+    if (ul_enabled_c(Debug, jit, optoparse)) st.print(" with previous state");
 #ifdef ASSERT
     if (target->is_SEL_head()) {
       target->mark_merged_backedge(block());
@@ -1768,8 +1775,8 @@ void Parse::merge_common(Parse::Block* target, int pnum) {
     if (pnum == 1) {            // Last merge for this Region?
       if (!block()->flow()->is_irreducible_loop_secondary_entry()) {
         Node* result = _gvn.transform(r);
-        if (r != result && TraceOptoParse) {
-          tty->print_cr("Block #%d replace %d with %d", block()->rpo(), r->_idx, result->_idx);
+        if (r != result && ul_enabled_c(Debug, jit, optoparse)) {
+          st.print("Block #%d replace %d with %d", block()->rpo(), r->_idx, result->_idx);
         }
       }
       record_for_igvn(r);
@@ -1866,9 +1873,7 @@ void Parse::merge_common(Parse::Block* target, int pnum) {
     stop();                     // done with this guy, for now
   }
 
-  if (TraceOptoParse) {
-    tty->print_cr(" on path %d", pnum);
-  }
+  if (ul_enabled_c(Debug, jit, optoparse)) st.print(" on path %d", pnum);
 
   // Done with this parser state.
   assert(stopped(), "");
@@ -2330,33 +2335,46 @@ void Parse::show_parse_info() {
       tty->cr();
     }
   }
-  if (PrintOpto && (depth() == 1 || PrintOptoInlining)) {
-    // Print that we succeeded; suppress this message on the first osr parse.
-
-    if (method()->is_synchronized())         tty->print("s");
-    if (method()->has_exception_handlers())  tty->print("!");
-    // Check this is not the final compiled version
-    if (C->trap_can_recompile() && depth() == 1) {
-      tty->print("-");
-    } else {
-      tty->print(" ");
-    }
-    if( depth() != 1 ) { tty->print("   "); }  // missing compile count
-    for (int i = 1; i < depth(); ++i) { tty->print("  "); }
-    method()->print_short_name();
-    if (is_osr_parse()) {
-      tty->print(" @ %d", osr_bci());
-    }
-    if (ilt->caller_bci() != -1) {
-      tty->print(" @ %d", ilt->caller_bci());
-    }
-    tty->print(" (%d bytes)",method()->code_size());
-    if (ilt->count_inlines()) {
-      tty->print(" __inlined %d (%d bytes)", ilt->count_inlines(),
-                 ilt->count_inline_bcs());
-    }
-    tty->cr();
+  const bool both_tags = ul_enabled_c(Debug, jit, opto, inlining);
+  if (!ul_enabled_c(Debug, jit, opto) && !both_tags) return;
+  if (depth() != 1 && !both_tags)                     return;
+  stringStream ss;
+  if (C->is_osr_compilation()) {
+    ss.print("[OSR]%3d", C->compile_id());
+  } else {
+    ss.print("%3d", C->compile_id());
   }
+  if (method()->is_synchronized())         ss.print("s");
+  if (method()->has_exception_handlers())  ss.print("!");
+  // Check this is not the final compiled version
+  if (C->trap_can_recompile() && depth() == 1) {
+    ss.print("-");
+  } else {
+    ss.print(" ");
+  }
+  if (depth() != 1) {
+    ss.print("   ");
+  } // missing compile count
+  for (int i = 1; i < depth(); ++i) {
+    ss.print("  ");
+  }
+  method()->print_short_name(&ss);
+  if (is_osr_parse()) {
+    ss.print(" @ %d", osr_bci());
+  }
+  if (ilt->caller_bci() != -1) {
+    ss.print(" @ %d", ilt->caller_bci());
+  }
+  ss.print(" (%d bytes)", method()->code_size());
+  if (ilt->count_inlines()) {
+    ss.print(" __inlined %d (%d bytes)", ilt->count_inlines(),
+              ilt->count_inline_bcs());
+  }
+
+  if (both_tags)
+    log_debug(jit, opto, inlining)("%s", ss.freeze());
+  else
+    log_debug(jit, opto)("%s", ss.freeze());
 }
 
 
@@ -2374,10 +2392,10 @@ void Parse::dump() {
 }
 
 // Dump information associated with a byte code index, 'bci'
-void Parse::dump_bci(int bci) {
+void Parse::dump_bci(int bci, outputStream* out) {
   // Output info on merge-points, cloning, and within _jsr..._ret
   // NYI
-  tty->print(" bci:%d", bci);
+  out->print(" bci:%d", bci);
 }
 
 #endif

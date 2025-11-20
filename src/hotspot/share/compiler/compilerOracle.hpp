@@ -49,6 +49,7 @@ class methodHandle;
   option(Help,  "help",  Unknown) \
   option(Quiet, "quiet", Unknown) \
   option(Log, "log", Bool) \
+  option(UL, "ul", Bool) \
   option(Print, "print", Bool) \
   option(Inline,  "inline", Bool) \
   option(DontInline,  "dontinline", Bool) \
@@ -164,6 +165,8 @@ class CompilerOracle : AllStatic {
 
   // Tells whether there are any methods to print for print_method_statistics()
   static bool should_print_methods();
+
+  static bool should_ul();
 
   // Tells whether there are any methods to (collect|collect+print) memory statistics for
   static bool should_collect_memstat();

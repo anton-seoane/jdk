@@ -25,6 +25,7 @@
 #include "compiler/compileLog.hpp"
 #include "gc/shared/barrierSet.hpp"
 #include "gc/shared/c2/barrierSetC2.hpp"
+#include "logging/logStream.hpp"
 #include "memory/allocation.inline.hpp"
 #include "opto/addnode.hpp"
 #include "opto/callnode.hpp"
@@ -783,9 +784,11 @@ void PhaseIdealLoop::do_peeling(IdealLoopTree *loop, Node_List &old_new) {
   // no longer a 'main' loop; it will need new pre and post loops before
   // we can do further RCE.
 #ifndef PRODUCT
-  if (TraceLoopOpts) {
-    tty->print("Peel         ");
-    loop->dump_head();
+  if (ul_enabled_c(Trace, jit, loopopts)) {
+    LogMessage(jit, loopopts) msg;
+    NonInterleavingLogStream st(LogLevelType::Trace, msg);
+    st.print("Peel         ");
+    loop->dump_head(&st);
   }
 #endif
   LoopNode* head = loop->_head->as_Loop();
@@ -805,8 +808,11 @@ void PhaseIdealLoop::do_peeling(IdealLoopTree *loop, Node_List &old_new) {
         cl->set_no_multiversion();
       }
 #ifndef PRODUCT
-      if (TraceLoopOpts) {
-        tty->print("Peeling a 'main' loop; resetting to 'normal' ");
+      if (ul_enabled_c(Debug, jit, opto) && VerifyLoopOptimizations) {
+        LogMessage(jit, opto) msg;
+        NonInterleavingLogStream st(LogLevelType::Debug, msg);
+        st.print("Peeling a 'main' loop; resetting to 'normal' ");
+        loop->dump_head(&st);
       }
 #endif
     }
@@ -1147,9 +1153,9 @@ bool IdealLoopTree::policy_unroll(PhaseIdealLoop *phase) {
   }
 
   if (cl->is_unroll_only()) {
-    if (TraceSuperWordLoopUnrollAnalysis) {
-      tty->print_cr("policy_unroll passed vector loop(vlen=%d, factor=%d)\n",
-                    slp_max_unroll_factor, future_unroll_cnt);
+    if (ul_enabled(phase->C, Trace, jit, superwordloopunrollanalysis)) {
+      log_trace(jit, superwordloopunrollanalysis)("policy_unroll passed vector loop(vlen=%d, factor=%d)\n",
+                                                  slp_max_unroll_factor, future_unroll_cnt);
     }
   }
 
@@ -1178,8 +1184,9 @@ void IdealLoopTree::policy_unroll_slp_analysis(CountedLoopNode *cl, PhaseIdealLo
       if (slp_max_unroll_factor >= future_unroll_cnt) {
         int new_limit = cl->node_count_before_unroll() * slp_max_unroll_factor;
         if (new_limit > LoopUnrollLimit) {
-          if (TraceSuperWordLoopUnrollAnalysis) {
-            tty->print_cr("slp analysis unroll=%d, default limit=%d\n", new_limit, _local_loop_unroll_limit);
+          if (ul_enabled(phase->C, Trace, jit, superwordloopunrollanalysis)) {
+            log_trace(jit, superwordloopunrollanalysis)("slp analysis unroll=%d, default limit=%d\n",
+                                                        new_limit, _local_loop_unroll_limit);
           }
           _local_loop_unroll_limit = new_limit;
         }
@@ -1393,12 +1400,14 @@ void PhaseIdealLoop::ensure_zero_trip_guard_proj(Node* node, bool is_main_loop) 
 void PhaseIdealLoop::insert_pre_post_loops(IdealLoopTree *loop, Node_List &old_new, bool peel_only) {
 
 #ifndef PRODUCT
-  if (TraceLoopOpts) {
+  if (ul_enabled_c(Trace, jit, loopopts)) {
+    LogMessage(jit, loopopts) msg;
+    NonInterleavingLogStream st(LogLevelType::Trace, msg);
     if (peel_only)
-      tty->print("PeelMainPost ");
+      st.print("PeelMainPost ");
     else
-      tty->print("PreMainPost  ");
-    loop->dump_head();
+      st.print("PreMainPost  ");
+    loop->dump_head(&st);
   }
 #endif
   C->set_major_progress();
@@ -1632,9 +1641,11 @@ void PhaseIdealLoop::insert_vector_post_loop(IdealLoopTree *loop, Node_List &old
   }
 
 #ifndef PRODUCT
-  if (TraceLoopOpts) {
-    tty->print("PostVector  ");
-    loop->dump_head();
+  if (ul_enabled_c(Trace, jit, loopopts)) {
+    LogMessage(jit, loopopts) msg;
+    NonInterleavingLogStream st(LogLevelType::Trace, msg);
+    st.print("PostVector  ");
+    loop->dump_head(&st);
   }
 #endif
   C->set_major_progress();
@@ -1931,22 +1942,37 @@ void PhaseIdealLoop::do_unroll(IdealLoopTree *loop, Node_List &old_new, bool adj
   C->print_method(PHASE_BEFORE_LOOP_UNROLLING, 4, loop_head);
 
 #ifndef PRODUCT
-  if (TraceLoopOpts) {
+  if (ul_enabled_c(Trace, jit, loopopts)) {
+    LogMessage(jit, loopopts) msg;
+    NonInterleavingLogStream st(LogLevelType::Trace, msg);
     if (loop_head->trip_count() < (uint)LoopUnrollLimit) {
-      tty->print("Unroll %d(" JULONG_FORMAT_W(2) ") ", loop_head->unrolled_count()*2, loop_head->trip_count());
+      st.print("Unroll %d(" JULONG_FORMAT_W(2) ") ", loop_head->unrolled_count()*2, loop_head->trip_count());
     } else {
-      tty->print("Unroll %d     ", loop_head->unrolled_count()*2);
+      st.print("Unroll %d     ", loop_head->unrolled_count() * 2);
     }
-    loop->dump_head();
+    loop->dump_head(&st);
   }
 
-  if (C->do_vector_loop() && (PrintOpto && (VerifyLoopOptimizations || TraceLoopOpts))) {
-    Node_Stack stack(C->live_nodes() >> 2);
-    Node_List rpo_list;
-    VectorSet visited;
-    visited.set(loop_head->_idx);
-    rpo(loop_head, stack, visited, rpo_list);
-    dump(loop, rpo_list.size(), rpo_list);
+  if (C->do_vector_loop()) {
+    if (ul_enabled_c(Trace, jit, loopopts, opto)) {
+      LogMessage(jit, loopopts, opto) msg;
+      NonInterleavingLogStream st(LogLevelType::Trace, msg);
+      Node_Stack stack(C->live_nodes() >> 2);
+      Node_List rpo_list;
+      VectorSet visited;
+      visited.set(loop_head->_idx);
+      rpo(loop_head, stack, visited, rpo_list);
+      dump(loop, rpo_list.size(), rpo_list, &st);
+    } else if (ul_enabled_c(Trace, jit, opto) && VerifyLoopOptimizations) {
+      LogMessage(jit, opto) msg;
+      NonInterleavingLogStream st(LogLevelType::Debug, msg);
+      Node_Stack stack(C->live_nodes() >> 2);
+      Node_List rpo_list;
+      VectorSet visited;
+      visited.set(loop_head->_idx);
+      rpo(loop_head, stack, visited, rpo_list);
+      dump(loop, rpo_list.size(), rpo_list, &st);
+    }
   }
 #endif
 
@@ -2164,24 +2190,51 @@ void PhaseIdealLoop::do_unroll(IdealLoopTree *loop, Node_List &old_new, bool adj
   update_main_loop_assertion_predicates(clone_head, stride_con);
 
 #ifndef PRODUCT
-  if (C->do_vector_loop() && (PrintOpto && (VerifyLoopOptimizations || TraceLoopOpts))) {
-    tty->print("\nnew loop after unroll\n");       loop->dump_head();
-    for (uint i = 0; i < loop->_body.size(); i++) {
-      loop->_body.at(i)->dump();
-    }
-    if (C->clone_map().is_debug()) {
-      tty->print("\nCloneMap\n");
-      Dict* dict = C->clone_map().dict();
-      DictI i(dict);
-      tty->print_cr("Dict@%p[%d] = ", dict, dict->Size());
-      for (int ii = 0; i.test(); ++i, ++ii) {
-        NodeCloneInfo cl((uint64_t)dict->operator[]((void*)i._key));
-        tty->print("%d->%d:%d,", (int)(intptr_t)i._key, cl.idx(), cl.gen());
-        if (ii % 10 == 9) {
-          tty->print_cr(" ");
-        }
+  if (C->do_vector_loop()) {
+    if (ul_enabled_c(Trace, jit, loopopts, opto)) {
+      LogMessage(jit, loopopts, opto) msg;
+      NonInterleavingLogStream st(LogLevelType::Trace, msg);
+      st.print("\nnew loop after unroll\n");
+      loop->dump_head(&st);
+      for (uint i = 0; i < loop->_body.size(); i++) {
+        loop->_body.at(i)->dump(&st);
       }
-      tty->print_cr(" ");
+      if (C->clone_map().is_debug()) {
+        st.print("\nCloneMap\n");
+        Dict* dict = C->clone_map().dict();
+        DictI i(dict);
+        st.print_cr("Dict@%p[%d] = ", dict, dict->Size());
+        for (int ii = 0; i.test(); ++i, ++ii) {
+          NodeCloneInfo cl((uint64_t)dict->operator[]((void*)i._key));
+          st.print("%d->%d:%d,", (int)(intptr_t)i._key, cl.idx(), cl.gen());
+          if (ii % 10 == 9) {
+            st.print_cr(" ");
+          }
+        }
+        st.print_cr(" ");
+      }
+    } else if (ul_enabled_c(Trace, jit, opto) && VerifyLoopOptimizations) {
+      LogMessage(jit, opto) msg;
+      NonInterleavingLogStream st(LogLevelType::Debug, msg);
+      st.print("\nnew loop after unroll\n");
+      loop->dump_head(&st);
+      for (uint i = 0; i < loop->_body.size(); i++) {
+        loop->_body.at(i)->dump(&st);
+      }
+      if (C->clone_map().is_debug()) {
+        st.print("\nCloneMap\n");
+        Dict* dict = C->clone_map().dict();
+        DictI i(dict);
+        st.print_cr("Dict@%p[%d] = ", dict, dict->Size());
+        for (int ii = 0; i.test(); ++i, ++ii) {
+          NodeCloneInfo cl((uint64_t)dict->operator[]((void*)i._key));
+          st.print("%d->%d:%d,", (int)(intptr_t)i._key, cl.idx(), cl.gen());
+          if (ii % 10 == 9) {
+            st.print_cr(" ");
+          }
+        }
+        st.print_cr(" ");
+      }
     }
   }
 #endif
@@ -2196,9 +2249,11 @@ void PhaseIdealLoop::do_maximally_unroll(IdealLoopTree *loop, Node_List &old_new
   assert(cl->has_exact_trip_count(), "trip count is not exact");
   assert(cl->trip_count() > 0, "");
 #ifndef PRODUCT
-  if (TraceLoopOpts) {
-    tty->print("MaxUnroll  " JULONG_FORMAT " ", cl->trip_count());
-    loop->dump_head();
+  if (ul_enabled_c(Trace, jit, loopopts)) {
+    LogMessage(jit, loopopts) msg;
+    NonInterleavingLogStream st(LogLevelType::Trace, msg);
+    st.print("MaxUnroll  " JULONG_FORMAT " ", cl->trip_count());
+    loop->dump_head(&st);
   }
 #endif
 
@@ -2622,9 +2677,11 @@ bool PhaseIdealLoop::is_scaled_iv_plus_extra_offset(Node* exp1, Node* offset3, N
 // Eliminate range-checks and other trip-counter vs loop-invariant tests.
 void PhaseIdealLoop::do_range_check(IdealLoopTree* loop) {
 #ifndef PRODUCT
-  if (TraceLoopOpts) {
-    tty->print("RangeCheck   ");
-    loop->dump_head();
+  if (ul_enabled_c(Trace, jit, loopopts)) {
+    LogMessage(jit, loopopts) msg;
+    NonInterleavingLogStream st(LogLevelType::Trace, msg);
+    st.print("RangeCheck   ");
+    loop->dump_head(&st);
   }
 #endif
 
@@ -2789,9 +2846,11 @@ void PhaseIdealLoop::do_range_check(IdealLoopTree* loop) {
       Node* next_limit_ctrl = dominated_node(new_limit_ctrl, offset_ctrl, limit_ctrl);
 
 #ifdef ASSERT
-      if (TraceRangeLimitCheck) {
-        tty->print_cr("RC bool node%s", flip ? " flipped:" : ":");
-        bol->dump(2);
+      if (ul_enabled_c(Trace, jit, rangelimitcheck)) {
+        LogMessage(jit, rangelimitcheck) msg;
+        NonInterleavingLogStream st(LogLevelType::Trace, msg);
+        st.print_cr("RC bool node%s", flip ? " flipped:" : ":");
+        bol->dump(2, &st);
       }
 #endif
       // At this point we have the expression as:
@@ -2854,9 +2913,7 @@ void PhaseIdealLoop::do_range_check(IdealLoopTree* loop) {
                                                                       AssertionPredicateType::InitValue);
 
         } else {
-          if (PrintOpto) {
-            tty->print_cr("missed RCE opportunity");
-          }
+          log_debug_c2(jit, opto)("missed RCE opportunity");
           continue;             // In release mode, ignore it
         }
       } else {                  // Otherwise work on normal compares
@@ -2885,9 +2942,7 @@ void PhaseIdealLoop::do_range_check(IdealLoopTree* loop) {
           add_constraint(stride_con, lscale_con, offset, mini, limit, next_limit_ctrl, &pre_limit, &main_limit);
           break;
         default:
-          if (PrintOpto) {
-            tty->print_cr("missed RCE opportunity");
-          }
+          log_debug_c2(jit, opto)("missed RCE opportunity");
           continue;             // Unhandled case
         }
       }
@@ -3236,12 +3291,17 @@ bool IdealLoopTree::do_remove_empty_loop(PhaseIdealLoop *phase) {
   }
 
 #ifndef PRODUCT
-  if (PrintOpto) {
-    tty->print("Removing empty loop with%s zero trip guard", needs_guard ? "out" : "");
-    this->dump_head();
-  } else if (TraceLoopOpts) {
-    tty->print("Empty with%s zero trip guard   ", needs_guard ? "out" : "");
-    this->dump_head();
+  if (ul_enabled(phase->C, Debug, jit, opto)) {
+    LogMessage(jit, opto) msg;
+    NonInterleavingLogStream st(LogLevelType::Debug, msg);
+    st.print("Removing empty loop with%s zero trip guard",
+             needs_guard ? "out" : "");
+    this->dump_head(&st);
+  } else if (ul_enabled_c(Trace, jit, loopopts)) {
+    LogMessage(jit, loopopts) msg;
+    NonInterleavingLogStream st(LogLevelType::Trace, msg);
+    st.print("Empty with%s zero trip guard   ", needs_guard ? "out" : "");
+    this->dump_head(&st);
   }
 #endif
 
@@ -3423,9 +3483,11 @@ bool IdealLoopTree::do_one_iteration_loop(PhaseIdealLoop *phase) {
   }
 
 #ifndef PRODUCT
-  if (TraceLoopOpts) {
-    tty->print("OneIteration ");
-    this->dump_head();
+  if (ul_enabled_c(Trace, jit, loopopts)) {
+    LogMessage(jit, loopopts) msg;
+    NonInterleavingLogStream st(LogLevelType::Trace, msg);
+    st.print("OneIteration ");
+    this->dump_head(&st);
   }
 #endif
 
@@ -3477,7 +3539,9 @@ bool IdealLoopTree::iteration_split_impl(PhaseIdealLoop *phase, Node_List &old_n
       }
     }
     if (policy_peeling(phase)) {    // Should we peel?
-      if (PrintOpto) { tty->print_cr("should_peel"); }
+      if (ul_enabled(phase->C, Debug, jit, opto)) {
+        log_debug(jit, opto)("should_peel");
+      }
       phase->do_peeling(this, old_new);
     } else if (policy_unswitching(phase)) {
       phase->do_unswitching(this, old_new);
@@ -3758,9 +3822,13 @@ bool PhaseIdealLoop::match_fill_loop(IdealLoopTree* lpt, Node*& store, Node*& st
 
   if (msg != nullptr) {
 #ifndef PRODUCT
-    if (TraceOptimizeFill) {
-      tty->print_cr("not fill intrinsic candidate: %s", msg);
-      if (msg_node != nullptr) msg_node->dump();
+    if (ul_enabled_c(Trace, jit, optimizefill)) {
+      LogMessage(jit, optimizefill) logm;
+      NonInterleavingLogStream st(LogLevelType::Trace, logm);
+      st.print_cr("not fill intrinsic candidate: %s", msg);
+      if (msg_node != nullptr) {
+        msg_node->dump(&st);
+      }
     }
 #endif
     return false;
@@ -3841,9 +3909,13 @@ bool PhaseIdealLoop::match_fill_loop(IdealLoopTree* lpt, Node*& store, Node*& st
 
   if (msg != nullptr) {
 #ifndef PRODUCT
-    if (TraceOptimizeFill) {
-      tty->print_cr("not fill intrinsic: %s", msg);
-      if (msg_node != nullptr) msg_node->dump();
+    if (ul_enabled_c(Trace, jit, optimizefill)) {
+      LogMessage(jit, optimizefill) logm;
+      NonInterleavingLogStream st(LogLevelType::Trace, logm);
+      st.print_cr("not fill intrinsic: %s", msg);
+      if (msg_node != nullptr) {
+        msg_node->dump(&st);
+      }
     }
 #endif
     return false;
@@ -3902,16 +3974,20 @@ bool PhaseIdealLoop::match_fill_loop(IdealLoopTree* lpt, Node*& store, Node*& st
   }
 
 #ifdef ASSERT
-  if (TraceOptimizeFill) {
+  if (ul_enabled_c(Trace, jit, optimizefill)) {
+    LogMessage(jit, optimizefill) logm;
+    NonInterleavingLogStream st(LogLevelType::Trace, logm);
     if (msg != nullptr) {
-      tty->print_cr("no fill intrinsic: %s", msg);
-      if (msg_node != nullptr) msg_node->dump();
+      st.print_cr("no fill intrinsic: %s", msg);
+      if (msg_node != nullptr) {
+        msg_node->dump(&st);
+      }
     } else {
-      tty->print_cr("fill intrinsic for:");
+      st.print_cr("fill intrinsic for:");
     }
-    store->dump();
+    store->dump(&st);
     if (Verbose) {
-      lpt->_body.dump();
+      lpt->_body.dump(&st);
     }
   }
 #endif
@@ -3951,9 +4027,11 @@ bool PhaseIdealLoop::intrinsify_fill(IdealLoopTree* lpt) {
   }
 
 #ifndef PRODUCT
-  if (TraceLoopOpts) {
-    tty->print("ArrayFill    ");
-    lpt->dump_head();
+  if (ul_enabled_c(Trace, jit, loopopts)) {
+    LogMessage(jit, loopopts) msg;
+    NonInterleavingLogStream st(LogLevelType::Trace, msg);
+    st.print("ArrayFill    ");
+    lpt->dump_head(&st);
   }
 #endif
 
@@ -3994,9 +4072,7 @@ bool PhaseIdealLoop::intrinsify_fill(IdealLoopTree* lpt) {
     len = new SubINode(len, _igvn.intcon(1));
     _igvn.register_new_node_with_optimizer(len);
 #ifndef PRODUCT
-    if (TraceOptimizeFill) {
-      tty->print_cr("ArrayFill store on backedge, subtract 1 from len.");
-    }
+    log_trace_c2(jit, optimizefill)("ArrayFill store on backedge, subtract 1 from len.");
 #endif
   }
 
@@ -4105,9 +4181,11 @@ bool PhaseIdealLoop::intrinsify_fill(IdealLoopTree* lpt) {
   }
 
 #ifndef PRODUCT
-  if (TraceOptimizeFill) {
-    tty->print("ArrayFill call   ");
-    call->dump();
+  if (ul_enabled_c(Trace, jit, optimizefill)) {
+    LogMessage(jit, optimizefill) logm;
+    NonInterleavingLogStream st(LogLevelType::Trace, logm);
+    st.print("ArrayFill call   ");
+    call->dump(&st);
   }
 #endif
 
