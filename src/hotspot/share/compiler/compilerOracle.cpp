@@ -27,6 +27,7 @@
 #include "compiler/compilerOracle.hpp"
 #include "compiler/methodMatcher.hpp"
 #include "jvm.h"
+#include "logging/logConfiguration.hpp"
 #include "memory/allocation.inline.hpp"
 #include "memory/oopFactory.hpp"
 #include "memory/resourceArea.hpp"
@@ -316,6 +317,33 @@ TypedMethodOptionMatcher* TypedMethodOptionMatcher::match(const methodHandle& me
   return nullptr;
 }
 
+static void ul_compatibility_layer(CompileCommandEnum option) {
+  tty->print_cr("%d", option);
+  switch (option) {
+  case CompileCommandEnum::PrintCompilation:
+    // Not migrating it at the moment
+    break;
+  case CompileCommandEnum::PrintInlining:
+    LogConfiguration::configure_stdout(LogLevel::Trace, false, LOG_TAGS(jit, inlining));
+    break;
+  case CompileCommandEnum::PrintIntrinsics:
+    LogConfiguration::configure_stdout(LogLevel::Trace, false, LOG_TAGS(jit, intrinsics));
+    break;
+  case CompileCommandEnum::TraceOptoPipelining:
+    LogConfiguration::configure_stdout(LogLevel::Trace, false, LOG_TAGS(jit, optopipelining));
+    break;
+  case CompileCommandEnum::TraceSpilling:
+    LogConfiguration::configure_stdout(LogLevel::Trace, false, LOG_TAGS(jit, spilling));
+    break;
+  case CompileCommandEnum::TraceEscapeAnalysis:
+    LogConfiguration::configure_stdout(LogLevel::Trace, false, LOG_TAGS(jit, escapeanalysis));
+    break;
+  default:
+    // Either default CompileCommands or non-UL-related ones. Ignore
+    return;
+  }
+}
+
 template<typename T>
 static bool register_command(TypedMethodOptionMatcher* matcher,
                              CompileCommandEnum option,
@@ -345,6 +373,8 @@ static bool register_command(TypedMethodOptionMatcher* matcher,
       return false;
     }
   }
+
+  ul_compatibility_layer(option);
 
   matcher->init(option, option_list);
   matcher->set_value<T>(value);
@@ -1101,10 +1131,12 @@ bool CompilerOracle::parse_from_line(char* line) {
         print_parse_error(error_buf, original.get());
         return false;
       }
-    }
-    if (!scan_value(type, line, bytes_read, matcher, option, error_buf, sizeof(error_buf))) {
-      print_parse_error(error_buf, original.get());
-      return false;
+    } else {
+      // Value provided. It's a bit silly that scan_value will recheck for line == null on a boolean case, but oh well
+      if (!scan_value(type, line, bytes_read, matcher, option, error_buf, sizeof(error_buf))) {
+        print_parse_error(error_buf, original.get());
+        return false;
+      }
     }
     assert(matcher != nullptr, "consistency");
   }

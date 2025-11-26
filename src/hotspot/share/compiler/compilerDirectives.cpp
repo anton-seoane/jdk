@@ -28,6 +28,7 @@
 #include "compiler/compilerDefinitions.inline.hpp"
 #include "compiler/compilerDirectives.hpp"
 #include "compiler/compilerOracle.hpp"
+#include "logging/logConfiguration.hpp"
 #include "memory/allocation.inline.hpp"
 #include "memory/resourceArea.hpp"
 #include "opto/phasetype.hpp"
@@ -672,6 +673,23 @@ void DirectivesStack::init() {
   push(_default_directives);
 }
 
+void ul_compatibility_layer(CompilerDirectives* directive) {
+  // Check both stores. Probably refine this?
+  if (directive->_c1_store->PrintCompilationOption || directive->_c2_store->PrintCompilationOption) {
+    // Nothing at the moment
+  } else if (directive->_c1_store->PrintInliningOption || directive->_c2_store->PrintInliningOption) {
+    LogConfiguration::configure_stdout(LogLevel::Trace, false, LOG_TAGS(jit, inlining));
+  } else if (directive->_c1_store->PrintIntrinsicsOption || directive->_c2_store->PrintIntrinsicsOption) {
+    LogConfiguration::configure_stdout(LogLevel::Trace, false, LOG_TAGS(jit, intrinsics));
+  } else if (directive->_c1_store->TraceOptoPipeliningOption || directive->_c2_store->TraceOptoPipeliningOption) {
+    LogConfiguration::configure_stdout(LogLevel::Trace, false, LOG_TAGS(jit, optopipelining));
+  } else if (directive->_c1_store->TraceSpillingOption || directive->_c2_store->TraceSpillingOption) {
+    LogConfiguration::configure_stdout(LogLevel::Trace, false, LOG_TAGS(jit, spilling));
+  } else if (directive->_c1_store->TraceEscapeAnalysisOption || directive->_c2_store->TraceEscapeAnalysisOption) {
+    LogConfiguration::configure_stdout(LogLevel::Trace, false, LOG_TAGS(jit, escapeanalysis));
+  }
+}
+
 DirectiveSet* DirectivesStack::getDefaultDirective(AbstractCompiler* comp) {
   MutexLocker locker(DirectivesStack_lock, Mutex::_no_safepoint_check_flag);
 
@@ -688,6 +706,8 @@ void DirectivesStack::push(CompilerDirectives* directive) {
     assert(_bottom == nullptr, "There can only be one default directive");
     _bottom = directive; // default directive, can never be removed.
   }
+
+  ul_compatibility_layer(directive);
 
   directive->set_next(_top);
   _top = directive;

@@ -134,6 +134,8 @@ class CompilerOracle : AllStatic {
   static bool parse_from_input(inputStream::Input* input,
                                parse_from_line_fn_t* parse_from_line);
 
+  static void ul_compatibility_layer(CompileCommandEnum option);
+
  public:
   // True if the command file has been specified or is implicit
   static bool has_command_file();
