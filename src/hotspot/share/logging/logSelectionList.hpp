@@ -61,6 +61,8 @@ class LogSelectionList : public StackObj {
   // this function will list all the invalid selections on the stream.
   bool verify_selections(outputStream* out = nullptr) const;
 
+  void describe_on(outputStream* out = tty) const;
+
   LogDecorators get_default_decorators() const;
 };
 

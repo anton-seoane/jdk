@@ -50,6 +50,7 @@ class methodHandle;
   option(Quiet, "quiet", Unknown) \
   option(Log, "log", Bool) \
   option(UL, "ul", Bool) \
+  option(ULC, "ulc", Ccstrlist) \
   option(Print, "print", Bool) \
   option(Inline,  "inline", Bool) \
   option(DontInline,  "dontinline", Bool) \

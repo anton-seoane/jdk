@@ -367,6 +367,11 @@ void PhaseChaitin::compact() {
 
 void PhaseChaitin::Register_Allocate() {
 
+  if (trace_spilling()) {
+    C->directive()->should_ul_sel().describe_on();
+
+  }
+
   // Above the OLD FP (and in registers) are the incoming arguments.  Stack
   // slots in this area are called "arg_slots".  Above the NEW FP (and in
   // registers) is the outgoing argument area; above that is the spill/temp

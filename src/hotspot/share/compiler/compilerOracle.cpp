@@ -27,6 +27,7 @@
 #include "compiler/compilerOracle.hpp"
 #include "compiler/methodMatcher.hpp"
 #include "jvm.h"
+#include "jvm_io.h"
 #include "logging/logConfiguration.hpp"
 #include "memory/allocation.inline.hpp"
 #include "memory/oopFactory.hpp"
@@ -41,6 +42,7 @@
 #include "runtime/handles.inline.hpp"
 #include "runtime/jniHandles.hpp"
 #include "runtime/os.hpp"
+#include "utilities/debug.hpp"
 #include "utilities/istream.hpp"
 #include "utilities/parseInteger.hpp"
 
@@ -318,7 +320,6 @@ TypedMethodOptionMatcher* TypedMethodOptionMatcher::match(const methodHandle& me
 }
 
 static void ul_compatibility_layer(CompileCommandEnum option) {
-  tty->print_cr("%d", option);
   switch (option) {
   case CompileCommandEnum::PrintCompilation:
     // Not migrating it at the moment
@@ -842,12 +843,12 @@ static bool scan_value(enum OptionType type, char* line, int& total_bytes_read,
     ResourceMark rm;
     char* value = NEW_RESOURCE_ARRAY(char, strlen(line) + 1);
     char* next_value = value;
-    if (sscanf(line, "%255[_a-zA-Z0-9+\\-]%n", next_value, &bytes_read) == 1) {
+    if (sscanf(line, "%255[_a-zA-Z0-9+\\-=*]%n", next_value, &bytes_read) == 1) { // I'm not breaking anything right?
       total_bytes_read += bytes_read;
       line += bytes_read;
       next_value += bytes_read + 1;
       char* end_value = next_value - 1;
-      while (sscanf(line, "%*[ \t]%255[_a-zA-Z0-9+\\-]%n", next_value, &bytes_read) == 1) {
+      while (sscanf(line, "%*[ \t]%255[_a-zA-Z0-9+\\-=*]%n", next_value, &bytes_read) == 1) {
         total_bytes_read += bytes_read;
         line += bytes_read;
         *end_value = ' '; // override '\0'
@@ -860,6 +861,13 @@ static bool scan_value(enum OptionType type, char* line, int& total_bytes_read,
 
         if (!validator.is_valid()) {
           jio_snprintf(errorbuf, buf_size, "Unrecognized intrinsic detected in %s: %s", option2name(option), validator.what());
+          return false;
+        }
+      } else if (option == CompileCommandEnum::ULC) {
+        UnifiedLoggingMatchingValidator validator(value);
+
+        if (!validator.is_valid()) {
+          jio_snprintf(errorbuf, buf_size, "Error validating %s: %s", option2name(option), validator.what());
           return false;
         }
       }
@@ -892,7 +900,6 @@ static bool scan_value(enum OptionType type, char* line, int& total_bytes_read,
       else {
         assert(false, "Ccstrlist type option missing validator");
       }
-
       return register_command(matcher, option, errorbuf, buf_size, (ccstr) value);
     } else {
       jio_snprintf(errorbuf, buf_size, "Value cannot be read for option '%s' of type '%s'", ccname, type_str);

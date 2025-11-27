@@ -35,6 +35,7 @@
 #include "opto/traceAutoVectorizationTag.hpp"
 #include "opto/traceMergeStoresTag.hpp"
 #include "runtime/globals_extension.hpp"
+#include "utilities/debug.hpp"
 
 CompilerDirectives::CompilerDirectives() : _next(nullptr), _match(nullptr), _ref_count(0) {
   _c1_store = new DirectiveSet(this);
@@ -474,6 +475,19 @@ DirectiveSet* DirectiveSet::compilecommand_compatibility_init(const methodHandle
     }
 #endif
 #endif
+    if (!_modified[ULCIndex]) {
+      // Parse ccstr and create set
+      ccstrlist option;
+      if (CompilerOracle::has_option_value(method, CompileCommandEnum::ULC, option)) {
+        UnifiedLoggingMatchingValidator validator(option);
+        if (validator.is_valid()) {
+          set.cloned()->set_ul_log_selections(validator.log_selections());
+        } else {
+          // Huh?
+          ShouldNotReachHere();
+        }
+      }
+    }
 
     // Canonicalize DisableIntrinsic to contain only ',' as a separator.
     ccstrlist option_value;
@@ -652,6 +666,7 @@ DirectiveSet* DirectiveSet::clone(DirectiveSet const* src) {
 
   set->_intrinsic_control_words = src->_intrinsic_control_words;
   set->set_ideal_phase_name_set(src->_ideal_phase_name_set);
+  set->_ul_log_selections = src->_ul_log_selections;
   return set;
 }
 
