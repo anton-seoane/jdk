@@ -29,6 +29,15 @@
 #include "memory/allocation.hpp"
 
 class LogTagSet;
+template <
+  LogTagType T0,
+  LogTagType T1,
+  LogTagType T2,
+  LogTagType T3,
+  LogTagType T4,
+  LogTagType GuardTag
+>
+class LogImpl;
 
 // Class representing a selection of tags with for a given level.
 // Consists of a set of tags, an optional wildcard flag, and a level, e.g. "tag1+tag2*=level".
@@ -50,6 +59,14 @@ class LogSelection : public StackObj {
   static LogSelection parse(const char* str, outputStream* error_stream = nullptr);
 
   LogSelection(const LogTagType tags[LogTag::MaxTags], bool wildcard, LogLevelType level);
+
+  template <LogTagType T0, LogTagType T1 = LogTag::__NO_TAG,
+            LogTagType T2 = LogTag::__NO_TAG, LogTagType T3 = LogTag::__NO_TAG,
+            LogTagType T4 = LogTag::__NO_TAG,
+            LogTagType GuardTag = LogTag::__NO_TAG>
+  bool is_same(const LogImpl<T0, T1, T2, T3, T4, GuardTag>& log) {
+
+  }
 
   bool operator==(const LogSelection& ref) const;
   bool operator!=(const LogSelection& ref) const;
