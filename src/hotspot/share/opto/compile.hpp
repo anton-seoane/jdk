@@ -34,7 +34,9 @@
 #include "compiler/compilerEvent.hpp"
 #include "libadt/dict.hpp"
 #include "libadt/vectset.hpp"
+#include "logging/log.hpp"
 #include "logging/logTag.hpp"
+#include "logging/logTagSet.hpp"
 #include "memory/resourceArea.hpp"
 #include "oops/methodData.hpp"
 #include "opto/idealGraphPrinter.hpp"
@@ -508,7 +510,10 @@ public:
             LogTagType T4 = LogTag::__NO_TAG,
             LogTagType GuardTag = LogTag::__NO_TAG>
   bool should_print_ul(LogLevelType level) {
+    LogTagType tags[5] = {T0, T1, T2, T3, T4};
+    LogSelection ls(tags, false, level);
     return LogImpl<T0, T1, T2, T3, T4, GuardTag>::is_level(level) &&
+           C->directive()->should_ul_sel().contains(ls) &&
            C->directive()->should_ul();
   }
 

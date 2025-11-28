@@ -68,6 +68,19 @@ bool LogSelection::operator!=(const LogSelection& ref) const {
   return !operator==(ref);
 }
 
+bool LogSelection::operator>=(const LogSelection& ref) const {
+  if (_ntags != ref._ntags ||
+      _tag_sets_selected != ref._tag_sets_selected) {
+    return false;
+  }
+  for (size_t i = 0; i < _ntags; i++) {
+    if (_tags[i] != ref._tags[i]) {
+      return false;
+    }
+  }
+  return ref._level >= _level;
+}
+
 bool LogSelection::superset_of(const LogSelection& other) const {
   bool match;
   for (size_t i = 0; i < other.ntags(); ++i) {

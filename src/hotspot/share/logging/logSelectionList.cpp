@@ -60,6 +60,15 @@ void LogSelectionList::describe_on(outputStream* out) const {
   }
 }
 
+bool LogSelectionList::contains(const LogSelection& ls) const {
+  for (size_t i = 0; i < _nselections; ++i) {
+    if (_selections[i] >= ls) {
+      return true;
+    }
+  }
+
+  return false;
+}
 
 LogDecorators LogSelectionList::get_default_decorators() const {
   for (size_t i = 0; i < _nselections; ++i) {

@@ -64,12 +64,16 @@ class LogSelection : public StackObj {
             LogTagType T2 = LogTag::__NO_TAG, LogTagType T3 = LogTag::__NO_TAG,
             LogTagType T4 = LogTag::__NO_TAG,
             LogTagType GuardTag = LogTag::__NO_TAG>
-  bool is_same(const LogImpl<T0, T1, T2, T3, T4, GuardTag>& log) {
+  LogSelection(const LogImpl<T0, T1, T2, T3, T4, GuardTag>& log, LogLevelType level) {
+    LogTagType tags[LogTag::MaxTags] = { T0, T1, T2, T3, T4 };
 
+    LogSelection(tags, false, level);
   }
 
   bool operator==(const LogSelection& ref) const;
   bool operator!=(const LogSelection& ref) const;
+  bool operator>=(const LogSelection& ref) const;
+
 
   bool superset_of(const LogSelection& ref) const;
 
