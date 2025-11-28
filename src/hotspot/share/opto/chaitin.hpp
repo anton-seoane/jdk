@@ -522,7 +522,7 @@ private:
   void de_ssa();
 
 #ifndef PRODUCT
-  void trace_cisc_spill_ul(const char* text, Node* n);
+  void trace_cisc_spill_ul(const char* text, Node* n) const;
 #endif
 
   // Add edge between reg and everything in the vector.

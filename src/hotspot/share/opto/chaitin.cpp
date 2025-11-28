@@ -820,7 +820,7 @@ void PhaseChaitin::mark_ssa() {
 
 
 #ifndef PRODUCT
-void PhaseChaitin::trace_cisc_spill_ul(const char* text, Node* n) {
+void PhaseChaitin::trace_cisc_spill_ul(const char* text, Node* n) const {
   if (!ul_enabled_c(Trace, jit, ciscspill)) return;
   if (text == nullptr || n == nullptr) return;
   LogMessage(jit, ciscspill) msg;
