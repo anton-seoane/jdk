@@ -609,10 +609,8 @@ bool PhaseIdealLoop::has_control_dependencies_from_predicates(LoopNode* head) {
 
 #ifndef PRODUCT
 void PhaseIdealLoop::trace_loop_unswitching_impossible(const LoopNode* original_head) {
-  if (ul_enabled(Compile::current(), Trace, jit, loopunswitching)) {
-    log_trace(jit, loopunswitching)("Loop Unswitching \"%d %s\" not possible due to control dependencies",
-                                    original_head->_idx, original_head->Name());
-  }
+  log_trace_c2(jit, loopunswitching)("Loop Unswitching \"%d %s\" not possible due to control dependencies",
+                                     original_head->_idx, original_head->Name());
 }
 
 void PhaseIdealLoop::trace_loop_unswitching_count(IdealLoopTree* loop, LoopNode* original_head) {
@@ -626,7 +624,7 @@ void PhaseIdealLoop::trace_loop_unswitching_count(IdealLoopTree* loop, LoopNode*
 
 void PhaseIdealLoop::trace_loop_unswitching_result(const UnswitchedLoopSelector& unswitched_loop_selector,
                                                    const LoopNode* original_head, const LoopNode* new_head) {
-  if (ul_enabled(Compile::current(), Trace, jit, loopunswitching)) {
+  if (ul_enabled_c(Trace, jit, loopunswitching)) {
     LogMessage(jit, loopunswitching) logm;
     NonInterleavingLogStream st(LogLevelType::Trace, logm);
     IfNode* unswitch_candidate = unswitched_loop_selector.unswitch_candidate();

@@ -541,8 +541,8 @@ void PhaseIdealLoop::Dominators() {
     LogMessage(jit, dominators) msg;
     NonInterleavingLogStream st(LogLevelType::Debug, msg);
     w->dump(0, &st);
-#endif
   }
+#endif
 }
 
 // Perform DFS search.  Setup 'vertex' as DFS to vertex mapping.  Setup

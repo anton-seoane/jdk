@@ -1263,7 +1263,7 @@ void PhaseCFG::partial_latency_of_defs(Node *n) {
   // Set the latency for this instruction
 #ifndef PRODUCT
   if (trace_opto_pipelining()) {
-    LogMessage(jit, optoparse) msg;
+    LogMessage(jit, optopipelining) msg;
     NonInterleavingLogStream st(LogLevelType::Debug, msg);
     st.print("# latency_to_inputs: node_latency[%d] = %d for node", n->_idx, get_latency_for_node(n));
     dump(&st);

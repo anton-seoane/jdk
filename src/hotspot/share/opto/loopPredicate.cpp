@@ -730,7 +730,7 @@ BoolNode* PhaseIdealLoop::rc_predicate(Node* ctrl, const int scale, Node* offset
 
   if (ul_enabled_c(Trace, jit, looppredicate)) {
     predString->print("<u range");
-    log_trace(jit, looppredicate)("%s", predString->base());
+    log_trace(jit, looppredicate)("%s", predString->freeze());
     delete predString;
   }
   return bol;

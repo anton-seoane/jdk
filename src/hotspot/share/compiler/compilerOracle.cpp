@@ -330,15 +330,17 @@ static void ul_compatibility_layer(CompileCommandEnum option) {
   case CompileCommandEnum::PrintIntrinsics:
     LogConfiguration::configure_stdout(LogLevel::Trace, false, LOG_TAGS(jit, intrinsics));
     break;
-  case CompileCommandEnum::TraceOptoPipelining:
-    LogConfiguration::configure_stdout(LogLevel::Trace, false, LOG_TAGS(jit, optopipelining));
-    break;
   case CompileCommandEnum::TraceSpilling:
     LogConfiguration::configure_stdout(LogLevel::Trace, false, LOG_TAGS(jit, spilling));
+    break;
+#ifndef PRODUCT
+  case CompileCommandEnum::TraceOptoPipelining:
+    LogConfiguration::configure_stdout(LogLevel::Trace, false, LOG_TAGS(jit, optopipelining));
     break;
   case CompileCommandEnum::TraceEscapeAnalysis:
     LogConfiguration::configure_stdout(LogLevel::Trace, false, LOG_TAGS(jit, escapeanalysis));
     break;
+#endif
   default:
     // Either default CompileCommands or non-UL-related ones. Ignore
     return;

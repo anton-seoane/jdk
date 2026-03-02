@@ -696,13 +696,16 @@ void ul_compatibility_layer(CompilerDirectives* directive) {
     LogConfiguration::configure_stdout(LogLevel::Trace, false, LOG_TAGS(jit, inlining));
   } else if (directive->_c1_store->PrintIntrinsicsOption || directive->_c2_store->PrintIntrinsicsOption) {
     LogConfiguration::configure_stdout(LogLevel::Trace, false, LOG_TAGS(jit, intrinsics));
-  } else if (directive->_c1_store->TraceOptoPipeliningOption || directive->_c2_store->TraceOptoPipeliningOption) {
-    LogConfiguration::configure_stdout(LogLevel::Trace, false, LOG_TAGS(jit, optopipelining));
   } else if (directive->_c1_store->TraceSpillingOption || directive->_c2_store->TraceSpillingOption) {
     LogConfiguration::configure_stdout(LogLevel::Trace, false, LOG_TAGS(jit, spilling));
+  }
+#ifndef PRODUCT
+  else if (directive->_c1_store->TraceOptoPipeliningOption || directive->_c2_store->TraceOptoPipeliningOption) {
+    LogConfiguration::configure_stdout(LogLevel::Trace, false, LOG_TAGS(jit, optopipelining));
   } else if (directive->_c1_store->TraceEscapeAnalysisOption || directive->_c2_store->TraceEscapeAnalysisOption) {
     LogConfiguration::configure_stdout(LogLevel::Trace, false, LOG_TAGS(jit, escapeanalysis));
   }
+#endif
 }
 
 DirectiveSet* DirectivesStack::getDefaultDirective(AbstractCompiler* comp) {

@@ -1322,9 +1322,11 @@ bool PhaseIdealLoop::try_make_short_running_loop(IdealLoopTree* loop, jint strid
     register_new_node(new_limit, new_predicate_proj);
 
 #ifndef PRODUCT
-    if (TraceLoopLimitCheck) {
-      tty->print_cr("Short Long Loop Check Predicate generated:");
-      DEBUG_ONLY(bol->dump(2);)
+    if (ul_enabled_c(Trace, jit, looplimitcheck)) {
+      LogMessage(jit, looplimitcheck) msg;
+      NonInterleavingLogStream st(LogLevelType::Trace, msg);
+      st.print_cr("Short Long Loop Check Predicate generated:");
+      DEBUG_ONLY(bol->dump(2, &st);)
     }
 #endif
     entry_control = head->skip_strip_mined()->in(LoopNode::EntryControl);
