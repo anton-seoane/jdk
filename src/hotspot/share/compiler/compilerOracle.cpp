@@ -165,6 +165,8 @@ class TypedMethodOptionMatcher : public MethodMatcher {
   static TypedMethodOptionMatcher* parse_method_pattern(char*& line, char* errorbuf, const int buf_size);
   TypedMethodOptionMatcher* match(const methodHandle &method, CompileCommandEnum option);
 
+  bool has_ul_cc_set(const LogSelection ls);
+
   void init(CompileCommandEnum option, TypedMethodOptionMatcher* next) {
     _next = next;
     _option = option;
@@ -316,6 +318,48 @@ TypedMethodOptionMatcher* TypedMethodOptionMatcher::match(const methodHandle& me
   return nullptr;
 }
 
+bool TypedMethodOptionMatcher::has_ul_cc_set(const LogSelection ls) {
+  TypedMethodOptionMatcher* current = this;
+  while (current != nullptr) {
+    if (current->_option == CompileCommandEnum::ULC) {
+      if (LogSelection::parse(current->value<ccstrlist>()) == ls) {
+        return true;
+      }
+    }
+    current = current->next();
+  }
+  return false;
+
+}
+
+static void ul_compatibility_layer(CompileCommandEnum option) {
+  switch (option) {
+  case CompileCommandEnum::PrintCompilation:
+    // Not migrating it at the moment
+    break;
+  case CompileCommandEnum::PrintInlining:
+    LogConfiguration::configure_stdout(LogLevel::Trace, false, LOG_TAGS(jit, inlining));
+    break;
+  case CompileCommandEnum::PrintIntrinsics:
+    LogConfiguration::configure_stdout(LogLevel::Trace, false, LOG_TAGS(jit, intrinsics));
+    break;
+  case CompileCommandEnum::TraceSpilling:
+    LogConfiguration::configure_stdout(LogLevel::Trace, false, LOG_TAGS(jit, spilling));
+    break;
+#ifndef PRODUCT
+  case CompileCommandEnum::TraceOptoPipelining:
+    LogConfiguration::configure_stdout(LogLevel::Trace, false, LOG_TAGS(jit, optopipelining));
+    break;
+  case CompileCommandEnum::TraceEscapeAnalysis:
+    LogConfiguration::configure_stdout(LogLevel::Trace, false, LOG_TAGS(jit, escapeanalysis));
+    break;
+#endif
+  default:
+    // Either default CompileCommands or non-UL-related ones. Ignore
+    return;
+  }
+}
+
 template<typename T>
 static bool register_command(TypedMethodOptionMatcher* matcher,
                              CompileCommandEnum option,
@@ -346,6 +390,8 @@ static bool register_command(TypedMethodOptionMatcher* matcher,
     }
   }
 
+  ul_compatibility_layer(option);
+
   matcher->init(option, option_list);
   matcher->set_value<T>(value);
   option_list = matcher;
@@ -374,6 +420,14 @@ bool CompilerOracle::has_option_value(const methodHandle& method, CompileCommand
       return true;
     }
   }
+  return false;
+}
+
+bool CompilerOracle::has_ul_cc_set(const LogSelection ls) {
+  if (option_list != nullptr) {
+    return option_list->has_ul_cc_set(ls);
+  }
+
   return false;
 }
 
@@ -812,12 +866,12 @@ static bool scan_value(enum OptionType type, char* line, int& total_bytes_read,
     ResourceMark rm;
     char* value = NEW_RESOURCE_ARRAY(char, strlen(line) + 1);
     char* next_value = value;
-    if (sscanf(line, "%255[_a-zA-Z0-9+\\-]%n", next_value, &bytes_read) == 1) {
+    if (sscanf(line, "%255[_a-zA-Z0-9+\\-=*]%n", next_value, &bytes_read) == 1) { // I'm not breaking anything right?
       total_bytes_read += bytes_read;
       line += bytes_read;
       next_value += bytes_read + 1;
       char* end_value = next_value - 1;
-      while (sscanf(line, "%*[ \t]%255[_a-zA-Z0-9+\\-]%n", next_value, &bytes_read) == 1) {
+      while (sscanf(line, "%*[ \t]%255[_a-zA-Z0-9+\\-=*]%n", next_value, &bytes_read) == 1) {
         total_bytes_read += bytes_read;
         line += bytes_read;
         *end_value = ' '; // override '\0'
@@ -832,6 +886,15 @@ static bool scan_value(enum OptionType type, char* line, int& total_bytes_read,
           jio_snprintf(errorbuf, buf_size, "Unrecognized intrinsic detected in %s: %s", option2name(option), validator.what());
           return false;
         }
+      } else if (option == CompileCommandEnum::ULC) {
+        UnifiedLoggingMatchingValidator validator(value);
+
+        if (!validator.is_valid()) {
+          jio_snprintf(errorbuf, buf_size, "Error validating %s: %s", option2name(option), validator.what());
+          return false;
+        }
+
+        //validator.init_ul();
       }
 #if !defined(PRODUCT) && defined(COMPILER2)
       else if (option == CompileCommandEnum::TraceAutoVectorization) {
@@ -1101,10 +1164,12 @@ bool CompilerOracle::parse_from_line(char* line) {
         print_parse_error(error_buf, original.get());
         return false;
       }
-    }
-    if (!scan_value(type, line, bytes_read, matcher, option, error_buf, sizeof(error_buf))) {
-      print_parse_error(error_buf, original.get());
-      return false;
+    } else {
+      // Value provided. It's a bit silly that scan_value will recheck for line == null on a boolean case, but oh well
+      if (!scan_value(type, line, bytes_read, matcher, option, error_buf, sizeof(error_buf))) {
+        print_parse_error(error_buf, original.get());
+        return false;
+      }
     }
     assert(matcher != nullptr, "consistency");
   }

@@ -469,6 +469,20 @@ DirectiveSet* DirectiveSet::compilecommand_compatibility_init(const methodHandle
     }
 #endif
 #endif
+    if (!_modified[ULCIndex]) {
+      // Parse ccstr and create set
+      ccstrlist option;
+      if (CompilerOracle::has_option_value(method, CompileCommandEnum::ULC, option)) {
+        UnifiedLoggingMatchingValidator validator(option);
+        if (validator.is_valid()) {
+          set.cloned()->set_ul_log_selections(validator.log_selections());
+
+        } else {
+          // Huh?
+          ShouldNotReachHere();
+        }
+      }
+    }
 
     // Canonicalize DisableIntrinsic to contain only ',' as a separator.
     ccstrlist option_value;
@@ -661,6 +675,8 @@ DirectiveSet* DirectiveSet::clone(DirectiveSet const* src) {
 
   set->_intrinsic_control_words = src->_intrinsic_control_words;
   set->set_ideal_phase_name_set(src->_ideal_phase_name_set);
+  set->_ul_log_selections = src->_ul_log_selections;
+  set->_supplied = src->_supplied;
   return set;
 }
 
@@ -682,6 +698,26 @@ void DirectivesStack::init() {
   push(_default_directives);
 }
 
+void ul_compatibility_layer(CompilerDirectives* directive) {
+  // Check both stores. Probably refine this?
+  if (directive->_c1_store->PrintCompilationOption || directive->_c2_store->PrintCompilationOption) {
+    // Nothing at the moment
+  } else if (directive->_c1_store->PrintInliningOption || directive->_c2_store->PrintInliningOption) {
+    LogConfiguration::configure_stdout(LogLevel::Trace, false, LOG_TAGS(jit, inlining));
+  } else if (directive->_c1_store->PrintIntrinsicsOption || directive->_c2_store->PrintIntrinsicsOption) {
+    LogConfiguration::configure_stdout(LogLevel::Trace, false, LOG_TAGS(jit, intrinsics));
+  } else if (directive->_c1_store->TraceSpillingOption || directive->_c2_store->TraceSpillingOption) {
+    LogConfiguration::configure_stdout(LogLevel::Trace, false, LOG_TAGS(jit, spilling));
+  }
+#ifndef PRODUCT
+  else if (directive->_c1_store->TraceOptoPipeliningOption || directive->_c2_store->TraceOptoPipeliningOption) {
+    LogConfiguration::configure_stdout(LogLevel::Trace, false, LOG_TAGS(jit, optopipelining));
+  } else if (directive->_c1_store->TraceEscapeAnalysisOption || directive->_c2_store->TraceEscapeAnalysisOption) {
+    LogConfiguration::configure_stdout(LogLevel::Trace, false, LOG_TAGS(jit, escapeanalysis));
+  }
+#endif
+}
+
 DirectiveSet* DirectivesStack::getDefaultDirective(AbstractCompiler* comp) {
   MutexLocker locker(DirectivesStack_lock, Mutex::_no_safepoint_check_flag);
 
@@ -698,6 +734,8 @@ void DirectivesStack::push(CompilerDirectives* directive) {
     assert(_bottom == nullptr, "There can only be one default directive");
     _bottom = directive; // default directive, can never be removed.
   }
+
+  ul_compatibility_layer(directive);
 
   directive->set_next(_top);
   _top = directive;

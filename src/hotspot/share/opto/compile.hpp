@@ -505,9 +505,31 @@ private:
   InlinePrinter _inline_printer;
 
 public:
+  template <LogTagType T0, LogTagType T1 = LogTag::__NO_TAG,
+            LogTagType T2 = LogTag::__NO_TAG, LogTagType T3 = LogTag::__NO_TAG,
+            LogTagType T4 = LogTag::__NO_TAG,
+            LogTagType GuardTag = LogTag::__NO_TAG>
+  bool should_print_ul(LogLevelType level) {
+    LogTagType tags[5] = {T0, T1, T2, T3, T4};
+    LogSelection ls(tags, false, level);
+    return LogImpl<T0, T1, T2, T3, T4, GuardTag>::is_level(level) &&
+           (!CompilerOracle::has_ul_cc_set(ls) || C->directive()->should_ul_sel().contains(ls));
+  }
+
+  // Wrapper around should_print_ul to strip template notation
+  #define ul_enabled(C, level, ...) (C->should_print_ul<LOG_TAGS(__VA_ARGS__)>(LogLevelType::level))
+  #define ul_enabled_c(level, ...) (Compile::current()->should_print_ul<LOG_TAGS(__VA_ARGS__)>(LogLevelType::level))
+
+  #define log_error_c2(...) (!Compile::current()->should_print_ul<LOG_TAGS(__VA_ARGS__)>(LogLevelType::Error)) ? (void)0 : LogImpl<LOG_TAGS(__VA_ARGS__)>::write<LogLevel::Error>
+  #define log_warning_c2(...) (!Compile::current()->should_print_ul<LOG_TAGS(__VA_ARGS__)>(LogLevelType::Warning)) ? (void)0 : LogImpl<LOG_TAGS(__VA_ARGS__)>::write<LogLevel::Warning>
+  #define log_info_c2(...) (!Compile::current()->should_print_ul<LOG_TAGS(__VA_ARGS__)>(LogLevelType::Info)) ? (void)0 : LogImpl<LOG_TAGS(__VA_ARGS__)>::write<LogLevel::Info>
+  #define log_debug_c2(...) (!Compile::current()->should_print_ul<LOG_TAGS(__VA_ARGS__)>(LogLevelType::Debug)) ? (void)0 : LogImpl<LOG_TAGS(__VA_ARGS__)>::write<LogLevel::Debug>
+  #define log_trace_c2(...) (!Compile::current()->should_print_ul<LOG_TAGS(__VA_ARGS__)>(LogLevelType::Trace)) ? (void)0 : LogImpl<LOG_TAGS(__VA_ARGS__)>::write<LogLevel::Trace>
+
   void* barrier_set_state() const { return _barrier_set_state; }
 
   InlinePrinter* inline_printer() { return &_inline_printer; }
+
 
 #ifndef PRODUCT
   IdealGraphPrinter* igv_printer() { return _igv_printer; }

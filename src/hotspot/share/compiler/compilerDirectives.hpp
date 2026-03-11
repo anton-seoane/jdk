@@ -54,7 +54,8 @@
     cflags(RepeatCompilation,       intx, RepeatCompilation, RepeatCompilation)
 #define compilerdirectives_common_string_flags(cflags)                           \
   cflags(DisableIntrinsic,        ccstrlist, DisableIntrinsic, DisableIntrinsic) \
-  cflags(ControlIntrinsic,        ccstrlist, ControlIntrinsic, ControlIntrinsic)
+  cflags(ControlIntrinsic,        ccstrlist, ControlIntrinsic, ControlIntrinsic) \
+  cflags(ULC,                     ccstrlist, "", ULC) // á?
 #define compilerdirectives_common_flags(cflags) \
   compilerdirectives_common_other_flags(cflags) \
   compilerdirectives_common_string_flags(cflags)
@@ -132,6 +133,8 @@ private:
   CHeapBitMap _ideal_phase_name_set;
   CHeapBitMap _trace_auto_vectorization_tags;
   CHeapBitMap _trace_merge_stores_tags;
+  LogSelectionList _ul_log_selections; //TODO: initialize at construction
+  bool _supplied;
 
 public:
   DirectiveSet(CompilerDirectives* directive);
@@ -219,6 +222,15 @@ void set_##name(void* value) {                                      \
   const CHeapBitMap& trace_merge_stores_tags() {
     return _trace_merge_stores_tags;
   };
+  void set_ul_log_selections(const LogSelectionList& set) {
+    _ul_log_selections = set;
+  };
+  LogSelectionList should_ul_sel() const {
+    return _ul_log_selections;
+  }
+  bool supplied() const {
+    return _supplied;
+  }
 
   void print_intx(outputStream* st, ccstr n, intx v, bool mod) { if (mod) { st->print("%s:%zd ", n, v); } }
   void print_uintx(outputStream* st, ccstr n, intx v, bool mod) { if (mod) { st->print("%s:%zu ", n, v); } }
@@ -293,6 +305,42 @@ class ControlIntrinsicValidator {
 
   const char* what() const {
     return _bad;
+  }
+};
+
+class UnifiedLoggingMatchingValidator {
+ private:
+  bool _valid;
+  char* _bad;
+  LogSelectionList _selections;
+
+ public:
+  UnifiedLoggingMatchingValidator(ccstrlist option) {
+    _bad = os::strdup_check_oom(option, mtLogging); // Maybe another tag?
+    // Undo canonicalization
+    for (char* lp = _bad; *lp != '\0'; lp++) {
+      if (*lp == ' ')  *lp = ',';
+    }
+
+    _valid = _selections.parse(_bad);
+  }
+
+  ~UnifiedLoggingMatchingValidator() {
+    if (_bad != nullptr) {
+      FREE_C_HEAP_ARRAY(char, _bad);
+    }
+  }
+
+  bool is_valid() const {
+    return _valid;
+  }
+
+  const char* what() const {
+    return _bad;
+  }
+
+  const LogSelectionList log_selections() const {
+    return _selections;
   }
 };
 

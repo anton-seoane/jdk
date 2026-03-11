@@ -31,6 +31,7 @@
 #include "compiler/compiler_globals.hpp"
 #include "compiler/compilerDefinitions.inline.hpp"
 #include "compiler/compilerDirectives.hpp"
+#include "logging/log.hpp"
 #include "runtime/deoptimization.hpp"
 
 class CompilationFailureInfo;
@@ -131,6 +132,27 @@ class Compilation: public StackObj {
   static Compilation* current() {
     return (Compilation*) ciEnv::current()->compiler_data();
   }
+
+  template <LogTagType T0, LogTagType T1 = LogTag::__NO_TAG,
+            LogTagType T2 = LogTag::__NO_TAG, LogTagType T3 = LogTag::__NO_TAG,
+            LogTagType T4 = LogTag::__NO_TAG,
+            LogTagType GuardTag = LogTag::__NO_TAG>
+  bool should_print_ul(LogLevelType level) {
+    LogTagType tags[5] = {T0, T1, T2, T3, T4};
+    LogSelection ls(tags, false, level);
+    return LogImpl<T0, T1, T2, T3, T4, GuardTag>::is_level(level) &&
+           directive()->should_ul_sel().contains(ls);
+  }
+
+  // Wrapper around should_print_ul to strip template notation
+  #define ul_enabled(C, level, ...) (C->should_print_ul<LOG_TAGS(__VA_ARGS__)>(LogLevelType::level))
+  #define ul_enabled_c1(level, ...) (Compilation::current()->should_print_ul<LOG_TAGS(__VA_ARGS__)>(LogLevelType::level))
+
+  #define log_error_c1(...) (!Compilation::current()->should_print_ul<LOG_TAGS(__VA_ARGS__)>(LogLevelType::Error)) ? (void)0 : LogImpl<LOG_TAGS(__VA_ARGS__)>::write<LogLevel::Error>
+  #define log_warning_c1(...) (!Compilation::current()->should_print_ul<LOG_TAGS(__VA_ARGS__)>(LogLevelType::Warning)) ? (void)0 : LogImpl<LOG_TAGS(__VA_ARGS__)>::write<LogLevel::Warning>
+  #define log_info_c1(...) (!Compilation::current()->should_print_ul<LOG_TAGS(__VA_ARGS__)>(LogLevelType::Info)) ? (void)0 : LogImpl<LOG_TAGS(__VA_ARGS__)>::write<LogLevel::Info>
+  #define log_debug_c1(...) (!Compilation::current()->should_print_ul<LOG_TAGS(__VA_ARGS__)>(LogLevelType::Debug)) ? (void)0 : LogImpl<LOG_TAGS(__VA_ARGS__)>::write<LogLevel::Debug>
+  #define log_trace_c1(...) (!Compilation::current()->should_print_ul<LOG_TAGS(__VA_ARGS__)>(LogLevelType::Trace)) ? (void)0 : LogImpl<LOG_TAGS(__VA_ARGS__)>::write<LogLevel::Trace>
 
   // accessors
   ciEnv* env() const                             { return _env; }

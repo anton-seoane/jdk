@@ -25,6 +25,7 @@
 #ifndef SHARE_COMPILER_COMPILERORACLE_HPP
 #define SHARE_COMPILER_COMPILERORACLE_HPP
 
+#include "logging/logSelection.hpp"
 #include "memory/allStatic.hpp"
 #include "oops/oopsHierarchy.hpp"
 #include "utilities/istream.hpp"
@@ -49,6 +50,7 @@ class methodHandle;
   option(Help,  "help",  Unknown) \
   option(Quiet, "quiet", Unknown) \
   option(Log, "log", Bool) \
+  option(ULC, "ulc", Ccstrlist) \
   option(Print, "print", Bool) \
   option(Inline,  "inline", Bool) \
   option(DelayInline,  "delayinline", Bool) \
@@ -134,6 +136,8 @@ class CompilerOracle : AllStatic {
   static bool parse_from_input(inputStream::Input* input,
                                parse_from_line_fn_t* parse_from_line);
 
+  static void ul_compatibility_layer(CompileCommandEnum option);
+
  public:
   // True if the command file has been specified or is implicit
   static bool has_command_file();
@@ -177,6 +181,9 @@ class CompilerOracle : AllStatic {
 
   // A wrapper for checking bool options
   static bool has_option(const methodHandle& method, CompileCommandEnum option);
+
+  // ULC
+  static bool has_ul_cc_set(const LogSelection ls);
 
   // Check if method has option and value set. If yes, overwrite value and return true,
   // otherwise leave value unchanged and return false.

@@ -52,6 +52,24 @@ bool LogSelectionList::verify_selections(outputStream* out) const {
   return valid;
 }
 
+void LogSelectionList::describe_on(outputStream* out) const {
+  tty->print_cr("Size: %zu", _nselections);
+  for (size_t i = 0; i < _nselections; ++i) {
+    _selections[i].describe_on(out);
+    out->cr();
+  }
+}
+
+bool LogSelectionList::contains(const LogSelection& ls) const {
+  for (size_t i = 0; i < _nselections; ++i) {
+    if (_selections[i] >= ls) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
 LogDecorators LogSelectionList::get_default_decorators() const {
   for (size_t i = 0; i < _nselections; ++i) {
     if (!LogDecorators::has_disabled_default_decorators(_selections[i])) {
