@@ -29,6 +29,7 @@
 #include "jvm.h"
 #include "jvm_io.h"
 #include "logging/logConfiguration.hpp"
+#include "logging/logSelection.hpp"
 #include "memory/allocation.inline.hpp"
 #include "memory/oopFactory.hpp"
 #include "memory/resourceArea.hpp"
@@ -167,6 +168,8 @@ class TypedMethodOptionMatcher : public MethodMatcher {
   ~TypedMethodOptionMatcher();
   static TypedMethodOptionMatcher* parse_method_pattern(char*& line, char* errorbuf, const int buf_size);
   TypedMethodOptionMatcher* match(const methodHandle &method, CompileCommandEnum option);
+
+  bool has_ul_cc_set(const LogSelection ls);
 
   void init(CompileCommandEnum option, TypedMethodOptionMatcher* next) {
     _next = next;
@@ -319,6 +322,20 @@ TypedMethodOptionMatcher* TypedMethodOptionMatcher::match(const methodHandle& me
   return nullptr;
 }
 
+bool TypedMethodOptionMatcher::has_ul_cc_set(const LogSelection ls) {
+  TypedMethodOptionMatcher* current = this;
+  while (current != nullptr) {
+    if (current->_option == CompileCommandEnum::ULC) {
+      if (LogSelection::parse(current->value<ccstrlist>()) == ls) {
+        return true;
+      }
+    }
+    current = current->next();
+  }
+  return false;
+
+}
+
 static void ul_compatibility_layer(CompileCommandEnum option) {
   switch (option) {
   case CompileCommandEnum::PrintCompilation:
@@ -407,6 +424,14 @@ bool CompilerOracle::has_option_value(const methodHandle& method, CompileCommand
       return true;
     }
   }
+  return false;
+}
+
+bool CompilerOracle::has_ul_cc_set(const LogSelection ls) {
+  if (option_list != nullptr) {
+    return option_list->has_ul_cc_set(ls);
+  }
+
   return false;
 }
 
@@ -523,10 +548,6 @@ bool CompilerOracle::should_print(const methodHandle& method) {
 
 bool CompilerOracle::should_print_methods() {
   return has_command(CompileCommandEnum::Print);
-}
-
-bool CompilerOracle::should_ul() {
-  return has_command(CompileCommandEnum::UL);
 }
 
 // Tells whether there are any methods to collect memory statistics for
@@ -876,6 +897,8 @@ static bool scan_value(enum OptionType type, char* line, int& total_bytes_read,
           jio_snprintf(errorbuf, buf_size, "Error validating %s: %s", option2name(option), validator.what());
           return false;
         }
+
+        //validator.init_ul();
       }
 #if !defined(PRODUCT) && defined(COMPILER2)
       else if (option == CompileCommandEnum::TraceAutoVectorization) {

@@ -50,6 +50,7 @@
 #include "runtime/vmThread.hpp"
 #include "utilities/ticks.hpp"
 #include "utilities/vmEnums.hpp"
+#include "compiler/compilerOracle.hpp"
 
 class AbstractLockNode;
 class AddPNode;
@@ -516,8 +517,7 @@ public:
     LogTagType tags[5] = {T0, T1, T2, T3, T4};
     LogSelection ls(tags, false, level);
     return LogImpl<T0, T1, T2, T3, T4, GuardTag>::is_level(level) &&
-           C->directive()->should_ul_sel().contains(ls) &&
-           C->directive()->should_ul();
+           (!CompilerOracle::has_ul_cc_set(ls) || C->directive()->should_ul_sel().contains(ls));
   }
 
   // Wrapper around should_print_ul to strip template notation

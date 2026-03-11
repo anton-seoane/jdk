@@ -214,10 +214,6 @@ bool DirectiveSet::should_print_memstat() const {
   return MemStatOption == (uintx)MemStatAction::print;
 }
 
-bool DirectiveSet::should_ul() const {
-  return !CompilerOracle::should_ul() || ULOption;
-}
-
 size_t DirectiveSet::mem_limit() const {
   return MemLimitOption < 0 ? -MemLimitOption : MemLimitOption;
 }
@@ -318,6 +314,7 @@ DirectiveSet::DirectiveSet(CompilerDirectives* d) :
 #undef init_defaults_definition
   memset(_modified, 0, sizeof(_modified));
   _intrinsic_control_words.fill_in(/*default value*/TriBool());
+  _supplied = false;
 }
 
 DirectiveSet::~DirectiveSet() {
@@ -482,6 +479,7 @@ DirectiveSet* DirectiveSet::compilecommand_compatibility_init(const methodHandle
         UnifiedLoggingMatchingValidator validator(option);
         if (validator.is_valid()) {
           set.cloned()->set_ul_log_selections(validator.log_selections());
+
         } else {
           // Huh?
           ShouldNotReachHere();
@@ -681,6 +679,7 @@ DirectiveSet* DirectiveSet::clone(DirectiveSet const* src) {
   set->_intrinsic_control_words = src->_intrinsic_control_words;
   set->set_ideal_phase_name_set(src->_ideal_phase_name_set);
   set->_ul_log_selections = src->_ul_log_selections;
+  set->_supplied = src->_supplied;
   return set;
 }
 

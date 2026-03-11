@@ -31,6 +31,7 @@
 #include "logging/logSelectionList.hpp"
 #include "opto/phasetype.hpp"
 #include "utilities/bitMap.hpp"
+#include "utilities/debug.hpp"
 #include "utilities/exceptions.hpp"
 #include "utilities/tribool.hpp"
 
@@ -41,7 +42,6 @@
     cflags(BreakAtExecute,          bool, false, BreakAtExecute) \
     cflags(BreakAtCompile,          bool, false, BreakAtCompile) \
     cflags(Log,                     bool, LogCompilation, Unknown) \
-    cflags(UL,                      bool, false, UL) \
     cflags(MemLimit,                intx, 0, MemLimit) \
     cflags(MemStat,                 uintx, 0, MemStat) \
     cflags(PrintAssembly,           bool, PrintAssembly, PrintAssembly) \
@@ -136,6 +136,7 @@ private:
   CHeapBitMap _trace_auto_vectorization_tags;
   CHeapBitMap _trace_merge_stores_tags;
   LogSelectionList _ul_log_selections; //TODO: initialize at construction
+  bool _supplied;
 
 public:
   DirectiveSet(CompilerDirectives* directive);
@@ -229,6 +230,9 @@ void set_##name(void* value) {                                      \
   };
   LogSelectionList should_ul_sel() const {
     return _ul_log_selections;
+  }
+  bool supplied() const {
+    return _supplied;
   }
 
   void print_intx(outputStream* st, ccstr n, intx v, bool mod) { if (mod) { st->print("%s:%zd ", n, v); } }

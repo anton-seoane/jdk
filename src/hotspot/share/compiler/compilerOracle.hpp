@@ -25,6 +25,7 @@
 #ifndef SHARE_COMPILER_COMPILERORACLE_HPP
 #define SHARE_COMPILER_COMPILERORACLE_HPP
 
+#include "logging/logSelection.hpp"
 #include "memory/allStatic.hpp"
 #include "oops/oopsHierarchy.hpp"
 #include "utilities/istream.hpp"
@@ -49,7 +50,6 @@ class methodHandle;
   option(Help,  "help",  Unknown) \
   option(Quiet, "quiet", Unknown) \
   option(Log, "log", Bool) \
-  option(UL, "ul", Bool) \
   option(ULC, "ulc", Ccstrlist) \
   option(Print, "print", Bool) \
   option(Inline,  "inline", Bool) \
@@ -173,8 +173,6 @@ class CompilerOracle : AllStatic {
   // Tells whether there are any methods to print for print_method_statistics()
   static bool should_print_methods();
 
-  static bool should_ul();
-
   // Tells whether there are any methods to (collect|collect+print) memory statistics for
   static bool should_collect_memstat();
 
@@ -183,6 +181,9 @@ class CompilerOracle : AllStatic {
 
   // A wrapper for checking bool options
   static bool has_option(const methodHandle& method, CompileCommandEnum option);
+
+  // ULC
+  static bool has_ul_cc_set(const LogSelection ls);
 
   // Check if method has option and value set. If yes, overwrite value and return true,
   // otherwise leave value unchanged and return false.

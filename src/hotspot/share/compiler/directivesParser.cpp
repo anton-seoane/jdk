@@ -24,12 +24,14 @@
 
 #include "compiler/compileBroker.hpp"
 #include "compiler/directivesParser.hpp"
+#include "compiler/compilerDirectives.hpp"
 #include "memory/allocation.inline.hpp"
 #include "memory/resourceArea.hpp"
 #include "opto/phasetype.hpp"
 #include "opto/traceAutoVectorizationTag.hpp"
 #include "opto/traceMergeStoresTag.hpp"
 #include "runtime/os.hpp"
+#include "utilities/debug.hpp"
 
 #include <string.h>
 
@@ -365,6 +367,15 @@ bool DirectivesParser::set_option_flag(JSON_TYPE t, JSON_VAL* v, const key* opti
             set->set_ideal_phase_name_set(validator.phase_name_set());
           } else {
             error(VALUE_ERROR, "Unrecognized phase name detected in PrintIdealPhase: %s", validator.what());
+          }
+        } else if (strncmp(option_key->name, "ULC", 3) == 0) {
+          UnifiedLoggingMatchingValidator validator(s);
+
+          valid = validator.is_valid();
+          if (valid) {
+            set->set_ul_log_selections(validator.log_selections());
+          } else {
+            error(VALUE_ERROR, "Unrecognized or malformed log selection in ULC: %s", validator.what());
           }
         }
 #endif
