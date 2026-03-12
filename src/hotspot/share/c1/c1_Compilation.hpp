@@ -31,6 +31,7 @@
 #include "compiler/compiler_globals.hpp"
 #include "compiler/compilerDefinitions.inline.hpp"
 #include "compiler/compilerDirectives.hpp"
+#include "compiler/compilerOracle.hpp"
 #include "logging/log.hpp"
 #include "runtime/deoptimization.hpp"
 
@@ -141,11 +142,10 @@ class Compilation: public StackObj {
     LogTagType tags[5] = {T0, T1, T2, T3, T4};
     LogSelection ls(tags, false, level);
     return LogImpl<T0, T1, T2, T3, T4, GuardTag>::is_level(level) &&
-           directive()->should_ul_sel().contains(ls);
+           (!CompilerOracle::has_ul_cc_set(ls) || directive()->should_ul_sel().contains(ls));
   }
 
   // Wrapper around should_print_ul to strip template notation
-  #define ul_enabled(C, level, ...) (C->should_print_ul<LOG_TAGS(__VA_ARGS__)>(LogLevelType::level))
   #define ul_enabled_c1(level, ...) (Compilation::current()->should_print_ul<LOG_TAGS(__VA_ARGS__)>(LogLevelType::level))
 
   #define log_error_c1(...) (!Compilation::current()->should_print_ul<LOG_TAGS(__VA_ARGS__)>(LogLevelType::Error)) ? (void)0 : LogImpl<LOG_TAGS(__VA_ARGS__)>::write<LogLevel::Error>

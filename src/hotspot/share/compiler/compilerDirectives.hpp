@@ -56,7 +56,7 @@
 #define compilerdirectives_common_string_flags(cflags)                           \
   cflags(DisableIntrinsic,        ccstrlist, DisableIntrinsic, DisableIntrinsic) \
   cflags(ControlIntrinsic,        ccstrlist, ControlIntrinsic, ControlIntrinsic) \
-  cflags(ULC,                     ccstrlist, "", ULC) // á?
+  cflags(UL,                      ccstrlist, "", UL) // á?
 #define compilerdirectives_common_flags(cflags) \
   compilerdirectives_common_other_flags(cflags) \
   compilerdirectives_common_string_flags(cflags)

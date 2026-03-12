@@ -50,7 +50,7 @@ class methodHandle;
   option(Help,  "help",  Unknown) \
   option(Quiet, "quiet", Unknown) \
   option(Log, "log", Bool) \
-  option(ULC, "ulc", Ccstrlist) \
+  option(UL, "ul", Ccstrlist) \
   option(Print, "print", Bool) \
   option(Inline,  "inline", Bool) \
   option(DelayInline,  "delayinline", Bool) \
@@ -182,7 +182,7 @@ class CompilerOracle : AllStatic {
   // A wrapper for checking bool options
   static bool has_option(const methodHandle& method, CompileCommandEnum option);
 
-  // ULC
+  // UL
   static bool has_ul_cc_set(const LogSelection ls);
 
   // Check if method has option and value set. If yes, overwrite value and return true,
