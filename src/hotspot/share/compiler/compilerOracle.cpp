@@ -325,7 +325,7 @@ TypedMethodOptionMatcher* TypedMethodOptionMatcher::match(const methodHandle& me
 bool TypedMethodOptionMatcher::has_ul_cc_set(const LogSelection ls) {
   TypedMethodOptionMatcher* current = this;
   while (current != nullptr) {
-    if (current->_option == CompileCommandEnum::ULC) {
+    if (current->_option == CompileCommandEnum::UL) {
       if (LogSelection::parse(current->value<ccstrlist>()) == ls) {
         return true;
       }
@@ -890,7 +890,7 @@ static bool scan_value(enum OptionType type, char* line, int& total_bytes_read,
           jio_snprintf(errorbuf, buf_size, "Unrecognized intrinsic detected in %s: %s", option2name(option), validator.what());
           return false;
         }
-      } else if (option == CompileCommandEnum::ULC) {
+      } else if (option == CompileCommandEnum::UL) {
         UnifiedLoggingMatchingValidator validator(value);
 
         if (!validator.is_valid()) {

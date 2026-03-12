@@ -522,8 +522,7 @@ public:
   }
 
   // Wrapper around should_print_ul to strip template notation
-  #define ul_enabled(C, level, ...) (C->should_print_ul<LOG_TAGS(__VA_ARGS__)>(LogLevelType::level))
-  #define ul_enabled_c(level, ...) (Compile::current()->should_print_ul<LOG_TAGS(__VA_ARGS__)>(LogLevelType::level))
+  #define ul_enabled(level, ...) (Compile::current()->should_print_ul<LOG_TAGS(__VA_ARGS__)>(LogLevelType::level))
 
   #define log_error_c2(...) (!Compile::current()->should_print_ul<LOG_TAGS(__VA_ARGS__)>(LogLevelType::Error)) ? (void)0 : LogImpl<LOG_TAGS(__VA_ARGS__)>::write<LogLevel::Error>
   #define log_warning_c2(...) (!Compile::current()->should_print_ul<LOG_TAGS(__VA_ARGS__)>(LogLevelType::Warning)) ? (void)0 : LogImpl<LOG_TAGS(__VA_ARGS__)>::write<LogLevel::Warning>

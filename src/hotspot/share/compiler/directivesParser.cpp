@@ -368,14 +368,14 @@ bool DirectivesParser::set_option_flag(JSON_TYPE t, JSON_VAL* v, const key* opti
           } else {
             error(VALUE_ERROR, "Unrecognized phase name detected in PrintIdealPhase: %s", validator.what());
           }
-        } else if (strncmp(option_key->name, "ULC", 3) == 0) {
+        } else if (strncmp(option_key->name, "UL", 2) == 0) {
           UnifiedLoggingMatchingValidator validator(s);
 
           valid = validator.is_valid();
           if (valid) {
             set->set_ul_log_selections(validator.log_selections());
           } else {
-            error(VALUE_ERROR, "Unrecognized or malformed log selection in ULC: %s", validator.what());
+            error(VALUE_ERROR, "Unrecognized or malformed log selection in UL: %s", validator.what());
           }
         }
 #endif

@@ -472,10 +472,10 @@ DirectiveSet* DirectiveSet::compilecommand_compatibility_init(const methodHandle
     }
 #endif
 #endif
-    if (!_modified[ULCIndex]) {
+    if (!_modified[ULIndex]) {
       // Parse ccstr and create set
       ccstrlist option;
-      if (CompilerOracle::has_option_value(method, CompileCommandEnum::ULC, option)) {
+      if (CompilerOracle::has_option_value(method, CompileCommandEnum::UL, option)) {
         UnifiedLoggingMatchingValidator validator(option);
         if (validator.is_valid()) {
           set.cloned()->set_ul_log_selections(validator.log_selections());
