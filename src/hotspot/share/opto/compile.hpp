@@ -32,6 +32,7 @@
 #include "compiler/compileBroker.hpp"
 #include "compiler/compiler_globals.hpp"
 #include "compiler/compilerEvent.hpp"
+#include "compiler/compilerOracle.hpp"
 #include "libadt/dict.hpp"
 #include "libadt/vectset.hpp"
 #include "logging/log.hpp"

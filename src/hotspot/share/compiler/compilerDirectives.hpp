@@ -136,7 +136,6 @@ private:
   CHeapBitMap _trace_auto_vectorization_tags;
   CHeapBitMap _trace_merge_stores_tags;
   LogSelectionList _ul_log_selections; //TODO: initialize at construction
-  bool _supplied;
 
 public:
   DirectiveSet(CompilerDirectives* directive);
@@ -230,9 +229,6 @@ void set_##name(void* value) {                                      \
   };
   LogSelectionList should_ul_sel() const {
     return _ul_log_selections;
-  }
-  bool supplied() const {
-    return _supplied;
   }
 
   void print_intx(outputStream* st, ccstr n, intx v, bool mod) { if (mod) { st->print("%s:%zd ", n, v); } }

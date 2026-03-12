@@ -336,7 +336,7 @@ bool TypedMethodOptionMatcher::has_ul_cc_set(const LogSelection ls) {
 
 }
 
-static void ul_compatibility_layer(CompileCommandEnum option) {
+static void ul_compatibility_layer(CompileCommandEnum option) { /*
   switch (option) {
   case CompileCommandEnum::PrintCompilation:
     // Not migrating it at the moment
@@ -361,7 +361,7 @@ static void ul_compatibility_layer(CompileCommandEnum option) {
   default:
     // Either default CompileCommands or non-UL-related ones. Ignore
     return;
-  }
+  } */
 }
 
 template<typename T>
@@ -870,12 +870,12 @@ static bool scan_value(enum OptionType type, char* line, int& total_bytes_read,
     ResourceMark rm;
     char* value = NEW_RESOURCE_ARRAY(char, strlen(line) + 1);
     char* next_value = value;
-    if (sscanf(line, "%255[_a-zA-Z0-9+\\-=*]%n", next_value, &bytes_read) == 1) { // I'm not breaking anything right?
+    if (sscanf(line, "%255[_a-zA-Z0-9+=*\\-]%n", next_value, &bytes_read) == 1) { // I'm not breaking anything right?
       total_bytes_read += bytes_read;
       line += bytes_read;
       next_value += bytes_read + 1;
       char* end_value = next_value - 1;
-      while (sscanf(line, "%*[ \t]%255[_a-zA-Z0-9+\\-=*]%n", next_value, &bytes_read) == 1) {
+      while (sscanf(line, "%*[ \t]%255[_a-zA-Z0-9+=*\\-]%n", next_value, &bytes_read) == 1) {
         total_bytes_read += bytes_read;
         line += bytes_read;
         *end_value = ' '; // override '\0'

@@ -330,6 +330,7 @@ class Arguments : AllStatic {
                                            ScopedVMInitArgs* args_out);
 
   static bool handle_deprecated_print_gc_flags();
+  static void handle_print_compiler_flags();
 
   static jint parse_vm_init_args(GrowableArrayCHeap<VMInitArgsGroup, mtArguments>* all_args);
   static jint parse_each_vm_init_arg(const JavaVMInitArgs* args, JVMFlagOrigin origin);
