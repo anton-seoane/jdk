@@ -909,9 +909,9 @@ void PhaseIterGVN::verify_step(Node* n) {
   }
 }
 
-void PhaseIterGVN::trace_PhaseIterGVN(Node* n, Node* nn, const Type* oldtype) {
+void PhaseIterGVN::trace_PhaseIterGVN(Node* n, Node* nn, const Type* oldtype, bool progress) {
   const Type* newtype = type_or_null(n);
-  if (nn != n || oldtype != newtype) {
+  if (progress) {
     C->print_method(PHASE_AFTER_ITER_GVN_STEP, 5, n);
   }
   if (TraceIterativeGVN) {
@@ -1076,7 +1076,9 @@ void PhaseIterGVN::optimize() {
       NOT_PRODUCT(const Type* oldtype = type_or_null(n));
       // Do the transformation
       DEBUG_ONLY(int live_nodes_before = C->live_nodes();)
+      uint progress_before = made_progress();
       Node* nn = transform_old(n);
+      bool progress = (made_progress() - progress_before) > 0;
       DEBUG_ONLY(int live_nodes_after = C->live_nodes();)
       // Ensure we did not increase the live node count with more than
       // max_live_nodes_increase_per_iteration during the call to transform_old
@@ -1085,7 +1087,7 @@ void PhaseIterGVN::optimize() {
              "excessive live node increase in single iteration of IGVN: %d "
              "(should be at most %d)",
              increase, max_live_nodes_increase_per_iteration);
-      NOT_PRODUCT(trace_PhaseIterGVN(n, nn, oldtype);)
+      NOT_PRODUCT(trace_PhaseIterGVN(n, nn, oldtype, progress);)
     } else if (!n->is_top()) {
       remove_dead_node(n);
     }
