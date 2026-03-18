@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, 2023, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2020, 2026, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -32,6 +32,7 @@ import jdk.test.lib.Asserts;
  * @key stress randomness
  * @bug 8253765
  * @requires vm.debug == true & vm.compiler2.enabled
+ * @requires vm.flagless
  * @summary Tests that, when compiling with StressLCM or StressGCM, using the
  *          same seed yields the same code motion trace.
  * @library /test/lib /
