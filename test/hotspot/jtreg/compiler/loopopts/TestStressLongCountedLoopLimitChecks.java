@@ -37,6 +37,7 @@ import java.util.stream.Stream;
  * @summary test loop limit checks are inserted when stressing int counted loops to long counted loops
  * @library /test/lib
  * @requires vm.debug == true
+ * @requires vm.flagless
  * @run driver compiler.loopopts.TestStressLongCountedLoopLimitChecks
  */
 public class TestStressLongCountedLoopLimitChecks {
@@ -49,7 +50,7 @@ public class TestStressLongCountedLoopLimitChecks {
     }
 
     private static void test(Class launcher, int limitChecks, String... flags) throws IOException {
-        ProcessBuilder pb = ProcessTools.createTestJavaProcessBuilder(
+        ProcessBuilder pb = ProcessTools.createLimitedTestJavaProcessBuilder(
                 Stream.concat(Arrays.stream(flags), Stream.of(
                         "-XX:+IgnoreUnrecognizedVMOptions",
                         "-XX:+TraceLoopLimitCheck",
