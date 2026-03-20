@@ -25,7 +25,6 @@
  * @test
  * @bug 8030783
  * @summary Regression test for 8026478
- * @requires vm.flagless
  * @library /test/lib
  * @modules java.base/jdk.internal.misc
  *          java.management
@@ -43,7 +42,7 @@ public class VerifyAdapterSharing {
         ProcessBuilder pb;
         OutputAnalyzer out;
 
-        pb = ProcessTools.createLimitedTestJavaProcessBuilder("-Xcomp", "-XX:+IgnoreUnrecognizedVMOptions",
+        pb = ProcessTools.createTestJavaProcessBuilder("-Xcomp", "-XX:+IgnoreUnrecognizedVMOptions",
                 "-XX:+VerifyAdapterSharing", "-version");
         out = new OutputAnalyzer(pb.start());
         out.shouldHaveExitValue(0);

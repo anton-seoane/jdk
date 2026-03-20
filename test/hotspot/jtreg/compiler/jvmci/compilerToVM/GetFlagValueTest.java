@@ -25,7 +25,6 @@
  * @test
  * @bug 8173912
  * @requires vm.jvmci
- * @requires vm.flagless
  * @library / /test/lib
  * @library ../common/patches
  * @modules jdk.internal.vm.ci/jdk.vm.ci.hotspot:+open

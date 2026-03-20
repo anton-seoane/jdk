@@ -32,7 +32,6 @@ import jdk.test.lib.Asserts;
  * @key stress randomness
  * @bug 8253765
  * @requires vm.debug == true & vm.compiler2.enabled
- * @requires vm.flagless
  * @summary Tests that, when compiling with StressLCM or StressGCM, using the
  *          same seed yields the same code motion trace.
  * @library /test/lib /
@@ -49,7 +48,7 @@ public class TestStressCM {
             "-XX:CompileOnly=" + className + "::sum",
             "-XX:+TraceOptoPipelining", "-XX:+" + stressOpt,
             "-XX:StressSeed=" + stressSeed, className, "10"};
-        ProcessBuilder pb  = ProcessTools.createLimitedTestJavaProcessBuilder(procArgs);
+        ProcessBuilder pb  = ProcessTools.createTestJavaProcessBuilder(procArgs);
         OutputAnalyzer out = new OutputAnalyzer(pb.start());
         out.shouldHaveExitValue(0);
         // Extract the trace of our method (the last one after those of all
