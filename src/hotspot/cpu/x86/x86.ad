@@ -23977,10 +23977,10 @@ instruct vmask_gen_imm(kReg dst, immL len, rRegL temp) %{
   ins_encode %{
     if ($len$$constant > 0) {
       __ mov64($temp$$Register, (0xFFFFFFFFFFFFFFFFUL >> (64 - $len$$constant)));
+      __ kmovql($dst$$KRegister, $temp$$Register);
     } else {
-      __ mov64($temp$$Register, 0);
+      __ kxorql($dst$$KRegister, $dst$$KRegister, $dst$$KRegister);
     }
-    __ kmovql($dst$$KRegister, $temp$$Register);
   %}
   ins_pipe( pipe_slow );
 %}
