@@ -338,7 +338,7 @@ class UnifiedLoggingMatchingValidator {
     return _bad;
   }
 
-  const LogSelectionList log_selections() const {
+  const LogSelectionList& log_selections() const {
     return _selections;
   }
 };
