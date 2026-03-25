@@ -1076,9 +1076,9 @@ void PhaseIterGVN::optimize() {
       NOT_PRODUCT(const Type* oldtype = type_or_null(n));
       // Do the transformation
       DEBUG_ONLY(int live_nodes_before = C->live_nodes();)
-      uint progress_before = made_progress();
+      NOT_PRODUCT(uint progress_before = made_progress();)
       Node* nn = transform_old(n);
-      bool progress = (made_progress() - progress_before) > 0;
+      NOT_PRODUCT(bool progress = (made_progress() - progress_before) > 0;)
       DEBUG_ONLY(int live_nodes_after = C->live_nodes();)
       // Ensure we did not increase the live node count with more than
       // max_live_nodes_increase_per_iteration during the call to transform_old
