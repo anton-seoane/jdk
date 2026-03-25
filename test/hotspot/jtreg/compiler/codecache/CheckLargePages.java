@@ -26,7 +26,6 @@
  * @bug 8304954
  * @summary Code cache reservation should gracefully downgrade to using smaller pages if the code cache size is too small to host the requested page size.
  * @requires os.family == "linux"
- * @requires vm.gc != "Z"
  * @requires vm.flagless
  * @library /test/lib
  * @build jdk.test.whitebox.WhiteBox
