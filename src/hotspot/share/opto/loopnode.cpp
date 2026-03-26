@@ -394,9 +394,9 @@ void CountedLoopConverter::insert_loop_limit_check_predicate(const ParsePredicat
 #ifndef PRODUCT
   // report that the loop predication has been actually performed
   // for this loop
-  if (ul_enabled_c(Trace, jit, looplimitcheck)) {
-    LogMessage(jit, looplimitcheck) msg;
-    NonInterleavingLogStream st(LogLevelType::Trace, msg);
+  if (ul_enabled(Trace, jit, looplimitcheck)) {
+    LogTarget(Trace, jit, looplimitcheck) lt;
+    LogStream st(lt);
     st.print_cr("Counted Loop Limit Check generated:");
     DEBUG_ONLY( bol->dump(2, &st); )
   }
@@ -1264,9 +1264,9 @@ bool PhaseIdealLoop::try_make_short_running_loop(IdealLoopTree* loop, jint strid
     register_new_node(new_limit, new_predicate_proj);
 
 #ifndef PRODUCT
-    if (ul_enabled_c(Trace, jit, looplimitcheck)) {
-      LogMessage(jit, looplimitcheck) msg;
-      NonInterleavingLogStream st(LogLevelType::Trace, msg);
+    if (ul_enabled(Trace, jit, looplimitcheck)) {
+      LogTarget(Trace, jit, looplimitcheck) lt;
+      LogStream st(lt);
       st.print_cr("Short Long Loop Check Predicate generated:");
       DEBUG_ONLY(bol->dump(2, &st);)
     }
@@ -2340,8 +2340,8 @@ bool CountedLoopConverter::is_counted_loop() {
       // The Loop Limit Check Parse Predicate is not generated if this method trapped here before.
 #ifdef ASSERT
       if (ul_enabled(Trace, jit, looplimitcheck)) {
-        LogMessage(jit, looplimitcheck) msg;
-        NonInterleavingLogStream st(LogLevelType::Trace, msg);
+        LogTarget(Trace, jit, looplimitcheck) lt;
+        LogStream st(lt);
         st.print("Missing Loop Limit Check Parse Predicate:");
         _loop->dump_head(&st);
         _head->dump(1, &st);
@@ -2389,8 +2389,8 @@ bool CountedLoopConverter::is_counted_loop() {
       // The Loop Limit Check Parse Predicate is not generated if this method trapped here before.
 #ifdef ASSERT
       if (ul_enabled(Trace, jit, looplimitcheck)) {
-        LogMessage(jit, looplimitcheck) msg;
-        NonInterleavingLogStream st(LogLevelType::Trace, msg);
+        LogTarget(Trace, jit, looplimitcheck) lt;
+        LogStream st(lt);
         st.print("Missing Loop Limit Check Parse Predicate:");
         _loop->dump_head(&st);
         _head->dump(1, &st);

@@ -3495,40 +3495,38 @@ bool Arguments::handle_deprecated_print_gc_flags() {
 }
 
 void Arguments::handle_print_compiler_flags() {
-  /*
   #ifdef COMPILER2
-  if (TraceLoopOpts) LogConfiguration::configure_stdout(LogLevel::Trace, false, LOG_TAGS(jit, loopopts));
+  // if (TraceLoopOpts) LogConfiguration::configure_stdout(LogLevel::Trace, false, LOG_TAGS(jit, loopopts));
   #endif
-  if (PrintOpto) LogConfiguration::configure_stdout(LogLevel::Trace, false, LOG_TAGS(jit, opto));
-  if (TracePartialPeeling) LogConfiguration::configure_stdout(LogLevel::Trace, false, LOG_TAGS(jit, partialpeeling));
-  if (TraceOptoParse) LogConfiguration::configure_stdout(LogLevel::Trace, false, LOG_TAGS(jit, optoparse));
-  if (TraceLoopPredicate) LogConfiguration::configure_stdout(LogLevel::Trace, false, LOG_TAGS(jit, looppredicate));
-  if (TraceLoopUnswitching) LogConfiguration::configure_stdout(LogLevel::Trace, false, LOG_TAGS(jit, loopunswitching));
-  if (PrintNullCheckElimination) LogConfiguration::configure_stdout(LogLevel::Trace, false, LOG_TAGS(jit, nullcheckelimination));
-  if (PrintBailouts) LogConfiguration::configure_stdout(LogLevel::Trace, false, LOG_TAGS(jit, bailouts));
-  if (TraceSuperWordLoopUnrollAnalysis) LogConfiguration::configure_stdout(LogLevel::Trace, false, LOG_TAGS(jit, superwordloopunrollanalysis));
-  if (PrintInlining) LogConfiguration::configure_stdout(LogLevel::Trace, false, LOG_TAGS(jit, inlining));
-  if (PrintIntrinsics) LogConfiguration::configure_stdout(LogLevel::Trace, false, LOG_TAGS(jit, intrinsics));
-  if (PrintInlining || PrintIntrinsics) LogConfiguration::configure_stdout(LogLevel::Trace, false, LOG_TAGS(jit, inliningorintrinsics));
+  // if (PrintOpto) LogConfiguration::configure_stdout(LogLevel::Trace, false, LOG_TAGS(jit, opto));
+  // if (TracePartialPeeling) LogConfiguration::configure_stdout(LogLevel::Trace, false, LOG_TAGS(jit, partialpeeling));
+  // if (TraceOptoParse) LogConfiguration::configure_stdout(LogLevel::Trace, false, LOG_TAGS(jit, optoparse));
+  // if (TraceLoopPredicate) LogConfiguration::configure_stdout(LogLevel::Trace, false, LOG_TAGS(jit, looppredicate));
+  // if (TraceLoopUnswitching) LogConfiguration::configure_stdout(LogLevel::Trace, false, LOG_TAGS(jit, loopunswitching));
+  // if (PrintNullCheckElimination) LogConfiguration::configure_stdout(LogLevel::Trace, false, LOG_TAGS(jit, nullcheckelimination));
+  // if (PrintBailouts) LogConfiguration::configure_stdout(LogLevel::Trace, false, LOG_TAGS(jit, bailouts));
+  // if (TraceSuperWordLoopUnrollAnalysis) LogConfiguration::configure_stdout(LogLevel::Trace, false, LOG_TAGS(jit, superwordloopunrollanalysis));
+  // if (PrintInlining) LogConfiguration::configure_stdout(LogLevel::Trace, false, LOG_TAGS(jit, inlining));
+  // if (PrintIntrinsics) LogConfiguration::configure_stdout(LogLevel::Trace, false, LOG_TAGS(jit, intrinsics));
+  // if (PrintInlining || PrintIntrinsics) LogConfiguration::configure_stdout(LogLevel::Trace, false, LOG_TAGS(jit, inliningorintrinsics));
 #if defined(ASSERT) || !defined(PRODUCT)
-  if (TraceOptimizeFill) LogConfiguration::configure_stdout(LogLevel::Trace, false, LOG_TAGS(jit, optimizefill));
+  // if (TraceOptimizeFill) LogConfiguration::configure_stdout(LogLevel::Trace, false, LOG_TAGS(jit, optimizefill));
   if (TraceLoopLimitCheck) LogConfiguration::configure_stdout(LogLevel::Trace, false, LOG_TAGS(jit, looplimitcheck));
-  if (PrintEliminateAllocations) LogConfiguration::configure_stdout(LogLevel::Trace, false, LOG_TAGS(jit, eliminateallocations));
-  if (PrintEscapeAnalysis) LogConfiguration::configure_stdout(LogLevel::Trace, false, LOG_TAGS(jit, escapeanalysis));
+  // if (PrintEliminateAllocations) LogConfiguration::configure_stdout(LogLevel::Trace, false, LOG_TAGS(jit, eliminateallocations));
+  // if (PrintEscapeAnalysis) LogConfiguration::configure_stdout(LogLevel::Trace, false, LOG_TAGS(jit, escapeanalysis));
 #endif
 #ifndef PRODUCT
-  if (TraceCISCSpill) LogConfiguration::configure_stdout(LogLevel::Trace, false, LOG_TAGS(jit, ciscspill));
-  if (TraceSpilling) LogConfiguration::configure_stdout(LogLevel::Trace, false, LOG_TAGS(jit, spilling));
-  if (PrintValueNumbering) LogConfiguration::configure_stdout(LogLevel::Trace, false, LOG_TAGS(jit, valuenumbering));
-  if (PrintOptoPeephole) LogConfiguration::configure_stdout(LogLevel::Trace, false, LOG_TAGS(jit, optopeephole));
+  // if (TraceCISCSpill) LogConfiguration::configure_stdout(LogLevel::Trace, false, LOG_TAGS(jit, ciscspill));
+  // if (TraceSpilling) LogConfiguration::configure_stdout(LogLevel::Trace, false, LOG_TAGS(jit, spilling));
+  // if (PrintValueNumbering) LogConfiguration::configure_stdout(LogLevel::Trace, false, LOG_TAGS(jit, valuenumbering));
+  // if (PrintOptoPeephole) LogConfiguration::configure_stdout(LogLevel::Trace, false, LOG_TAGS(jit, optopeephole));
   if (PrintDominators) LogConfiguration::configure_stdout(LogLevel::Trace, false, LOG_TAGS(jit, dominators));
-  if (TraceOptoPipelining) LogConfiguration::configure_stdout(LogLevel::Trace, false, LOG_TAGS(jit, optopipelining));
+  // if (TraceOptoPipelining) LogConfiguration::configure_stdout(LogLevel::Trace, false, LOG_TAGS(jit, optopipelining));
 #endif
 #ifdef ASSERT
   //if (TraceMergeStores) LogConfiguration::configure_stdout(LogLevel::Trace, false, LOG_TAGS(jit, mergestores));
-  if (TraceRangeLimitCheck) LogConfiguration::configure_stdout(LogLevel::Trace, false, LOG_TAGS(jit, rangelimitcheck));
+  // if (TraceRangeLimitCheck) LogConfiguration::configure_stdout(LogLevel::Trace, false, LOG_TAGS(jit, rangelimitcheck));
 #endif
-  */
 }
 
 static void apply_debugger_ergo() {

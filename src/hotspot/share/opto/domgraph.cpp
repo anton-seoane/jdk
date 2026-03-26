@@ -535,11 +535,11 @@ void PhaseIdealLoop::Dominators() {
   _idom     [C->top()->_idx] = C->root();
   _dom_depth[C->top()->_idx] = 1;
 
-#ifndef PRODUCT
   // Debug Print of Dominator tree
-  if (ul_enabled_c(Debug, jit, dominators)) {
-    LogMessage(jit, dominators) msg;
-    NonInterleavingLogStream st(LogLevelType::Debug, msg);
+#ifndef PRODUCT
+  if (ul_enabled(Debug, jit, dominators)) {
+    LogTarget(Debug, jit, dominators) lt;
+    LogStream st(lt);
     w->dump(0, &st);
   }
 #endif
