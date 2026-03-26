@@ -75,6 +75,7 @@ class outputStream;
   LOG_TAG(deoptimization) \
   LOG_TAG(dependencies) \
   LOG_TAG(director) \
+  LOG_TAG(dominators) \
   NOT_PRODUCT(LOG_TAG(downcall)) \
   LOG_TAG(dump) \
   LOG_TAG(dynamic) \
@@ -119,6 +120,7 @@ class outputStream;
   LOG_TAG(load) /* Trace all classes loaded */ \
   LOG_TAG(loader) \
   LOG_TAG(logging) \
+  LOG_TAG(looplimitcheck) \
   LOG_TAG(malloc) \
   LOG_TAG(map) \
   LOG_TAG(mark) \

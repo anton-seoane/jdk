@@ -533,11 +533,13 @@ void PhaseIdealLoop::Dominators() {
   _dom_depth[C->top()->_idx] = 1;
 
   // Debug Print of Dominator tree
-  if( PrintDominators ) {
 #ifndef PRODUCT
-    w->dump(0);
-#endif
+  if (ul_enabled(Debug, jit, dominators)) {
+    LogTarget(Debug, jit, dominators) lt;
+    LogStream st(lt);
+    w->dump(0, &st);
   }
+#endif
 }
 
 // Perform DFS search.  Setup 'vertex' as DFS to vertex mapping.  Setup
