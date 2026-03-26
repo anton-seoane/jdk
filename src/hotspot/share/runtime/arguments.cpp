@@ -3502,7 +3502,7 @@ void Arguments::handle_print_compiler_flags() {
   // if (TracePartialPeeling) LogConfiguration::configure_stdout(LogLevel::Trace, false, LOG_TAGS(jit, partialpeeling));
   // if (TraceOptoParse) LogConfiguration::configure_stdout(LogLevel::Trace, false, LOG_TAGS(jit, optoparse));
   // if (TraceLoopPredicate) LogConfiguration::configure_stdout(LogLevel::Trace, false, LOG_TAGS(jit, looppredicate));
-  // if (TraceLoopUnswitching) LogConfiguration::configure_stdout(LogLevel::Trace, false, LOG_TAGS(jit, loopunswitching));
+  if (TraceLoopUnswitching) LogConfiguration::configure_stdout(LogLevel::Trace, false, LOG_TAGS(jit, loopunswitching));
   // if (PrintNullCheckElimination) LogConfiguration::configure_stdout(LogLevel::Trace, false, LOG_TAGS(jit, nullcheckelimination));
   // if (PrintBailouts) LogConfiguration::configure_stdout(LogLevel::Trace, false, LOG_TAGS(jit, bailouts));
   // if (TraceSuperWordLoopUnrollAnalysis) LogConfiguration::configure_stdout(LogLevel::Trace, false, LOG_TAGS(jit, superwordloopunrollanalysis));
