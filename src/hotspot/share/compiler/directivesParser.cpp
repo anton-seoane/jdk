@@ -198,7 +198,7 @@ bool DirectivesParser::push_key(const char* str, size_t len) {
     strncpy(s, str, len);
     s[len] = '\0';
     error(KEY_ERROR, "No such key: '%s'.", s);
-    FREE_C_HEAP_ARRAY(char, s);
+    FREE_C_HEAP_ARRAY(s);
     return false;
   }
 
@@ -379,7 +379,7 @@ bool DirectivesParser::set_option_flag(JSON_TYPE t, JSON_VAL* v, const key* opti
 #endif
 
         if (!valid) {
-          FREE_C_HEAP_ARRAY(char, s);
+          FREE_C_HEAP_ARRAY(s);
           return false;
         }
         (set->*test)((void *)&s);  // Takes ownership.
@@ -449,7 +449,7 @@ bool DirectivesParser::set_option(JSON_TYPE t, JSON_VAL* v) {
         assert (error_msg != nullptr, "Must have valid error message");
         error(VALUE_ERROR, "Method pattern error: %s", error_msg);
       }
-      FREE_C_HEAP_ARRAY(char, s);
+      FREE_C_HEAP_ARRAY(s);
     }
     break;
 
@@ -481,7 +481,7 @@ bool DirectivesParser::set_option(JSON_TYPE t, JSON_VAL* v) {
           error(VALUE_ERROR, "Method pattern error: %s", error_msg);
         }
       }
-      FREE_C_HEAP_ARRAY(char, s);
+      FREE_C_HEAP_ARRAY(s);
     }
     break;
 
@@ -631,4 +631,3 @@ bool DirectivesParser::callback(JSON_TYPE t, JSON_VAL* v, uint rlimit) {
     }
   }
 }
-
