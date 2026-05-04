@@ -98,9 +98,9 @@ void ParsePredicate::kill(PhaseIterGVN& igvn) const {
 
 #ifndef PRODUCT
 void ParsePredicate::trace_cloned_parse_predicate(const bool is_false_path_loop) const {
-  if (ul_enabled_c(Trace, jit, loopunswitching)) {
-    LogMessage(jit, loopunswitching) logm;
-    NonInterleavingLogStream st(LogLevelType::Trace, logm);
+  if (ul_enabled(Trace, jit, loopunswitching)) {
+    LogTarget(Trace, jit, loopunswitching) lt;
+    LogStream st(lt);
     st.print("Parse Predicate cloned to %s path loop: ", is_false_path_loop ? "false" : "true");
     head()->dump(&st);
   }

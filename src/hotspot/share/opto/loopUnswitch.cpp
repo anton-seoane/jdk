@@ -624,9 +624,9 @@ void PhaseIdealLoop::trace_loop_unswitching_count(IdealLoopTree* loop, LoopNode*
 
 void PhaseIdealLoop::trace_loop_unswitching_result(const UnswitchedLoopSelector& unswitched_loop_selector,
                                                    const LoopNode* original_head, const LoopNode* new_head) {
-  if (ul_enabled_c(Trace, jit, loopunswitching)) {
-    LogMessage(jit, loopunswitching) logm;
-    NonInterleavingLogStream st(LogLevelType::Trace, logm);
+  if (ul_enabled(Trace, jit, loopunswitching)) {
+    LogTarget(Trace, jit, loopunswitching) lt;
+    LogStream st(lt);
     IfNode* unswitch_candidate = unswitched_loop_selector.unswitch_candidate();
     IfNode* loop_selector = unswitched_loop_selector.loop_selector().selector();
     st.print_cr("Loop Unswitching:");
