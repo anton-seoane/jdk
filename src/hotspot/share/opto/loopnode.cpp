@@ -4949,7 +4949,7 @@ void IdealLoopTree::dump_head(outputStream* out) {
   if (Verbose) {
     if (_reachability_fences != nullptr && _reachability_fences->size() > 0) {
       out->print(" rfs={");
-      _reachability_fences->dump_simple();
+      _reachability_fences->dump_simple(out);
       out->print(" }");
     }
     out->print(" body={");

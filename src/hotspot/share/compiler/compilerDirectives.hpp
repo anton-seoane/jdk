@@ -325,7 +325,7 @@ class UnifiedLoggingMatchingValidator {
 
   ~UnifiedLoggingMatchingValidator() {
     if (_bad != nullptr) {
-      FREE_C_HEAP_ARRAY(char, _bad);
+      FREE_C_HEAP_ARRAY(_bad);
     }
   }
 
